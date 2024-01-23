@@ -13,6 +13,8 @@ func _ready():
 	if scene_capture:
 		scene_capture.connect("scene_capture_completed", _on_scene_capture_completed)
 
+	if OpenXRFbHandTrackingAimExtensionWrapper.is_available():
+		print ("Hand tracking aim is available")
 
 func _on_scene_capture_completed():
 	print("Scene Capture completed")
@@ -23,3 +25,9 @@ func _on_left_hand_button_pressed(name):
 	if name == "menu_button" and scene_capture:
 		print("Triggering scene capture")
 		scene_capture.request_scene_capture()
+
+
+func _on_timer_timeout() -> void:
+	print ("Valid: ", OpenXRFbHandTrackingAimExtensionWrapper.is_tracking_data_valid(0))
+	print ("Computed: ", OpenXRFbHandTrackingAimExtensionWrapper.is_tracking_data_computed(0))
+	print ("Index pinched: ", OpenXRFbHandTrackingAimExtensionWrapper.is_index_finger_pinching(0))

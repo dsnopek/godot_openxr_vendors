@@ -91,4 +91,8 @@ mesh = SubResource("SphereMesh_5gcab")
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_mjcgt")
 
+[node name="Timer" type="Timer" parent="."]
+autostart = true
+
 [connection signal="button_pressed" from="XROrigin3D/LeftHand" to="." method="_on_left_hand_button_pressed"]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
