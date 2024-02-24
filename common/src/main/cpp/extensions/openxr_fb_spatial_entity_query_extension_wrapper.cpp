@@ -58,6 +58,7 @@ OpenXRFbSpatialEntityQueryExtensionWrapper::~OpenXRFbSpatialEntityQueryExtension
 
 void OpenXRFbSpatialEntityQueryExtensionWrapper::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_spatial_entity_query_supported"), &OpenXRFbSpatialEntityQueryExtensionWrapper::is_spatial_entity_query_supported);
+	ClassDB::bind_method(D_METHOD("test_query"), &OpenXRFbSpatialEntityQueryExtensionWrapper::test_query);
 }
 
 void OpenXRFbSpatialEntityQueryExtensionWrapper::cleanup() {
@@ -106,6 +107,29 @@ bool OpenXRFbSpatialEntityQueryExtensionWrapper::_on_event_polled(const void *ev
 	}
 
 	return false;
+}
+
+void OpenXRFbSpatialEntityQueryExtensionWrapper::test_query() {
+	XrSpaceQueryInfoFB query = {
+		XR_TYPE_SPACE_QUERY_INFO_FB, // type
+		nullptr, // next
+		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
+		10, // maxResultsCount
+		6000000, // timeout
+		nullptr, // filter
+		nullptr, // excludeFilter
+	};
+
+	query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQueryExtensionWrapper::test_results);
+}
+
+void OpenXRFbSpatialEntityQueryExtensionWrapper::test_results(Vector<XrSpaceQueryResultFB> results) {
+	for (int i = 0; i < results.size(); i++) {
+		PackedByteArray b;
+		b.resize(16);
+		memcpy(b.ptrw(), &results[i].uuid.data, 16);
+		UtilityFunctions::print("Result [", i, "]: ", b);
+	}
 }
 
 void OpenXRFbSpatialEntityQueryExtensionWrapper::query_spatial_entities(const XrSpaceQueryInfoBaseHeaderFB *info, SpaceQueryCompleteCallback_t callback) {

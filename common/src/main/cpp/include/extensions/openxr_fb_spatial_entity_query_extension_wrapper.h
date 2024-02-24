@@ -67,6 +67,9 @@ public:
 	// deliver results when they are available.
 	void query_spatial_entities(const XrSpaceQueryInfoBaseHeaderFB *info, SpaceQueryCompleteCallback_t callback);
 
+	void test_query();
+	static void test_results(Vector<XrSpaceQueryResultFB> results);
+
 	OpenXRFbSpatialEntityQueryExtensionWrapper();
 	~OpenXRFbSpatialEntityQueryExtensionWrapper();
 
