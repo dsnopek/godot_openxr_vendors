@@ -98,6 +98,12 @@ bool OpenXRFbSpatialEntityExtensionWrapper::initialize_fb_spatial_entity_extensi
 	return true;
 }
 
+/*
+uint64_t OpenXRFbSpatialEntityExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
+
+}
+*/
+
 bool OpenXRFbSpatialEntityExtensionWrapper::_on_event_polled(const void *event) {
 	if (static_cast<const XrEventDataBuffer *>(event)->type == XR_TYPE_EVENT_DATA_SPACE_SET_STATUS_COMPLETE_FB) {
 		auto eventData = (const XrEventDataSpaceSetStatusCompleteFB *)event;

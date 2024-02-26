@@ -115,7 +115,7 @@ void OpenXRFbSpatialEntityQueryExtensionWrapper::test_query() {
 		nullptr, // next
 		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
 		10, // maxResultsCount
-		6000000, // timeout
+		0, // timeout
 		nullptr, // filter
 		nullptr, // excludeFilter
 	};
@@ -124,6 +124,7 @@ void OpenXRFbSpatialEntityQueryExtensionWrapper::test_query() {
 }
 
 void OpenXRFbSpatialEntityQueryExtensionWrapper::test_results(Vector<XrSpaceQueryResultFB> results) {
+	UtilityFunctions::print("Got ", results.size(), " results.");
 	for (int i = 0; i < results.size(); i++) {
 		PackedByteArray b;
 		b.resize(16);
@@ -178,7 +179,7 @@ void OpenXRFbSpatialEntityQueryExtensionWrapper::on_space_query_results(const Xr
 }
 
 void OpenXRFbSpatialEntityQueryExtensionWrapper::on_space_query_complete(const XrEventDataSpaceQueryCompleteFB *event) {
-	if (query_complete_callbacks.has(event->requestId)) {
+	if (!query_complete_callbacks.has(event->requestId)) {
 		WARN_PRINT("Received unexpected XR_TYPE_EVENT_DATA_SPACE_QUERY_RESULTS_AVAILABLE_FB");
 		return;
 	}

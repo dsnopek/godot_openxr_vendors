@@ -31,7 +31,7 @@ func _on_left_hand_button_pressed(name):
 		print("Triggering scene capture")
 		scene_capture.request_scene_capture()
 
-	if name == "by_button":
+	elif name == "by_button":
 		var supported_blend_modes = xr_interface.get_supported_environment_blend_modes()
 		print ("Supported blend modes: ", supported_blend_modes)
 		if XRInterface.XR_ENV_BLEND_MODE_ALPHA_BLEND in supported_blend_modes and XRInterface.XR_ENV_BLEND_MODE_OPAQUE in supported_blend_modes:
@@ -51,6 +51,11 @@ func _on_left_hand_button_pressed(name):
 				floor_mesh.visible = true
 		else:
 			print("Switching to/from passthrough not supported.")
+
+	elif name == "ax_button":
+		print ("Spatial Entity Query is supported: ", OpenXRFbSpatialEntityQueryExtensionWrapper.is_spatial_entity_query_supported())
+		OpenXRFbSpatialEntityQueryExtensionWrapper.test_query()
+
 
 func _on_left_controller_fb_render_model_render_model_loaded() -> void:
 	left_hand_mesh.hide()

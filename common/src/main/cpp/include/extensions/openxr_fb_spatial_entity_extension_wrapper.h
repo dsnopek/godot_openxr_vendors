@@ -52,8 +52,9 @@ public:
 	Dictionary _get_requested_extensions() override;
 
 	void _on_instance_created(uint64_t instance) override;
-
 	void _on_instance_destroyed() override;
+
+	//uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
 
 	bool is_spatial_entity_supported() {
 		return fb_spatial_entity_ext;
