@@ -221,8 +221,7 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 
 	XrSpaceComponentFilterInfoFB filter = {
 		XR_TYPE_SPACE_COMPONENT_FILTER_INFO_FB, // type
-		nullptr,
-		//&location_filter, // next
+		&location_filter, // next
 	};
 	switch (component_type) {
 		case COMPONENT_TYPE_LOCATABLE: {
