@@ -54,7 +54,14 @@ func _on_left_hand_button_pressed(name):
 
 	elif name == "ax_button":
 		print ("Spatial Entity Query is supported: ", OpenXRFbSpatialEntityQueryExtensionWrapper.is_spatial_entity_query_supported())
-		OpenXRFbSpatialEntityQueryExtensionWrapper.test_query()
+		var query = OpenXRFbSpatialEntityQuery.new()
+		#query.query_by_uuid(["77530fc0-9595-ecf6-791c-019e882a8f48", "860f3503-06bc-75a9-e412-ec081b9d33d9"])
+		query.query_by_component(OpenXRFbSpatialEntityQuery.COMPONENT_TYPE_LOCATABLE)
+		if query.execute() == OK:
+			var results = await query.completed
+			print ("Spatial Entity Query results: ", results)
+		else:
+			print ("Error running spatial entity query")
 
 
 func _on_left_controller_fb_render_model_render_model_loaded() -> void:

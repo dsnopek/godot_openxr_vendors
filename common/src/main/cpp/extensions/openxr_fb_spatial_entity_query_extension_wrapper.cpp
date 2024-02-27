@@ -108,32 +108,6 @@ bool OpenXRFbSpatialEntityQueryExtensionWrapper::_on_event_polled(const void *ev
 	return false;
 }
 
-/*
-void OpenXRFbSpatialEntityQueryExtensionWrapper::test_query() {
-	XrSpaceQueryInfoFB query = {
-		XR_TYPE_SPACE_QUERY_INFO_FB, // type
-		nullptr, // next
-		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
-		10, // maxResultsCount
-		0, // timeout
-		nullptr, // filter
-		nullptr, // excludeFilter
-	};
-
-	query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQueryExtensionWrapper::test_results);
-}
-
-void OpenXRFbSpatialEntityQueryExtensionWrapper::test_results(Vector<XrSpaceQueryResultFB> results) {
-	UtilityFunctions::print("Got ", results.size(), " results.");
-	for (int i = 0; i < results.size(); i++) {
-		PackedByteArray b;
-		b.resize(16);
-		memcpy(b.ptrw(), &results[i].uuid.data, 16);
-		UtilityFunctions::print("Result [", i, "]: ", b);
-	}
-}
-*/
-
 XrAsyncRequestIdFB OpenXRFbSpatialEntityQueryExtensionWrapper::query_spatial_entities(const XrSpaceQueryInfoBaseHeaderFB *p_info, QueryCompleteCallback p_callback, void *p_userdata) {
 	XrAsyncRequestIdFB request_id;
 
