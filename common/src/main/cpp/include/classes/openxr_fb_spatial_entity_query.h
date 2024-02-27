@@ -46,7 +46,8 @@ public:
 
 private:
 	StorageLocation location = STORAGE_LOCAL;
-	int max_results = 25;
+	uint32_t max_results = 25;
+	float timeout = 10.0;
 	Array uuids;
 
 	XrAsyncRequestIdFB request_id = 0;
@@ -58,13 +59,19 @@ public:
 	void set_storage_location(StorageLocation p_location);
 	StorageLocation get_storage_location() const;
 
-	void set_max_results(int p_max_results);
-	int get_max_results() const;
+	void set_max_results(uint32_t p_max_results);
+	uint32_t get_max_results() const;
+
+	void set_timeout(float p_timeout);
+	float get_timeout() const;
 
 	void set_uuids(Array p_uuids);
 	Array get_uuids() const;
 
 	Error execute();
+
+	static void _results_callback(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
+
 };
 
 } // namespace godot
