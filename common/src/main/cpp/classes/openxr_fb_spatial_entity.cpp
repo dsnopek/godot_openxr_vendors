@@ -30,6 +30,7 @@
 #include "classes/openxr_fb_spatial_entity.h"
 
 #include "extensions/openxr_fb_spatial_entity_extension_wrapper.h"
+#include "extensions/openxr_fb_spatial_entity_container_extension_wrapper.h"
 #include "extensions/openxr_fb_scene_extension_wrapper.h"
 
 using namespace godot;
@@ -44,6 +45,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_semantic_labels"), &OpenXRFbSpatialEntity::get_semantic_labels);
 	ClassDB::bind_method(D_METHOD("get_room_layout"), &OpenXRFbSpatialEntity::get_room_layout);
+	ClassDB::bind_method(D_METHOD("get_contained_uuids"), &OpenXRFbSpatialEntity::get_contained_uuids);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
 
@@ -106,6 +108,17 @@ PackedStringArray OpenXRFbSpatialEntity::get_semantic_labels() const {
 
 Dictionary OpenXRFbSpatialEntity::get_room_layout() const {
 	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_room_layout(space);
+}
+
+Array OpenXRFbSpatialEntity::get_contained_uuids() const {
+	Vector<XrUuidEXT> uuids = OpenXRFbSpatialEntityContainerExtensionWrapper::get_singleton()->get_contained_uuids(space);
+
+	Array ret;
+	ret.resize(uuids.size());
+	for (int i = 0; i < uuids.size(); i++) {
+		ret[i] = OpenXRUtilities::uuid_to_string_name(uuids[i]);
+	}
+	return ret;
 }
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntity::to_openxr_storage_location(StorageLocation p_location) {

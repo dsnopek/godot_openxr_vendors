@@ -61,10 +61,13 @@ func _on_left_hand_button_pressed(name):
 		if query.execute() == OK:
 			var results = await query.completed
 			for e in results:
-				print ("Entity: ", e.get_uuid(), " - ", e.get_semantic_labels())
+				print (" ===== Entity: ", e.get_uuid(), " - ", e.get_semantic_labels(), " ===== ")
 				var room_layout = e.get_room_layout()
 				if room_layout.size() > 0:
 					print ("Room layout: ", room_layout)
+				var contained = e.get_contained_uuids()
+				if contained.size() > 0:
+					print ("Contained: ", contained)
 		else:
 			print ("Error running spatial entity query")
 
