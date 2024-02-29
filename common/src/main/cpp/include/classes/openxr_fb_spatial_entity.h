@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  openxr_fb_spatial_entity_query.h                                      */
+/*  openxr_fb_spatial_entity.h                                            */
 /**************************************************************************/
 /*                       This file is part of:                            */
 /*                              GODOT XR                                  */
@@ -27,68 +27,47 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef OPENXR_FB_SPATIAL_ENTITY_QUERY_H
-#define OPENXR_FB_SPATIAL_ENTITY_QUERY_H
+#ifndef OPENXR_FB_SPATIAL_ENTITY_H
+#define OPENXR_FB_SPATIAL_ENTITY_H
 
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/ref_counted.hpp>
 
-#include "classes/openxr_fb_spatial_entity.h"
-
 namespace godot {
 
-class OpenXRFbSpatialEntityQuery : public RefCounted {
-	GDCLASS(OpenXRFbSpatialEntityQuery, RefCounted);
+class OpenXRFbSpatialEntity : public RefCounted {
+	GDCLASS(OpenXRFbSpatialEntity, RefCounted);
 
 public:
-	enum QueryType {
-		QUERY_ALL,
-		QUERY_BY_UUID,
-		QUERY_BY_COMPONENT,
+
+	enum StorageLocation {
+		STORAGE_LOCAL,
+		STORAGE_CLOUD,
+	};
+
+	enum ComponentType {
+		COMPONENT_TYPE_LOCATABLE,
+		COMPONENT_TYPE_STORABLE,
+		COMPONENT_TYPE_SHARABLE,
+		COMPONENT_TYPE_BOUNDED_2D,
+		COMPONENT_TYPE_BOUNDED_3D,
+		COMPONENT_TYPE_SEMANTIC_LABELS,
+		COMPONENT_TYPE_ROOM_LAYOUT,
+		COMPONENT_TYPE_SPACE_CONTAINER,
+		COMPONENT_TYPE_TRIANGLE_MESH,
 	};
 
 private:
-	QueryType query_type = QUERY_ALL;
-	OpenXRFbSpatialEntity::StorageLocation location = OpenXRFbSpatialEntity::STORAGE_LOCAL;
-	OpenXRFbSpatialEntity::ComponentType component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
-	uint32_t max_results = 25;
-	float timeout = 0.0f;
-	Array uuids;
-
-	XrAsyncRequestIdFB request_id = 0;
 
 protected:
 	static void _bind_methods();
 
-	XrAsyncRequestIdFB _execute_query_all();
-	XrAsyncRequestIdFB _execute_query_by_uuid();
-	XrAsyncRequestIdFB _execute_query_by_component();
-
-	XrSpaceStorageLocationFB _get_openxr_location() const;
-
 public:
-	void set_max_results(uint32_t p_max_results);
-	uint32_t get_max_results() const;
-
-	void set_timeout(float p_timeout);
-	float get_timeout() const;
-
-	void query_all();
-	void query_by_uuid(Array p_uuids, OpenXRFbSpatialEntity::StorageLocation p_location = OpenXRFbSpatialEntity::STORAGE_LOCAL);
-	void query_by_component(OpenXRFbSpatialEntity::ComponentType p_component_type, OpenXRFbSpatialEntity::StorageLocation p_location = OpenXRFbSpatialEntity::STORAGE_LOCAL);
-
-	QueryType get_query_type() const;
-	OpenXRFbSpatialEntity::StorageLocation get_storage_location() const;
-	Array get_uuids() const;
-	OpenXRFbSpatialEntity::ComponentType get_component_type() const;
-
-	Error execute();
-
-	static void _results_callback(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
 };
 
 } // namespace godot
 
-VARIANT_ENUM_CAST(OpenXRFbSpatialEntityQuery::QueryType);
+VARIANT_ENUM_CAST(OpenXRFbSpatialEntity::StorageLocation);
+VARIANT_ENUM_CAST(OpenXRFbSpatialEntity::ComponentType);
 
 #endif

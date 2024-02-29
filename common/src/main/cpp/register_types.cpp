@@ -55,6 +55,7 @@
 
 #include "classes/openxr_fb_render_model.h"
 #include "classes/openxr_fb_scene_manager.h"
+#include "classes/openxr_fb_spatial_entity.h"
 #include "classes/openxr_fb_spatial_entity_query.h"
 
 using namespace godot;
@@ -106,6 +107,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 
 			ClassDB::register_class<OpenXRFbRenderModel>();
 			ClassDB::register_class<OpenXRFbSceneManager>();
+			ClassDB::register_class<OpenXRFbSpatialEntity>();
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
 		} break;
 

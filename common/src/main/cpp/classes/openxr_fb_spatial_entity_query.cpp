@@ -41,8 +41,8 @@ void OpenXRFbSpatialEntityQuery::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_timeout", "seconds"), &OpenXRFbSpatialEntityQuery::set_timeout);
 	ClassDB::bind_method(D_METHOD("get_timeout"), &OpenXRFbSpatialEntityQuery::get_timeout);
 	ClassDB::bind_method(D_METHOD("query_all"), &OpenXRFbSpatialEntityQuery::query_all);
-	ClassDB::bind_method(D_METHOD("query_by_uuid", "uuids", "location"), &OpenXRFbSpatialEntityQuery::query_by_uuid, DEFVAL(STORAGE_LOCAL));
-	ClassDB::bind_method(D_METHOD("query_by_component", "component", "location"), &OpenXRFbSpatialEntityQuery::query_by_component, DEFVAL(STORAGE_LOCAL));
+	ClassDB::bind_method(D_METHOD("query_by_uuid", "uuids", "location"), &OpenXRFbSpatialEntityQuery::query_by_uuid, DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
+	ClassDB::bind_method(D_METHOD("query_by_component", "component", "location"), &OpenXRFbSpatialEntityQuery::query_by_component, DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
 	ClassDB::bind_method(D_METHOD("get_query_type"), &OpenXRFbSpatialEntityQuery::get_query_type);
 	ClassDB::bind_method(D_METHOD("get_storage_location"), &OpenXRFbSpatialEntityQuery::get_storage_location);
 	ClassDB::bind_method(D_METHOD("get_uuids"), &OpenXRFbSpatialEntityQuery::get_uuids);
@@ -55,19 +55,6 @@ void OpenXRFbSpatialEntityQuery::_bind_methods() {
 	BIND_ENUM_CONSTANT(QUERY_ALL);
 	BIND_ENUM_CONSTANT(QUERY_BY_UUID);
 	BIND_ENUM_CONSTANT(QUERY_BY_COMPONENT);
-
-	BIND_ENUM_CONSTANT(STORAGE_LOCAL);
-	BIND_ENUM_CONSTANT(STORAGE_CLOUD);
-
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_LOCATABLE);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_STORABLE);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_SHARABLE);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_BOUNDED_2D);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_BOUNDED_3D);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_SEMANTIC_LABELS);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_ROOM_LAYOUT);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_SPACE_CONTAINER);
-	BIND_ENUM_CONSTANT(COMPONENT_TYPE_TRIANGLE_MESH);
 
 	ADD_SIGNAL(MethodInfo("completed", PropertyInfo(Variant::Type::ARRAY, "results")));
 }
@@ -87,20 +74,20 @@ void OpenXRFbSpatialEntityQuery::set_timeout(float p_timeout) {
 void OpenXRFbSpatialEntityQuery::query_all() {
 	query_type = QUERY_ALL;
 	// Reset data used for other query types.
-	component_type = COMPONENT_TYPE_LOCATABLE;
-	location = STORAGE_LOCAL;
+	component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
+	location = OpenXRFbSpatialEntity::STORAGE_LOCAL;
 	uuids.clear();
 }
 
-void OpenXRFbSpatialEntityQuery::query_by_uuid(Array p_uuids, StorageLocation p_location) {
+void OpenXRFbSpatialEntityQuery::query_by_uuid(Array p_uuids, OpenXRFbSpatialEntity::StorageLocation p_location) {
 	query_type = QUERY_BY_UUID;
 	uuids = p_uuids;
 	location = p_location;
 	// Reset data used for other query types.
-	component_type = COMPONENT_TYPE_LOCATABLE;
+	component_type = OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE;
 }
 
-void OpenXRFbSpatialEntityQuery::query_by_component(ComponentType p_component_type, StorageLocation p_location) {
+void OpenXRFbSpatialEntityQuery::query_by_component(OpenXRFbSpatialEntity::ComponentType p_component_type, OpenXRFbSpatialEntity::StorageLocation p_location) {
 	query_type = QUERY_BY_COMPONENT;
 	component_type = p_component_type;
 	location = p_location;
@@ -116,7 +103,7 @@ OpenXRFbSpatialEntityQuery::QueryType OpenXRFbSpatialEntityQuery::get_query_type
 	return query_type;
 }
 
-OpenXRFbSpatialEntityQuery::StorageLocation OpenXRFbSpatialEntityQuery::get_storage_location() const {
+OpenXRFbSpatialEntity::StorageLocation OpenXRFbSpatialEntityQuery::get_storage_location() const {
 	return location;
 }
 
@@ -124,7 +111,7 @@ Array OpenXRFbSpatialEntityQuery::get_uuids() const {
 	return uuids;
 }
 
-OpenXRFbSpatialEntityQuery::ComponentType OpenXRFbSpatialEntityQuery::get_component_type() const {
+OpenXRFbSpatialEntity::ComponentType OpenXRFbSpatialEntityQuery::get_component_type() const {
 	return component_type;
 }
 
@@ -164,10 +151,10 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_all() {
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntityQuery::_get_openxr_location() const {
 	switch (location) {
-		case STORAGE_LOCAL:
+		case OpenXRFbSpatialEntity::STORAGE_LOCAL:
 			return XR_SPACE_STORAGE_LOCATION_LOCAL_FB;
 
-		case STORAGE_CLOUD:
+		case OpenXRFbSpatialEntity::STORAGE_CLOUD:
 			return XR_SPACE_STORAGE_LOCATION_CLOUD_FB;
 
 		default:
@@ -224,31 +211,31 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 		&location_filter, // next
 	};
 	switch (component_type) {
-		case COMPONENT_TYPE_LOCATABLE: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_LOCATABLE_FB;
 		} break;
-		case COMPONENT_TYPE_STORABLE: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_STORABLE_FB;
 		} break;
-		case COMPONENT_TYPE_SHARABLE: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SHARABLE: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_SHARABLE_FB;
 		} break;
-		case COMPONENT_TYPE_BOUNDED_2D: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_BOUNDED_2D: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB;
 		} break;
-		case COMPONENT_TYPE_BOUNDED_3D: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_BOUNDED_3D: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_BOUNDED_3D_FB;
 		} break;
-		case COMPONENT_TYPE_SEMANTIC_LABELS: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SEMANTIC_LABELS: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB;
 		} break;
-		case COMPONENT_TYPE_ROOM_LAYOUT: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_ROOM_LAYOUT: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_ROOM_LAYOUT_FB;
 		} break;
-		case COMPONENT_TYPE_SPACE_CONTAINER: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SPACE_CONTAINER: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_SPACE_CONTAINER_FB;
 		} break;
-		case COMPONENT_TYPE_TRIANGLE_MESH: {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_TRIANGLE_MESH: {
 			filter.componentType = XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META;
 		} break;
 		default: {
