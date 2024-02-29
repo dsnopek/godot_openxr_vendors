@@ -149,26 +149,11 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_all() {
 	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, this);
 }
 
-XrSpaceStorageLocationFB OpenXRFbSpatialEntityQuery::_get_openxr_location() const {
-	switch (location) {
-		case OpenXRFbSpatialEntity::STORAGE_LOCAL:
-			return XR_SPACE_STORAGE_LOCATION_LOCAL_FB;
-
-		case OpenXRFbSpatialEntity::STORAGE_CLOUD:
-			return XR_SPACE_STORAGE_LOCATION_CLOUD_FB;
-
-		default:
-			return XR_SPACE_STORAGE_LOCATION_INVALID_FB;
-	}
-
-	return XR_SPACE_STORAGE_LOCATION_INVALID_FB;
-}
-
 XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_uuid() {
 	XrSpaceStorageLocationFilterInfoFB location_filter = {
 		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
 		nullptr, // next
-		_get_openxr_location(), // location
+		OpenXRFbSpatialEntity::get_openxr_storage_location(location), // location
 	};
 
 	LocalVector<XrUuidEXT> uuid_array;
@@ -203,45 +188,14 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 	XrSpaceStorageLocationFilterInfoFB location_filter = {
 		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
 		nullptr, // next
-		_get_openxr_location(), // location
+		OpenXRFbSpatialEntity::get_openxr_storage_location(location), // location
 	};
 
 	XrSpaceComponentFilterInfoFB filter = {
 		XR_TYPE_SPACE_COMPONENT_FILTER_INFO_FB, // type
 		&location_filter, // next
+		OpenXRFbSpatialEntity::get_openxr_component_type(component_type), // componentType
 	};
-	switch (component_type) {
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_LOCATABLE_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_STORABLE_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SHARABLE: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_SHARABLE_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_BOUNDED_2D: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_BOUNDED_3D: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_BOUNDED_3D_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SEMANTIC_LABELS: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_ROOM_LAYOUT: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_ROOM_LAYOUT_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SPACE_CONTAINER: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_SPACE_CONTAINER_FB;
-		} break;
-		case OpenXRFbSpatialEntity::COMPONENT_TYPE_TRIANGLE_MESH: {
-			filter.componentType = XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META;
-		} break;
-		default: {
-			ERR_FAIL_V_MSG(ERR_INVALID_DATA, vformat("Unknown component type: %s", component_type));
-		}
-	}
 
 	XrSpaceQueryInfoFB query = {
 		XR_TYPE_SPACE_QUERY_INFO_FB, // type

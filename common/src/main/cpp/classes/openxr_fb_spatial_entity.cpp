@@ -47,4 +47,77 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	BIND_ENUM_CONSTANT(COMPONENT_TYPE_ROOM_LAYOUT);
 	BIND_ENUM_CONSTANT(COMPONENT_TYPE_SPACE_CONTAINER);
 	BIND_ENUM_CONSTANT(COMPONENT_TYPE_TRIANGLE_MESH);
+
+	ADD_SIGNAL(MethodInfo("set_component_enabled_completed", PropertyInfo(Variant::Type::BOOL, "succeeded"), PropertyInfo(Variant::Type::INT, "component"), PropertyInfo(Variant::Type::BOOL, "enabled")));
+}
+
+Array OpenXRFbSpatialEntity::get_supported_components() const {
+	Array ret;
+
+	Vector<XrSpaceComponentTypeFB> components = OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->get_support_components(space);
+	ret.resize(components.size());
+	for (int i = 0; i < components.size(); i++) {
+	}
+}
+
+bool OpenXRFbSpatialEntity::is_component_supported(ComponentType p_component) const {
+}
+
+bool OpenXRFbSpatialEntity::is_component_enabled(ComponentType p_component) const {
+}
+
+void OpenXRFbSpatialEntity::set_component_enabled(ComponentType p_component, bool p_enabled) {
+}
+
+XrSpaceStorageLocationFB OpenXRFbSpatialEntity::get_openxr_storage_location(StorageLocation p_location) {
+	switch (p_location) {
+		case OpenXRFbSpatialEntity::STORAGE_LOCAL: {
+			return XR_SPACE_STORAGE_LOCATION_LOCAL_FB;
+		} break;
+		case OpenXRFbSpatialEntity::STORAGE_CLOUD: {
+			return XR_SPACE_STORAGE_LOCATION_CLOUD_FB;
+		} break;
+		default: {
+			return XR_SPACE_STORAGE_LOCATION_INVALID_FB;
+		}
+	}
+}
+
+XrSpaceComponentTypeFB OpenXRFbSpatialEntity::get_openxr_component_type(ComponentType p_component) {
+	switch (p_component) {
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE: {
+			return XR_SPACE_COMPONENT_TYPE_LOCATABLE_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE: {
+			return XR_SPACE_COMPONENT_TYPE_STORABLE_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SHARABLE: {
+			return XR_SPACE_COMPONENT_TYPE_SHARABLE_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_BOUNDED_2D: {
+			return XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_BOUNDED_3D: {
+			return XR_SPACE_COMPONENT_TYPE_BOUNDED_3D_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SEMANTIC_LABELS: {
+			return XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_ROOM_LAYOUT: {
+			return XR_SPACE_COMPONENT_TYPE_ROOM_LAYOUT_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_SPACE_CONTAINER: {
+			return XR_SPACE_COMPONENT_TYPE_SPACE_CONTAINER_FB;
+		} break;
+		case OpenXRFbSpatialEntity::COMPONENT_TYPE_TRIANGLE_MESH: {
+			return XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META;
+		} break;
+		default: {
+			ERR_FAIL_V_MSG(XR_SPACE_COMPONENT_TYPE_LOCATABLE_FB, vformat("Unknown component type: %s", p_component));
+		}
+	}
+}
+
+OpenXRFbSpatialEntity::OpenXRFbSpatialEntity(XrSpace p_space) {
+	space = p_space;
 }

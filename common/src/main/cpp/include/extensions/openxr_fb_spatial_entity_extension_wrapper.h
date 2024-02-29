@@ -36,13 +36,7 @@
 
 #include "util.h"
 
-#include <functional>
-#include <map>
-#include <optional>
-
 using namespace godot;
-
-typedef std::function<void(const XrEventDataSpaceSetStatusCompleteFB *eventData)> SetSpaceComponentStatusCallback_t;
 
 // Wrapper for the set of Facebook XR spatial entity extension.
 class OpenXRFbSpatialEntityExtensionWrapper : public OpenXRExtensionWrapperExtension {
@@ -60,20 +54,11 @@ public:
 		return fb_spatial_entity_ext;
 	}
 
-	bool is_component_supported(const XrSpace &space, XrSpaceComponentTypeFB type);
-	bool is_component_enabled(const XrSpace &space, XrSpaceComponentTypeFB type);
+	typedef void (*SetComponentEnabledCallback)(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata);
 
-	// Attempts to set the enabled status for the given component of an XrSpace. The callback will
-	// run to deliver results, with an arg of either:
-	// - nullptr on immediate failure
-	// - A valid XrEventDataSpaceSetStatusCompleteFB* delivered by the runtime later on
-	// Both cases should be handled, and the second may still indicate an error depending on the
-	// contained XrResult.
-	void set_component_enabled(
-			const XrSpace &space,
-			XrSpaceComponentTypeFB type,
-			bool status,
-			std::optional<SetSpaceComponentStatusCallback_t> callback = std::nullopt);
+	Vector<XrSpaceComponentTypeFB> get_support_components(const XrSpace &p_space);
+	bool is_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component);
+	void set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata);
 
 	virtual bool _on_event_polled(const void *event) override;
 
@@ -112,9 +97,20 @@ private:
 			(XrSpaceComponentStatusFB *), status)
 
 	bool initialize_fb_spatial_entity_extension(const XrInstance &instance);
+	void on_set_component_enabled_complete(const XrEventDataSpaceSetStatusCompleteFB *event);
 
 	HashMap<String, bool *> request_extensions;
-	HashMap<XrAsyncRequestIdFB, SetSpaceComponentStatusCallback_t> set_status_callbacks;
+
+	struct SetComponentEnabledInfo {
+		SetComponentEnabledCallback callback;
+		void *userdata;
+
+		SetComponentEnabledInfo(SetComponentEnabledCallback p_callback, void *p_userdata) {
+			callback = p_callback;
+			userdata = p_userdata;
+		}
+	};
+	HashMap<XrAsyncRequestIdFB, SetComponentEnabledInfo> set_component_enabled_info;
 
 	void cleanup();
 

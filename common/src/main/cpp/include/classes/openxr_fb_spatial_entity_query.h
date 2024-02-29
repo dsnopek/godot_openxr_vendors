@@ -64,8 +64,6 @@ protected:
 	XrAsyncRequestIdFB _execute_query_by_uuid();
 	XrAsyncRequestIdFB _execute_query_by_component();
 
-	XrSpaceStorageLocationFB _get_openxr_location() const;
-
 public:
 	void set_max_results(uint32_t p_max_results);
 	uint32_t get_max_results() const;

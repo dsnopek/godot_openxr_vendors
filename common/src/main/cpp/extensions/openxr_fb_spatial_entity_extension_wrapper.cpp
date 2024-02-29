@@ -106,32 +106,22 @@ uint64_t OpenXRFbSpatialEntityExtensionWrapper::_set_system_properties_and_get_n
 
 bool OpenXRFbSpatialEntityExtensionWrapper::_on_event_polled(const void *event) {
 	if (static_cast<const XrEventDataBuffer *>(event)->type == XR_TYPE_EVENT_DATA_SPACE_SET_STATUS_COMPLETE_FB) {
-		auto eventData = (const XrEventDataSpaceSetStatusCompleteFB *)event;
-		if (set_status_callbacks.has(eventData->requestId)) {
-			set_status_callbacks[eventData->requestId](eventData);
-			set_status_callbacks.erase(eventData->requestId);
-		}
+		on_set_component_enabled_complete((const XrEventDataSpaceSetStatusCompleteFB *)event);
 		return true;
 	}
 
 	return false;
 }
 
-bool OpenXRFbSpatialEntityExtensionWrapper::is_component_supported(const XrSpace &space, XrSpaceComponentTypeFB type) {
+Vector<XrSpaceComponentTypeFB> OpenXRFbSpatialEntityExtensionWrapper::get_support_components(const XrSpace &space) {
+	Vector<XrSpaceComponentTypeFB> components;
+
 	uint32_t numComponents = 0;
 	xrEnumerateSpaceSupportedComponentsFB(space, 0, &numComponents, nullptr);
-	Vector<XrSpaceComponentTypeFB> components;
 	components.resize(numComponents);
 	xrEnumerateSpaceSupportedComponentsFB(space, numComponents, &numComponents, components.ptrw());
 
-	bool supported = false;
-	for (uint32_t c = 0; c < numComponents; ++c) {
-		if (components[c] == type) {
-			supported = true;
-			break;
-		}
-	}
-	return supported;
+	return components;
 }
 
 bool OpenXRFbSpatialEntityExtensionWrapper::is_component_enabled(const XrSpace &space, XrSpaceComponentTypeFB type) {
@@ -140,25 +130,31 @@ bool OpenXRFbSpatialEntityExtensionWrapper::is_component_enabled(const XrSpace &
 	return (status.enabled && !status.changePending);
 }
 
-void OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(
-		const XrSpace &space,
-		XrSpaceComponentTypeFB type,
-		bool status,
-		std::optional<SetSpaceComponentStatusCallback_t> callback) {
+void OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata) {
 	XrSpaceComponentStatusSetInfoFB request = {
 		XR_TYPE_SPACE_COMPONENT_STATUS_SET_INFO_FB,
 		nullptr,
-		type,
-		status,
+		p_component,
+		p_enabled,
 		0,
 	};
-	XrAsyncRequestIdFB requestId;
-	if (!XR_SUCCEEDED(xrSetSpaceComponentStatusFB(space, &request, &requestId))) {
-		if (callback != std::nullopt) {
-			(*callback)(nullptr);
-		}
+	XrAsyncRequestIdFB request_id;
+	XrResult result = xrSetSpaceComponentStatusFB(p_space, &request, &request_id);
+	if (!XR_SUCCEEDED(result)) {
+		p_callback(result, p_component, p_enabled, p_userdata);
+		return;
 	}
-	if (callback != std::nullopt) {
-		set_status_callbacks[requestId] = *callback;
+
+	set_component_enabled_info[request_id] = SetComponentEnabledInfo(p_callback, p_userdata);
+}
+
+void OpenXRFbSpatialEntityExtensionWrapper::on_set_component_enabled_complete(const XrEventDataSpaceSetStatusCompleteFB *event) {
+	if (!set_component_enabled_info.has(event->requestId)) {
+		WARN_PRINT("Received unexpected XR_TYPE_EVENT_DATA_SPACE_SET_STATUS_COMPLETE_FB");
+		return;
 	}
+
+	SetComponentEnabledInfo *info = set_component_enabled_info.getptr(event->requestId);
+	info->callback(event->result, event->componentType, event->enabled, info->userdata);
+	set_component_enabled_info.erase(event->requestId);
 }

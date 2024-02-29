@@ -58,11 +58,23 @@ public:
 	};
 
 private:
+	XrSpace space = XR_NULL_HANDLE;
 
 protected:
 	static void _bind_methods();
 
 public:
+	Array get_supported_components() const;
+	bool is_component_supported(ComponentType p_component) const;
+	bool is_component_enabled(ComponentType p_component) const;
+	void set_component_enabled(ComponentType p_component, bool p_enabled);
+
+	static XrSpaceStorageLocationFB get_openxr_storage_location(StorageLocation p_location);
+	static XrSpaceComponentTypeFB get_openxr_component_type(ComponentType p_component);
+
+	OpenXRFbSpatialEntity() = default;
+	OpenXRFbSpatialEntity(XrSpace p_space);
+
 };
 
 } // namespace godot
