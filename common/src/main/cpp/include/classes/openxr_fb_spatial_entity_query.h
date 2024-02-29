@@ -67,7 +67,7 @@ private:
 	StorageLocation location = STORAGE_LOCAL;
 	ComponentType component_type = COMPONENT_TYPE_LOCATABLE;
 	uint32_t max_results = 25;
-	float timeout = 10.0;
+	float timeout = 0.0f;
 	Array uuids;
 
 	XrAsyncRequestIdFB request_id = 0;

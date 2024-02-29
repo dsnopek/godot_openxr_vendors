@@ -154,7 +154,7 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_all() {
 		nullptr, // next
 		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
 		max_results, // maxResultsCount
-		0, // timeout
+		(XrDuration)(timeout * 1000000), // timeout
 		nullptr, // filter
 		nullptr, // excludeFilter
 	};
@@ -204,7 +204,7 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_uuid() {
 		nullptr, // next
 		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
 		max_results, // maxResultsCount
-		location == STORAGE_CLOUD ? (XrDuration)(timeout * 1000000) : 0, // timeout
+		(XrDuration)(timeout * 1000000), // timeout
 		(XrSpaceFilterInfoBaseHeaderFB *)&filter, // filter
 		nullptr, // excludeFilter
 	};
@@ -261,7 +261,7 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 		nullptr, // next
 		XR_SPACE_QUERY_ACTION_LOAD_FB, // queryAction
 		max_results, // maxResultsCount
-		location == STORAGE_CLOUD ? (XrDuration)(timeout * 1000000) : 0, // timeout
+		(XrDuration)(timeout * 1000000), // timeout
 		(XrSpaceFilterInfoBaseHeaderFB *)&filter, // filter
 		nullptr, // excludeFilter
 	};
