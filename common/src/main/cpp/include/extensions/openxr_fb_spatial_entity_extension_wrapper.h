@@ -102,8 +102,10 @@ private:
 	HashMap<String, bool *> request_extensions;
 
 	struct SetComponentEnabledInfo {
-		SetComponentEnabledCallback callback;
-		void *userdata;
+		SetComponentEnabledCallback callback = nullptr;
+		void *userdata = nullptr;
+
+		SetComponentEnabledInfo() { }
 
 		SetComponentEnabledInfo(SetComponentEnabledCallback p_callback, void *p_userdata) {
 			callback = p_callback;

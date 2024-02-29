@@ -153,7 +153,7 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_uuid() {
 	XrSpaceStorageLocationFilterInfoFB location_filter = {
 		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
 		nullptr, // next
-		OpenXRFbSpatialEntity::get_openxr_storage_location(location), // location
+		OpenXRFbSpatialEntity::to_openxr_storage_location(location), // location
 	};
 
 	LocalVector<XrUuidEXT> uuid_array;
@@ -188,13 +188,13 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 	XrSpaceStorageLocationFilterInfoFB location_filter = {
 		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
 		nullptr, // next
-		OpenXRFbSpatialEntity::get_openxr_storage_location(location), // location
+		OpenXRFbSpatialEntity::to_openxr_storage_location(location), // location
 	};
 
 	XrSpaceComponentFilterInfoFB filter = {
 		XR_TYPE_SPACE_COMPONENT_FILTER_INFO_FB, // type
 		&location_filter, // next
-		OpenXRFbSpatialEntity::get_openxr_component_type(component_type), // componentType
+		OpenXRFbSpatialEntity::to_openxr_component_type(component_type), // componentType
 	};
 
 	XrSpaceQueryInfoFB query = {
@@ -215,17 +215,8 @@ void OpenXRFbSpatialEntityQuery::_results_callback(const Vector<XrSpaceQueryResu
 
 	Array results;
 	for (int i = 0; i < p_results.size(); i++) {
-		const uint8_t *data = p_results[i].uuid.data;
-		char uuid_str[37];
-
-		sprintf(uuid_str, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-			data[0], data[1], data[2], data[3],
-			data[4], data[5],
-			data[6], data[7],
-			data[8], data[9],
-			data[10], data[11], data[12], data[13], data[14], data[15]);
-
-		results.push_back(String(uuid_str));
+		Ref<OpenXRFbSpatialEntity> entity = Ref<OpenXRFbSpatialEntity>(memnew(OpenXRFbSpatialEntity(p_results[i].space, p_results[i].uuid)));
+		results.push_back(entity);
 	}
 
 	self->emit_signal("completed", results);

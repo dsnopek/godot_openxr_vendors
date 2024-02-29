@@ -101,15 +101,16 @@ const PackedStringArray &OpenXRFbSceneExtensionWrapper::get_supported_semantic_l
 	return semantic_labels;
 }
 
-std::optional<String> OpenXRFbSceneExtensionWrapper::get_semantic_labels(const XrSpace &space) {
-	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(space, XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB)) {
-		return std::nullopt;
+PackedStringArray OpenXRFbSceneExtensionWrapper::get_semantic_labels(XrSpace p_space) {
+	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB)) {
+		return PackedStringArray();
 	}
 
 	XrSemanticLabelsSupportFlagsFB flags = XR_SEMANTIC_LABELS_SUPPORT_MULTIPLE_SEMANTIC_LABELS_BIT_FB | XR_SEMANTIC_LABELS_SUPPORT_ACCEPT_DESK_TO_TABLE_MIGRATION_BIT_FB;
 #ifdef META_VENDOR_ENABLED
 	flags |= XR_SEMANTIC_LABELS_SUPPORT_ACCEPT_INVISIBLE_WALL_FACE_BIT_FB;
 #endif
+
 	const XrSemanticLabelsSupportInfoFB semanticLabelsSupportInfo = {
 		XR_TYPE_SEMANTIC_LABELS_SUPPORT_INFO_FB,
 		nullptr,
@@ -120,18 +121,20 @@ std::optional<String> OpenXRFbSceneExtensionWrapper::get_semantic_labels(const X
 	XrSemanticLabelsFB labels = { XR_TYPE_SEMANTIC_LABELS_FB, &semanticLabelsSupportInfo, 0 };
 
 	// First call.
-	xrGetSpaceSemanticLabelsFB(SESSION, space, &labels);
-	// Second call
-	Vector<char> labelData;
-	labelData.resize(labels.bufferCountOutput);
-	labels.bufferCapacityInput = labelData.size();
-	labels.buffer = labelData.ptrw();
-	xrGetSpaceSemanticLabelsFB(SESSION, space, &labels);
+	xrGetSpaceSemanticLabelsFB(SESSION, p_space, &labels);
 
-	// std::string necessary since buffer may not be null terminated
-	return String(std::string(labels.buffer, labels.bufferCountOutput).c_str());
+	// Second call
+	CharString label_data;
+	label_data.resize(labels.bufferCountOutput + 1);
+	labels.bufferCapacityInput = label_data.size();
+	labels.buffer = label_data.ptrw();
+	xrGetSpaceSemanticLabelsFB(SESSION, p_space, &labels);
+
+	label_data[label_data.size() - 1] = '\0';
+	return String(label_data).split(",");
 }
 
+/*
 void OpenXRFbSceneExtensionWrapper::get_shapes(const XrSpace &space, XrSceneObjectInternal &object) {
 	if (OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(space, XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB)) {
 		//  Grab both the bounding box 2D and the boundary
@@ -164,6 +167,7 @@ void OpenXRFbSceneExtensionWrapper::get_shapes(const XrSpace &space, XrSceneObje
 	// 	WARN_PRINT("Found component with XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META");
 	// }
 }
+*/
 
 bool OpenXRFbSceneExtensionWrapper::initialize_fb_scene_extension(const XrInstance p_instance) {
 	GDEXTENSION_INIT_XR_FUNC_V(xrGetSpaceBoundingBox2DFB);

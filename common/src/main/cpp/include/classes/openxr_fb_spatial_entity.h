@@ -53,27 +53,39 @@ public:
 		COMPONENT_TYPE_BOUNDED_3D,
 		COMPONENT_TYPE_SEMANTIC_LABELS,
 		COMPONENT_TYPE_ROOM_LAYOUT,
-		COMPONENT_TYPE_SPACE_CONTAINER,
+		COMPONENT_TYPE_CONTAINER,
 		COMPONENT_TYPE_TRIANGLE_MESH,
 	};
 
 private:
 	XrSpace space = XR_NULL_HANDLE;
+	StringName uuid;
 
 protected:
 	static void _bind_methods();
 
+	static void _on_set_component_enabled_completed(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *userdata);
+
+	String _to_string() const;
+
 public:
+	StringName get_uuid() const;
+
 	Array get_supported_components() const;
 	bool is_component_supported(ComponentType p_component) const;
 	bool is_component_enabled(ComponentType p_component) const;
 	void set_component_enabled(ComponentType p_component, bool p_enabled);
 
-	static XrSpaceStorageLocationFB get_openxr_storage_location(StorageLocation p_location);
-	static XrSpaceComponentTypeFB get_openxr_component_type(ComponentType p_component);
+	PackedStringArray get_semantic_labels() const;
+
+	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
+	static XrSpaceComponentTypeFB to_openxr_component_type(ComponentType p_component);
+	static ComponentType from_openxr_component_type(XrSpaceComponentTypeFB p_component);
+
+	XrSpace get_space();
 
 	OpenXRFbSpatialEntity() = default;
-	OpenXRFbSpatialEntity(XrSpace p_space);
+	OpenXRFbSpatialEntity(XrSpace p_space, const XrUuidEXT &p_uuid);
 
 };
 

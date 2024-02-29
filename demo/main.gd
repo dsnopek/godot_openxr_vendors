@@ -57,10 +57,11 @@ func _on_left_hand_button_pressed(name):
 		var query = OpenXRFbSpatialEntityQuery.new()
 		#query.query_by_uuid(["77530fc0-9595-ecf6-791c-019e882a8f48", "860f3503-06bc-75a9-e412-ec081b9d33d9"])
 		#query.max_results = 20
-		query.query_by_component(OpenXRFbSpatialEntity.COMPONENT_TYPE_ROOM_LAYOUT)
+		#query.query_by_component(OpenXRFbSpatialEntity.COMPONENT_TYPE_ROOM_LAYOUT)
 		if query.execute() == OK:
 			var results = await query.completed
-			print ("Spatial Entity Query results: ", results)
+			for e in results:
+				print ("Entity: ", e.get_uuid(), " - ", e.get_semantic_labels())
 		else:
 			print ("Error running spatial entity query")
 
