@@ -27,7 +27,8 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#pragma once
+#ifndef OPENXR_FB_SPATIAL_ENTITY_STORAGE_EXTENSION_WRAPPER_H
+#define OPENXR_FB_SPATIAL_ENTITY_STORAGE_EXTENSION_WRAPPER_H
 
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/open_xr_extension_wrapper_extension.hpp>
@@ -102,3 +103,5 @@ private:
 
 	bool fb_spatial_entity_storage_ext = false;
 };
+
+#endif

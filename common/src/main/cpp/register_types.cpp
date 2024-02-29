@@ -54,6 +54,7 @@
 #include "extensions/openxr_fb_spatial_entity_query_extension_wrapper.h"
 
 #include "classes/openxr_fb_render_model.h"
+#include "classes/openxr_fb_scene_manager.h"
 #include "classes/openxr_fb_spatial_entity_query.h"
 
 using namespace godot;
@@ -104,6 +105,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			Engine::get_singleton()->register_singleton("OpenXRFbFaceTrackingExtensionWrapper", OpenXRFbFaceTrackingExtensionWrapper::get_singleton());
 
 			ClassDB::register_class<OpenXRFbRenderModel>();
+			ClassDB::register_class<OpenXRFbSceneManager>();
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
 		} break;
 

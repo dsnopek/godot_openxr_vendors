@@ -76,6 +76,8 @@ public:
 	OpenXRFbSceneExtensionWrapper();
 	~OpenXRFbSceneExtensionWrapper();
 
+	static const PackedStringArray &get_supported_semantic_labels();
+
 	std::optional<String> get_semantic_labels(const XrSpace &space);
 	void get_shapes(const XrSpace &space, XrSceneObjectInternal &object);
 

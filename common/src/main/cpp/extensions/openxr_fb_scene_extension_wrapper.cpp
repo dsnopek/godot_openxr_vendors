@@ -41,6 +41,9 @@
 
 using namespace godot;
 
+// List from https://developer.oculus.com/documentation/native/android/mobile-scene-api-ref/
+static const char *SUPPORTED_SEMANTIC_LABELS = "CEILING,DOOR_FRAME,FLOOR,INVISIBLE_WALL_FACE,WALL_ART,WALL_FACE,WINDOW_FRAME,COUCH,TABLE,BED,LAMP,PLANT,SCREEN,STORAGE,GLOBAL_MESH,OTHER";
+
 OpenXRFbSceneExtensionWrapper *OpenXRFbSceneExtensionWrapper::singleton = nullptr;
 
 OpenXRFbSceneExtensionWrapper *OpenXRFbSceneExtensionWrapper::get_singleton() {
@@ -93,14 +96,16 @@ void OpenXRFbSceneExtensionWrapper::_on_instance_destroyed() {
 	cleanup();
 }
 
+const PackedStringArray &OpenXRFbSceneExtensionWrapper::get_supported_semantic_labels() {
+	static PackedStringArray semantic_labels = String(SUPPORTED_SEMANTIC_LABELS).split(",");
+	return semantic_labels;
+}
+
 std::optional<String> OpenXRFbSceneExtensionWrapper::get_semantic_labels(const XrSpace &space) {
 	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(space, XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB)) {
 		return std::nullopt;
 	}
 
-	// List from https://developer.oculus.com/documentation/native/android/mobile-scene-api-ref/
-	static const CharString recognizedLabels =
-			"CEILING,DOOR_FRAME,FLOOR,INVISIBLE_WALL_FACE,WALL_ART,WALL_FACE,WINDOW_FRAME,COUCH,TABLE,BED,LAMP,PLANT,SCREEN,STORAGE,GLOBAL_MESH,OTHER";
 	XrSemanticLabelsSupportFlagsFB flags = XR_SEMANTIC_LABELS_SUPPORT_MULTIPLE_SEMANTIC_LABELS_BIT_FB | XR_SEMANTIC_LABELS_SUPPORT_ACCEPT_DESK_TO_TABLE_MIGRATION_BIT_FB;
 #ifdef META_VENDOR_ENABLED
 	flags |= XR_SEMANTIC_LABELS_SUPPORT_ACCEPT_INVISIBLE_WALL_FACE_BIT_FB;
@@ -109,7 +114,7 @@ std::optional<String> OpenXRFbSceneExtensionWrapper::get_semantic_labels(const X
 		XR_TYPE_SEMANTIC_LABELS_SUPPORT_INFO_FB,
 		nullptr,
 		flags,
-		recognizedLabels.ptr(),
+		SUPPORTED_SEMANTIC_LABELS,
 	};
 
 	XrSemanticLabelsFB labels = { XR_TYPE_SEMANTIC_LABELS_FB, &semanticLabelsSupportInfo, 0 };
