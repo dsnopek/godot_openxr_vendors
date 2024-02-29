@@ -61,9 +61,11 @@ public:
 
 	static const PackedStringArray &get_supported_semantic_labels();
 
-	PackedStringArray get_semantic_labels(XrSpace space);
-	Dictionary get_room_layout(XrSpace space);
-	//void get_shapes(const XrSpace &space, XrSceneObjectInternal &object);
+	PackedStringArray get_semantic_labels(const XrSpace p_space);
+	Dictionary get_room_layout(const XrSpace p_space);
+	Rect2 get_bounding_box_2d(const XrSpace p_space);
+	AABB get_bounding_box_3d(const XrSpace p_space);
+	Vector<Vector2> get_boundary_2d(const XrSpace p_space);
 
 protected:
 	static void _bind_methods();

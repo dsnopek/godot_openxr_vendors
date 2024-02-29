@@ -102,7 +102,7 @@ const PackedStringArray &OpenXRFbSceneExtensionWrapper::get_supported_semantic_l
 	return semantic_labels;
 }
 
-PackedStringArray OpenXRFbSceneExtensionWrapper::get_semantic_labels(XrSpace p_space) {
+PackedStringArray OpenXRFbSceneExtensionWrapper::get_semantic_labels(const XrSpace p_space) {
 	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_SEMANTIC_LABELS_FB)) {
 		return PackedStringArray();
 	}
@@ -135,7 +135,7 @@ PackedStringArray OpenXRFbSceneExtensionWrapper::get_semantic_labels(XrSpace p_s
 	return String(label_data).split(",");
 }
 
-Dictionary OpenXRFbSceneExtensionWrapper::get_room_layout(XrSpace p_space) {
+Dictionary OpenXRFbSceneExtensionWrapper::get_room_layout(const XrSpace p_space) {
 	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_ROOM_LAYOUT_FB)) {
 		return Dictionary();
 	}
@@ -185,40 +185,48 @@ Dictionary OpenXRFbSceneExtensionWrapper::get_room_layout(XrSpace p_space) {
 	return ret;
 }
 
-/*
-void OpenXRFbSceneExtensionWrapper::get_shapes(const XrSpace &space, XrSceneObjectInternal &object) {
-	if (OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(space, XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB)) {
-		//  Grab both the bounding box 2D and the boundary
-		XrRect2Df boundingBox2D;
-		if (XR_SUCCEEDED(xrGetSpaceBoundingBox2DFB(SESSION, space, &boundingBox2D))) {
-			object.boundingBox2D = boundingBox2D;
-		}
-
-		XrBoundary2DFB boundary2D = { XR_TYPE_BOUNDARY_2D_FB, nullptr, 0 };
-		if (XR_SUCCEEDED(xrGetSpaceBoundary2DFB(SESSION, space, &boundary2D))) {
-			Vector<XrVector2f> vertices;
-			vertices.resize(boundary2D.vertexCountOutput);
-			boundary2D.vertexCapacityInput = vertices.size();
-			boundary2D.vertices = vertices.ptrw();
-			if (XR_SUCCEEDED(xrGetSpaceBoundary2DFB(SESSION, space, &boundary2D))) {
-				object.boundary2D = vertices;
-			}
-		}
+Rect2 OpenXRFbSceneExtensionWrapper::get_bounding_box_2d(const XrSpace p_space) {
+	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB)) {
+		return Rect2();
 	}
 
-	if (OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(space, XR_SPACE_COMPONENT_TYPE_BOUNDED_3D_FB)) {
-		XrRect3DfFB boundingBox3D;
-		if (XR_SUCCEEDED(xrGetSpaceBoundingBox3DFB(SESSION, space, &boundingBox3D))) {
-			object.boundingBox3D = boundingBox3D;
-		}
+	XrRect2Df bounding_box;
+
+	XrResult result = xrGetSpaceBoundingBox2DFB(SESSION, p_space, &bounding_box);
+	if (XR_FAILED(result)) {
+		WARN_PRINT("xrGetSpaceBoundingBox2DFB failed to bounding box!");
+		WARN_PRINT(get_openxr_api()->get_error_string(result));
+		return Rect2();
 	}
 
-	// TODO: Need to enable the extension for this
-	// if (is_component_enabled(space, XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META)) {
-	// 	WARN_PRINT("Found component with XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META");
-	// }
+	return Rect2(
+		Vector2(bounding_box.offset.x, bounding_box.offset.y),
+		Vector2(bounding_box.extent.width, bounding_box.extent.height));
 }
-*/
+
+AABB OpenXRFbSceneExtensionWrapper::get_bounding_box_3d(const XrSpace p_space) {
+	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_BOUNDED_3D_FB)) {
+		return AABB();
+	}
+
+	XrRect3DfFB bounding_box;
+
+	XrResult result = xrGetSpaceBoundingBox3DFB(SESSION, p_space, &bounding_box);
+	if (XR_FAILED(result)) {
+		WARN_PRINT("xrGetSpaceBoundingBox3DFB failed to bounding box!");
+		WARN_PRINT(get_openxr_api()->get_error_string(result));
+		return AABB();
+	}
+
+	return AABB(
+		Vector3(bounding_box.offset.x, bounding_box.offset.y, bounding_box.offset.z),
+		Vector3(bounding_box.extent.width, bounding_box.extent.height, bounding_box.extent.depth));
+}
+
+Vector<Vector2> get_boundary_2d(const XrSpace p_space) {
+	// @todo it!
+	return Vector<Vector2>();
+}
 
 bool OpenXRFbSceneExtensionWrapper::initialize_fb_scene_extension(const XrInstance p_instance) {
 	GDEXTENSION_INIT_XR_FUNC_V(xrGetSpaceBoundingBox2DFB);
