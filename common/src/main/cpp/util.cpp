@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  openxr_fb_spatial_entity.h                                            */
+/*  util.cpp                                                              */
 /**************************************************************************/
 /*                       This file is part of:                            */
 /*                              GODOT XR                                  */
@@ -27,72 +27,23 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#ifndef OPENXR_FB_SPATIAL_ENTITY_H
-#define OPENXR_FB_SPATIAL_ENTITY_H
+#include "util.h"
 
 #include <openxr/openxr.h>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <stdio.h>
 
-namespace godot {
+using namespace godot;
 
-class OpenXRFbSpatialEntity : public RefCounted {
-	GDCLASS(OpenXRFbSpatialEntity, RefCounted);
+StringName OpenXRUtilities::uuid_to_string_name(const XrUuidEXT &p_uuid) {
+	const uint8_t *data = p_uuid.data;
+	char uuid_str[37];
 
-public:
+	sprintf(uuid_str, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+		data[0], data[1], data[2], data[3],
+		data[4], data[5],
+		data[6], data[7],
+		data[8], data[9],
+		data[10], data[11], data[12], data[13], data[14], data[15]);
 
-	enum StorageLocation {
-		STORAGE_LOCAL,
-		STORAGE_CLOUD,
-	};
-
-	enum ComponentType {
-		COMPONENT_TYPE_LOCATABLE,
-		COMPONENT_TYPE_STORABLE,
-		COMPONENT_TYPE_SHARABLE,
-		COMPONENT_TYPE_BOUNDED_2D,
-		COMPONENT_TYPE_BOUNDED_3D,
-		COMPONENT_TYPE_SEMANTIC_LABELS,
-		COMPONENT_TYPE_ROOM_LAYOUT,
-		COMPONENT_TYPE_CONTAINER,
-		COMPONENT_TYPE_TRIANGLE_MESH,
-	};
-
-private:
-	XrSpace space = XR_NULL_HANDLE;
-	StringName uuid;
-
-protected:
-	static void _bind_methods();
-
-	static void _on_set_component_enabled_completed(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *userdata);
-
-	String _to_string() const;
-
-public:
-	StringName get_uuid() const;
-
-	Array get_supported_components() const;
-	bool is_component_supported(ComponentType p_component) const;
-	bool is_component_enabled(ComponentType p_component) const;
-	void set_component_enabled(ComponentType p_component, bool p_enabled);
-
-	PackedStringArray get_semantic_labels() const;
-	Dictionary get_room_layout() const;
-
-	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
-	static XrSpaceComponentTypeFB to_openxr_component_type(ComponentType p_component);
-	static ComponentType from_openxr_component_type(XrSpaceComponentTypeFB p_component);
-
-	XrSpace get_space();
-
-	OpenXRFbSpatialEntity() = default;
-	OpenXRFbSpatialEntity(XrSpace p_space, const XrUuidEXT &p_uuid);
-
-};
-
-} // namespace godot
-
-VARIANT_ENUM_CAST(OpenXRFbSpatialEntity::StorageLocation);
-VARIANT_ENUM_CAST(OpenXRFbSpatialEntity::ComponentType);
-
-#endif
+	return StringName(uuid_str);
+}

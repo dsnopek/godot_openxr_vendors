@@ -43,6 +43,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_component_enabled", "component"), &OpenXRFbSpatialEntity::set_component_enabled);
 
 	ClassDB::bind_method(D_METHOD("get_semantic_labels"), &OpenXRFbSpatialEntity::get_semantic_labels);
+	ClassDB::bind_method(D_METHOD("get_room_layout"), &OpenXRFbSpatialEntity::get_room_layout);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
 
@@ -101,6 +102,10 @@ void OpenXRFbSpatialEntity::_on_set_component_enabled_completed(XrResult p_resul
 
 PackedStringArray OpenXRFbSpatialEntity::get_semantic_labels() const {
 	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_semantic_labels(space);
+}
+
+Dictionary OpenXRFbSpatialEntity::get_room_layout() const {
+	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_room_layout(space);
 }
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntity::to_openxr_storage_location(StorageLocation p_location) {
@@ -194,16 +199,5 @@ XrSpace OpenXRFbSpatialEntity::get_space() {
 
 OpenXRFbSpatialEntity::OpenXRFbSpatialEntity(XrSpace p_space, const XrUuidEXT &p_uuid) {
 	space = p_space;
-
-	const uint8_t *data = p_uuid.data;
-	char uuid_str[37];
-
-	sprintf(uuid_str, "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-		data[0], data[1], data[2], data[3],
-		data[4], data[5],
-		data[6], data[7],
-		data[8], data[9],
-		data[10], data[11], data[12], data[13], data[14], data[15]);
-
-	uuid = StringName(uuid_str);
+	uuid = OpenXRUtilities::uuid_to_string_name(p_uuid);
 }

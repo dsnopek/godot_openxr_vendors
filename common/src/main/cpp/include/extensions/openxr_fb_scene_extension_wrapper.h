@@ -62,6 +62,7 @@ public:
 	static const PackedStringArray &get_supported_semantic_labels();
 
 	PackedStringArray get_semantic_labels(XrSpace space);
+	Dictionary get_room_layout(XrSpace space);
 	//void get_shapes(const XrSpace &space, XrSceneObjectInternal &object);
 
 protected:

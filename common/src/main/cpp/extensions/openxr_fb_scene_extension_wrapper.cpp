@@ -31,6 +31,7 @@
 
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
+#include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #ifdef META_VENDOR_ENABLED
@@ -126,12 +127,62 @@ PackedStringArray OpenXRFbSceneExtensionWrapper::get_semantic_labels(XrSpace p_s
 	// Second call
 	CharString label_data;
 	label_data.resize(labels.bufferCountOutput + 1);
-	labels.bufferCapacityInput = label_data.size();
+	labels.bufferCapacityInput = labels.bufferCountOutput;
 	labels.buffer = label_data.ptrw();
 	xrGetSpaceSemanticLabelsFB(SESSION, p_space, &labels);
 
 	label_data[label_data.size() - 1] = '\0';
 	return String(label_data).split(",");
+}
+
+Dictionary OpenXRFbSceneExtensionWrapper::get_room_layout(XrSpace p_space) {
+	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_ROOM_LAYOUT_FB)) {
+		return Dictionary();
+	}
+
+	XrResult result;
+
+	XrRoomLayoutFB room_layout = {
+		XR_TYPE_ROOM_LAYOUT_FB, // type
+		nullptr, // next
+		{}, // floorUuid
+		{}, // ceilingUuid
+		0, // wallUuidCapacityInput
+		0, // wallUuidCountOutput
+		nullptr, // wallUuids
+	};
+
+	result = xrGetSpaceRoomLayoutFB(SESSION, p_space, &room_layout);
+	if (XR_FAILED(result)) {
+		WARN_PRINT("xrGetSpaceRoomLayoutFB failed to get wall count!");
+		WARN_PRINT(get_openxr_api()->get_error_string(result));
+		return Dictionary();
+	}
+
+	LocalVector<XrUuidEXT> walls;
+	walls.resize(room_layout.wallUuidCountOutput);
+	room_layout.wallUuidCapacityInput = walls.size();
+	room_layout.wallUuids = walls.ptr();
+
+	result = xrGetSpaceRoomLayoutFB(SESSION, p_space, &room_layout);
+	if (XR_FAILED(result)) {
+		WARN_PRINT("xrGetSpaceRoomLayoutFB failed to get room layout!");
+		WARN_PRINT(get_openxr_api()->get_error_string(result));
+		return Dictionary();
+	}
+
+	Dictionary ret;
+	ret["floor"] = OpenXRUtilities::uuid_to_string_name(room_layout.floorUuid);
+	ret["ceiling"] = OpenXRUtilities::uuid_to_string_name(room_layout.ceilingUuid);
+
+	Array walls_array;
+	walls_array.resize(walls.size());
+	for (int i = 0; i < walls.size(); i++) {
+		walls_array[i] = OpenXRUtilities::uuid_to_string_name(walls[i]);
+	}
+	ret["walls"] = walls_array;
+
+	return ret;
 }
 
 /*
