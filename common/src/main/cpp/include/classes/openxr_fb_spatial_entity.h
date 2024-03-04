@@ -79,6 +79,9 @@ public:
 	PackedStringArray get_semantic_labels() const;
 	Dictionary get_room_layout() const;
 	Array get_contained_uuids() const;
+	Rect2 get_bounding_box_2d() const;
+	AABB get_bounding_box_3d() const;
+	PackedVector2Array get_boundary_2d() const;
 
 	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
 	static XrSpaceComponentTypeFB to_openxr_component_type(ComponentType p_component);

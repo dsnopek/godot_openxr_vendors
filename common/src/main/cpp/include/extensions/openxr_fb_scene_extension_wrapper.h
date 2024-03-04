@@ -65,7 +65,7 @@ public:
 	Dictionary get_room_layout(const XrSpace p_space);
 	Rect2 get_bounding_box_2d(const XrSpace p_space);
 	AABB get_bounding_box_3d(const XrSpace p_space);
-	Vector<Vector2> get_boundary_2d(const XrSpace p_space);
+	PackedVector2Array get_boundary_2d(const XrSpace p_space);
 
 protected:
 	static void _bind_methods();

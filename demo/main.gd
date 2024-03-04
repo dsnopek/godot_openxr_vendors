@@ -57,9 +57,11 @@ func _on_left_hand_button_pressed(name):
 		var query = OpenXRFbSpatialEntityQuery.new()
 		#query.query_by_uuid(["77530fc0-9595-ecf6-791c-019e882a8f48", "860f3503-06bc-75a9-e412-ec081b9d33d9"])
 		#query.max_results = 20
-		query.query_by_component(OpenXRFbSpatialEntity.COMPONENT_TYPE_ROOM_LAYOUT)
+		#query.query_by_component(OpenXRFbSpatialEntity.COMPONENT_TYPE_ROOM_LAYOUT)
 		if query.execute() == OK:
 			var results = await query.completed
+			if results.size() == 0:
+				print ("No results")
 			for e in results:
 				print (" ===== Entity: ", e.get_uuid(), " - ", e.get_semantic_labels(), " ===== ")
 				var room_layout = e.get_room_layout()
@@ -68,6 +70,12 @@ func _on_left_hand_button_pressed(name):
 				var contained = e.get_contained_uuids()
 				if contained.size() > 0:
 					print ("Contained: ", contained)
+				if e.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_BOUNDED_2D):
+					print ("Bounding Box 2D :", e.get_bounding_box_2d())
+					print ("Boundary 2D :", e.get_boundary_2d())
+				if e.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_BOUNDED_3D):
+					print ("Bounding Box 3D :", e.get_bounding_box_3d())
+
 		else:
 			print ("Error running spatial entity query")
 

@@ -46,6 +46,9 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_semantic_labels"), &OpenXRFbSpatialEntity::get_semantic_labels);
 	ClassDB::bind_method(D_METHOD("get_room_layout"), &OpenXRFbSpatialEntity::get_room_layout);
 	ClassDB::bind_method(D_METHOD("get_contained_uuids"), &OpenXRFbSpatialEntity::get_contained_uuids);
+	ClassDB::bind_method(D_METHOD("get_bounding_box_2d"), &OpenXRFbSpatialEntity::get_bounding_box_2d);
+	ClassDB::bind_method(D_METHOD("get_bounding_box_3d"), &OpenXRFbSpatialEntity::get_bounding_box_3d);
+	ClassDB::bind_method(D_METHOD("get_boundary_2d"), &OpenXRFbSpatialEntity::get_boundary_2d);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
 
@@ -119,6 +122,18 @@ Array OpenXRFbSpatialEntity::get_contained_uuids() const {
 		ret[i] = OpenXRUtilities::uuid_to_string_name(uuids[i]);
 	}
 	return ret;
+}
+
+Rect2 OpenXRFbSpatialEntity::get_bounding_box_2d() const {
+	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_bounding_box_2d(space);
+}
+
+AABB OpenXRFbSpatialEntity::get_bounding_box_3d() const {
+	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_bounding_box_3d(space);
+}
+
+PackedVector2Array OpenXRFbSpatialEntity::get_boundary_2d() const {
+	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_boundary_2d(space);
 }
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntity::to_openxr_storage_location(StorageLocation p_location) {

@@ -223,9 +223,48 @@ AABB OpenXRFbSceneExtensionWrapper::get_bounding_box_3d(const XrSpace p_space) {
 		Vector3(bounding_box.extent.width, bounding_box.extent.height, bounding_box.extent.depth));
 }
 
-Vector<Vector2> get_boundary_2d(const XrSpace p_space) {
-	// @todo it!
-	return Vector<Vector2>();
+PackedVector2Array OpenXRFbSceneExtensionWrapper::get_boundary_2d(const XrSpace p_space) {
+	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_BOUNDED_2D_FB)) {
+		return PackedVector2Array();
+	}
+
+	XrResult result;
+
+	XrBoundary2DFB boundary = {
+		XR_TYPE_BOUNDARY_2D_FB, // type
+		nullptr, // next
+		0, // vertexCapacityInput
+		0, // vertexCapacityOutput
+		nullptr, // vertices
+	};
+
+	result = xrGetSpaceBoundary2DFB(SESSION, p_space, &boundary);
+	if (XR_FAILED(result)) {
+		WARN_PRINT("xrGetSpaceBoundary2DFB failed to get vertex count!");
+		WARN_PRINT(get_openxr_api()->get_error_string(result));
+		return PackedVector2Array();
+	}
+
+	LocalVector<XrVector2f> vertices;
+	vertices.resize(boundary.vertexCountOutput);
+	boundary.vertexCapacityInput = vertices.size();
+	boundary.vertices = vertices.ptr();
+
+	result = xrGetSpaceBoundary2DFB(SESSION, p_space, &boundary);
+	if (XR_FAILED(result)) {
+		WARN_PRINT("xrGetSpaceBoundary2DFB failed to get boundary!");
+		WARN_PRINT(get_openxr_api()->get_error_string(result));
+		return PackedVector2Array();
+	}
+
+	PackedVector2Array ret;
+	ret.resize(boundary.vertexCountOutput);
+	for (int i = 0; i < boundary.vertexCountOutput; i++) {
+		XrVector2f vertex = vertices[i];
+		ret[i] = Vector2(vertex.x, vertex.y);
+	}
+
+	return ret;
 }
 
 bool OpenXRFbSceneExtensionWrapper::initialize_fb_scene_extension(const XrInstance p_instance) {
