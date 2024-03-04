@@ -83,6 +83,9 @@ public:
 	AABB get_bounding_box_3d() const;
 	PackedVector2Array get_boundary_2d() const;
 
+	void track();
+	void untrack();
+
 	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
 	static XrSpaceComponentTypeFB to_openxr_component_type(ComponentType p_component);
 	static ComponentType from_openxr_component_type(XrSpaceComponentTypeFB p_component);

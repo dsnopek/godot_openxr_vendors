@@ -31,8 +31,8 @@
 
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/open_xr_extension_wrapper_extension.hpp>
+#include <godot_cpp/classes/xr_positional_tracker.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "util.h"
 
@@ -47,6 +47,7 @@ public:
 
 	void _on_instance_created(uint64_t instance) override;
 	void _on_instance_destroyed() override;
+	void _on_process() override;
 
 	//uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
 
@@ -59,6 +60,9 @@ public:
 	Vector<XrSpaceComponentTypeFB> get_support_components(const XrSpace &p_space);
 	bool is_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component);
 	void set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata);
+
+	void track_entity(const StringName &p_name, const XrSpace &p_space);
+	void untrack_entity(const StringName &p_name);
 
 	virtual bool _on_event_polled(const void *event) override;
 
@@ -113,6 +117,18 @@ private:
 		}
 	};
 	HashMap<XrAsyncRequestIdFB, SetComponentEnabledInfo> set_component_enabled_info;
+
+	struct TrackedEntity {
+		XrSpace space = XR_NULL_HANDLE;
+		Ref<XRPositionalTracker> tracker;
+
+		TrackedEntity(XrSpace p_space) {
+			space = p_space;
+		}
+
+		TrackedEntity();
+	};
+	HashMap<StringName, TrackedEntity> tracked_entities;
 
 	void cleanup();
 

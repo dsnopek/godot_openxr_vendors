@@ -50,6 +50,9 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_bounding_box_3d"), &OpenXRFbSpatialEntity::get_bounding_box_3d);
 	ClassDB::bind_method(D_METHOD("get_boundary_2d"), &OpenXRFbSpatialEntity::get_boundary_2d);
 
+	ClassDB::bind_method(D_METHOD("track"), &OpenXRFbSpatialEntity::track);
+	ClassDB::bind_method(D_METHOD("untrack"), &OpenXRFbSpatialEntity::untrack);
+
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
 
 	BIND_ENUM_CONSTANT(STORAGE_LOCAL);
@@ -134,6 +137,14 @@ AABB OpenXRFbSpatialEntity::get_bounding_box_3d() const {
 
 PackedVector2Array OpenXRFbSpatialEntity::get_boundary_2d() const {
 	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_boundary_2d(space);
+}
+
+void OpenXRFbSpatialEntity::track() {
+	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->track_entity(uuid, space);
+}
+
+void OpenXRFbSpatialEntity::untrack() {
+	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->untrack_entity(uuid);
 }
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntity::to_openxr_storage_location(StorageLocation p_location) {
