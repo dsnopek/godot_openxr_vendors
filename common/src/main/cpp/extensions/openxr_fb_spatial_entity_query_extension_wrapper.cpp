@@ -109,14 +109,14 @@ bool OpenXRFbSpatialEntityQueryExtensionWrapper::_on_event_polled(const void *ev
 }
 
 XrAsyncRequestIdFB OpenXRFbSpatialEntityQueryExtensionWrapper::query_spatial_entities(const XrSpaceQueryInfoBaseHeaderFB *p_info, QueryCompleteCallback p_callback, void *p_userdata) {
-	XrAsyncRequestIdFB request_id;
+	XrAsyncRequestIdFB request_id = 0;
 
 	const XrResult result = xrQuerySpacesFB(SESSION, p_info, &request_id);
 	if (!XR_SUCCEEDED(result)) {
 		WARN_PRINT("xrQuerySpacesFB failed!");
 		WARN_PRINT(get_openxr_api()->get_error_string(result));
-		p_callback({}, p_userdata);
-		return 0;
+		p_callback(request_id, {}, p_userdata);
+		return request_id;
 	}
 
 	queries[request_id] = QueryInfo(p_callback, p_userdata);
@@ -166,6 +166,6 @@ void OpenXRFbSpatialEntityQueryExtensionWrapper::on_space_query_complete(const X
 		return;
 	}
 	QueryInfo *query = queries.getptr(event->requestId);
-	query->callback(query->results, query->userdata);
+	query->callback(event->requestId, query->results, query->userdata);
 	queries.erase(event->requestId);
 }

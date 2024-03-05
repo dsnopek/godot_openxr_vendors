@@ -35,6 +35,7 @@
 #include <godot_cpp/classes/xr_server.hpp>
 
 #include "extensions/openxr_fb_scene_extension_wrapper.h"
+#include "classes/openxr_fb_spatial_entity_query.h"
 
 using namespace godot;
 
@@ -192,13 +193,96 @@ void OpenXRFbSceneManager::hide() {
 	set_visible(false);
 }
 
-void OpenXRFbSceneManager::create_scene_anchors() {
-	ERR_FAIL_COND(anchors_created);
-	ERR_FAIL_COND(!xr_origin);
+Error OpenXRFbSceneManager::create_scene_anchors() {
+	ERR_FAIL_COND_V(anchors_created, FAILED);
+	ERR_FAIL_COND_V(!xr_origin, FAILED);
 
-	// @todo it!
+	// Find the room layout entity.
+	Ref<OpenXRFbSpatialEntityQuery> query;
+	query.instantiate();
+	query->query_by_component(OpenXRFbSpatialEntity::COMPONENT_TYPE_ROOM_LAYOUT);
+	query->connect("completed", callable_mp(this, &OpenXRFbSceneManager::_on_room_layout_query_completed));
 
-	anchors_created = true;
+	Error ret = query->execute();
+
+	if (ret == OK) {
+		// Count as created right away so we don't double create the anchors.
+		anchors_created = true;
+	} else {
+		ERR_PRINT("OpenXRFbSceneManager: Unable to query room layout.");
+	}
+
+	return ret;
+}
+
+void OpenXRFbSceneManager::_on_room_layout_query_completed(Array p_results) {
+	Array anchor_uuids;
+
+	for (int i = 0; i < p_results.size(); i++) {
+		Ref<OpenXRFbSpatialEntity> room_layout = p_results[i];
+		ERR_CONTINUE(room_layout.is_null());
+		anchor_uuids.append_array(room_layout->get_contained_uuids());
+	}
+
+	// Find all the anchors that are part of the room layout.
+	Ref<OpenXRFbSpatialEntityQuery> query;
+	query.instantiate();
+	query->query_by_uuid(anchor_uuids);
+	query->connect("completed", callable_mp(this, &OpenXRFbSceneManager::_on_anchor_query_completed));
+	ERR_FAIL_COND(query->execute() != OK);
+}
+
+void OpenXRFbSceneManager::_on_anchor_query_completed(const Array &p_results) {
+	for (int i = 0; i < p_results.size(); i++) {
+		Ref<OpenXRFbSpatialEntity> entity = p_results[i];
+		ERR_CONTINUE(entity.is_null());
+
+		Ref<PackedScene> packed_scene = get_scene_for_entity(entity);
+		if (packed_scene.is_null()) {
+			// If the developer doesn't give a default or a specific scene, that's fine, just skip it.
+			continue;
+		}
+
+		// Ensure that the spatial entity is locatable before creating the anchor.
+		if (entity->is_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE)) {
+			_create_scene_anchor(entity, packed_scene);
+		} else if (entity->is_component_supported(OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE)) {
+			entity->connect("set_component_enabled_completed", callable_mp(this, &OpenXRFbSceneManager::_on_anchor_enable_locatable_completed).bind(entity, packed_scene), CONNECT_ONE_SHOT);
+			entity->set_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE, true);
+		}
+	}
+}
+
+void OpenXRFbSceneManager::_on_anchor_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity, const Ref<PackedScene> &p_packed_scene) {
+	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to make scene anchor %s locatable.", p_entity->get_uuid()));
+	_create_scene_anchor(p_entity, p_packed_scene);
+}
+
+void OpenXRFbSceneManager::_create_scene_anchor(const Ref<OpenXRFbSpatialEntity> &p_entity, const Ref<PackedScene> &p_packed_scene) {
+	p_entity->track();
+
+	XRAnchor3D *anchor = memnew(XRAnchor3D);
+	anchor->set_name(p_entity->get_uuid());
+	anchor->set_tracker(p_entity->get_uuid());
+	xr_origin->add_child(anchor);
+
+	Node *scene = p_packed_scene->instantiate();
+	anchor->add_child(scene);
+
+	scene->call(scene_setup_method, p_entity);
+}
+
+Ref<PackedScene> OpenXRFbSceneManager::get_scene_for_entity(const Ref<OpenXRFbSpatialEntity> &p_entity) const {
+	Array semantic_labels = p_entity->get_semantic_labels();
+
+	// @todo Allow developers to override which label is selected.
+	Variant selected_label = semantic_labels.size() > 0 ? semantic_labels[0] : Variant();
+
+	if (selected_label.get_type() == Variant::STRING && scenes.has(selected_label)) {
+		return scenes[selected_label];
+	}
+
+	return default_scene;
 }
 
 void OpenXRFbSceneManager::remove_scene_anchors() {

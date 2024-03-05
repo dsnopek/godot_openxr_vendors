@@ -31,7 +31,9 @@
 #define OPENXR_FB_SPATIAL_ENTITY_H
 
 #include <openxr/openxr.h>
+
 #include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 
 namespace godot {
 
@@ -61,10 +63,12 @@ private:
 	XrSpace space = XR_NULL_HANDLE;
 	StringName uuid;
 
+	static HashMap<XrAsyncRequestIdFB, Ref<OpenXRFbSpatialEntity>> requests_in_progress;
+
 protected:
 	static void _bind_methods();
 
-	static void _on_set_component_enabled_completed(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *userdata);
+	static void _on_set_component_enabled_completed(XrAsyncRequestIdFB p_request_id, XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *userdata);
 
 	String _to_string() const;
 
@@ -85,6 +89,7 @@ public:
 
 	void track();
 	void untrack();
+	bool is_tracked() const;
 
 	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
 	static XrSpaceComponentTypeFB to_openxr_component_type(ComponentType p_component);

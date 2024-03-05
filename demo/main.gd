@@ -73,8 +73,6 @@ func _on_left_hand_button_pressed(name):
 				if e.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_BOUNDED_2D):
 					print ("Bounding Box 2D :", e.get_bounding_box_2d())
 					print ("Boundary 2D :", e.get_boundary_2d())
-				if e.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_BOUNDED_3D):
-					print ("Bounding Box 3D :", e.get_bounding_box_3d())
 
 		else:
 			print ("Error running spatial entity query")

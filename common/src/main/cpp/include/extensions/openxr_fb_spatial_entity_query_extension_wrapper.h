@@ -55,7 +55,7 @@ public:
 
 	static OpenXRFbSpatialEntityQueryExtensionWrapper *get_singleton();
 
-	typedef void (*QueryCompleteCallback)(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
+	typedef void (*QueryCompleteCallback)(XrAsyncRequestIdFB p_request_id, const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
 
 	// Attempts to query spatial entities given an XrSpaceQueryInfoFB. The callback will run to
 	// deliver results when they are available.

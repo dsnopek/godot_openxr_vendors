@@ -1,8 +1,9 @@
-[gd_scene load_steps=16 format=3 uid="uid://cqsodpswgup8w"]
+[gd_scene load_steps=17 format=3 uid="uid://cqsodpswgup8w"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_fsva1"]
 [ext_resource type="PackedScene" uid="uid://c0uv4eu2yjm3b" path="res://viewport_2d_in_3d.tscn" id="2_7whgo"]
 [ext_resource type="PackedScene" uid="uid://d4b4rllli6tqp" path="res://tablet_content.tscn" id="3_45w5g"]
+[ext_resource type="PackedScene" uid="uid://bcjp8kcgde4cs" path="res://scene_anchor.tscn" id="4_3u3ah"]
 [ext_resource type="Script" path="res://tracked_face.gd" id="4_fsql8"]
 [ext_resource type="PackedScene" uid="uid://ikxieb2fyavg" path="res://assets/face/Face.gltf" id="4_wrwst"]
 
@@ -99,6 +100,7 @@ transform = Transform3D(1, 0, 0, 0, -0.0133513, 0.999911, 0, -0.999911, -0.01335
 mesh = SubResource("SphereMesh_5gcab")
 
 [node name="OpenXRFbSceneManager" type="OpenXRFbSceneManager" parent="XROrigin3D"]
+default_scene = ExtResource("4_3u3ah")
 
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_mjcgt")

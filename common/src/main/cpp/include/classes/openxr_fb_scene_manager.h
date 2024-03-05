@@ -36,6 +36,8 @@
 #include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 
+#include "classes/openxr_fb_spatial_entity.h"
+
 namespace godot {
 
 class XROrigin3D;
@@ -65,6 +67,12 @@ protected:
 	void _on_openxr_session_begun();
 	void _on_openxr_session_stopping();
 
+	void _on_room_layout_query_completed(Array p_results);
+	void _on_anchor_query_completed(const Array &p_results);
+	void _on_anchor_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity, const Ref<PackedScene> &p_packed_scene);
+	void _create_scene_anchor(const Ref<OpenXRFbSpatialEntity> &p_entity, const Ref<PackedScene> &p_packed_scene);
+	Ref<PackedScene> get_scene_for_entity(const Ref<OpenXRFbSpatialEntity> &p_entity) const;
+
 	static void _bind_methods();
 
 public:
@@ -84,7 +92,7 @@ public:
 	void show();
 	void hide();
 
-	void create_scene_anchors();
+	Error create_scene_anchors();
 	void remove_scene_anchors();
 	bool are_scene_anchors_created() const;
 

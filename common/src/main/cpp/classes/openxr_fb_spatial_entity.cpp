@@ -35,6 +35,8 @@
 
 using namespace godot;
 
+HashMap<XrAsyncRequestIdFB, Ref<OpenXRFbSpatialEntity>> OpenXRFbSpatialEntity::requests_in_progress;
+
 void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_uuid"), &OpenXRFbSpatialEntity::get_uuid);
 
@@ -52,6 +54,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("track"), &OpenXRFbSpatialEntity::track);
 	ClassDB::bind_method(D_METHOD("untrack"), &OpenXRFbSpatialEntity::untrack);
+	ClassDB::bind_method(D_METHOD("is_tracked"), &OpenXRFbSpatialEntity::is_tracked);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
 
@@ -100,12 +103,16 @@ bool OpenXRFbSpatialEntity::is_component_enabled(ComponentType p_component) cons
 }
 
 void OpenXRFbSpatialEntity::set_component_enabled(ComponentType p_component, bool p_enabled) {
-	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->set_component_enabled(space, to_openxr_component_type(p_component), p_enabled, OpenXRFbSpatialEntity::_on_set_component_enabled_completed, this);
+	XrAsyncRequestIdFB request_id = OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->set_component_enabled(space, to_openxr_component_type(p_component), p_enabled, OpenXRFbSpatialEntity::_on_set_component_enabled_completed, this);
+	// Keep the object alive until the end of the request.
+	requests_in_progress[request_id] = Ref<OpenXRFbSpatialEntity>(this);
 }
 
-void OpenXRFbSpatialEntity::_on_set_component_enabled_completed(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata) {
+void OpenXRFbSpatialEntity::_on_set_component_enabled_completed(XrAsyncRequestIdFB p_request_id, XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata) {
 	OpenXRFbSpatialEntity *self = (OpenXRFbSpatialEntity *)p_userdata;
 	self->emit_signal("set_component_enabled_completed", XR_SUCCEEDED(p_result), from_openxr_component_type(p_component), p_enabled);
+	// Remove our reference to the object.
+	requests_in_progress.erase(p_request_id);
 }
 
 PackedStringArray OpenXRFbSpatialEntity::get_semantic_labels() const {
@@ -140,11 +147,16 @@ PackedVector2Array OpenXRFbSpatialEntity::get_boundary_2d() const {
 }
 
 void OpenXRFbSpatialEntity::track() {
+	ERR_FAIL_COND_MSG(!is_component_enabled(COMPONENT_TYPE_LOCATABLE), vformat("Cannot track spatial entity %s because COMPONENT_TYPE_LOCATABLE isn't enabled.", uuid));
 	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->track_entity(uuid, space);
 }
 
 void OpenXRFbSpatialEntity::untrack() {
 	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->untrack_entity(uuid);
+}
+
+bool OpenXRFbSpatialEntity::is_tracked() const {
+	return OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_entity_tracked(uuid);
 }
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntity::to_openxr_storage_location(StorageLocation p_location) {

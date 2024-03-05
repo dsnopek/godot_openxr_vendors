@@ -177,7 +177,7 @@ bool OpenXRFbSpatialEntityExtensionWrapper::is_component_enabled(const XrSpace &
 	return (status.enabled && !status.changePending);
 }
 
-void OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata) {
+XrAsyncRequestIdFB OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata) {
 	XrSpaceComponentStatusSetInfoFB request = {
 		XR_TYPE_SPACE_COMPONENT_STATUS_SET_INFO_FB,
 		nullptr,
@@ -185,14 +185,16 @@ void OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(const XrSpace 
 		p_enabled,
 		0,
 	};
-	XrAsyncRequestIdFB request_id;
+	XrAsyncRequestIdFB request_id = 0;
 	XrResult result = xrSetSpaceComponentStatusFB(p_space, &request, &request_id);
 	if (!XR_SUCCEEDED(result)) {
-		p_callback(result, p_component, p_enabled, p_userdata);
-		return;
+		p_callback(request_id, result, p_component, p_enabled, p_userdata);
+		return request_id;
 	}
 
 	set_component_enabled_info[request_id] = SetComponentEnabledInfo(p_callback, p_userdata);
+
+	return request_id;
 }
 
 void OpenXRFbSpatialEntityExtensionWrapper::on_set_component_enabled_complete(const XrEventDataSpaceSetStatusCompleteFB *event) {
@@ -202,7 +204,7 @@ void OpenXRFbSpatialEntityExtensionWrapper::on_set_component_enabled_complete(co
 	}
 
 	SetComponentEnabledInfo *info = set_component_enabled_info.getptr(event->requestId);
-	info->callback(event->result, event->componentType, event->enabled, info->userdata);
+	info->callback(event->requestId, event->result, event->componentType, event->enabled, info->userdata);
 	set_component_enabled_info.erase(event->requestId);
 }
 
@@ -219,4 +221,8 @@ void OpenXRFbSpatialEntityExtensionWrapper::untrack_entity(const StringName &p_n
 		}
 		tracked_entities.erase(p_name);
 	}
+}
+
+bool OpenXRFbSpatialEntityExtensionWrapper::is_entity_tracked(const StringName &p_name) const {
+	return tracked_entities.has(p_name);
 }

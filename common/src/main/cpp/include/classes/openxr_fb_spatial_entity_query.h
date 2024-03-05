@@ -32,6 +32,7 @@
 
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 
 #include "classes/openxr_fb_spatial_entity.h"
 
@@ -56,6 +57,8 @@ private:
 	Array uuids;
 
 	XrAsyncRequestIdFB request_id = 0;
+
+	static HashMap<XrAsyncRequestIdFB, Ref<OpenXRFbSpatialEntityQuery>> queries_in_progress;
 
 protected:
 	static void _bind_methods();
@@ -82,7 +85,7 @@ public:
 
 	Error execute();
 
-	static void _results_callback(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
+	static void _results_callback(XrAsyncRequestIdFB p_request_id, const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
 };
 
 } // namespace godot
