@@ -44,6 +44,7 @@
 #include "export/pico_export_plugin.h"
 
 #include "extensions/openxr_fb_face_tracking_extension_wrapper.h"
+#include "extensions/openxr_fb_hand_tracking_mesh_extension_wrapper.h"
 #include "extensions/openxr_fb_passthrough_extension_wrapper.h"
 #include "extensions/openxr_fb_render_model_extension_wrapper.h"
 #include "extensions/openxr_fb_scene_capture_extension_wrapper.h"
@@ -53,6 +54,7 @@
 #include "extensions/openxr_fb_spatial_entity_container_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_query_extension_wrapper.h"
 
+#include "classes/openxr_fb_hand_tracking_mesh.h"
 #include "classes/openxr_fb_render_model.h"
 #include "classes/openxr_fb_scene_manager.h"
 #include "classes/openxr_fb_spatial_entity.h"
@@ -89,6 +91,9 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 
 			ClassDB::register_class<OpenXRFbFaceTrackingExtensionWrapper>();
 			OpenXRFbFaceTrackingExtensionWrapper::get_singleton()->register_extension_wrapper();
+
+			ClassDB::register_class<OpenXRFbHandTrackingMeshExtensionWrapper>();
+			OpenXRFbHandTrackingMeshExtensionWrapper::get_singleton()->register_extension_wrapper();
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_SERVERS:
@@ -106,6 +111,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			Engine::get_singleton()->register_singleton("OpenXRFbFaceTrackingExtensionWrapper", OpenXRFbFaceTrackingExtensionWrapper::get_singleton());
 
 			ClassDB::register_class<OpenXRFbRenderModel>();
+			ClassDB::register_class<OpenXRFbHandTrackingMesh>();
 			ClassDB::register_class<OpenXRFbSceneManager>();
 			ClassDB::register_class<OpenXRFbSpatialEntity>();
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();

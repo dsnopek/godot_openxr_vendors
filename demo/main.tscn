@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cqsodpswgup8w"]
+[gd_scene load_steps=18 format=3 uid="uid://cqsodpswgup8w"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_fsva1"]
 [ext_resource type="PackedScene" uid="uid://c0uv4eu2yjm3b" path="res://viewport_2d_in_3d.tscn" id="2_7whgo"]
@@ -51,7 +51,7 @@ script = ExtResource("1_fsva1")
 environment = SubResource("Environment_m0xew")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.5, -0.75, 0.433012, -9.8385e-09, 0.5, 0.866026, -0.866025, -0.433013, 0.25, 0, 0, 0)
+transform = Transform3D(0.677077, -0.692092, 0.25015, 0.264251, 0.545897, 0.79509, -0.686831, -0.472235, 0.552501, 0, 0, 0)
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
 
@@ -66,10 +66,9 @@ pose = &"grip"
 [node name="LeftHandMesh" type="MeshInstance3D" parent="XROrigin3D/LeftHand"]
 mesh = SubResource("BoxMesh_3kt6b")
 
-[node name="LeftControllerFbRenderModel" type="OpenXRFbRenderModel" parent="XROrigin3D/LeftHand"]
-
 [node name="HandTablet" type="MeshInstance3D" parent="XROrigin3D/LeftHand"]
 transform = Transform3D(1, 0, 0, 0, -0.392209, 0.919876, 0, -0.919876, -0.392209, 0, -0.236189, -0.208883)
+visible = false
 mesh = SubResource("QuadMesh_1oamj")
 surface_material_override/0 = SubResource("StandardMaterial3D_pmc5p")
 
@@ -79,6 +78,8 @@ screen_size = Vector2(0.35, 0.25)
 enabled = false
 scene = ExtResource("3_45w5g")
 unshaded = true
+
+[node name="LeftControllerFbRenderModel" type="OpenXRFbRenderModel" parent="XROrigin3D/LeftHand"]
 
 [node name="RightHand" type="XRController3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.478861, 0.468292, -0.241097)
@@ -99,6 +100,16 @@ tracker = &"/user/eyes_ext"
 transform = Transform3D(1, 0, 0, 0, -0.0133513, 0.999911, 0, -0.999911, -0.0133513, 0, 0, -1.18886)
 mesh = SubResource("SphereMesh_5gcab")
 
+[node name="LeftXRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D"]
+
+[node name="LeftHandModel" type="OpenXRFbHandTrackingMesh" parent="XROrigin3D/LeftXRHandModifier3D"]
+
+[node name="RightXRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D"]
+hand_tracker = &"/user/right"
+
+[node name="RightHandModel" type="OpenXRFbHandTrackingMesh" parent="XROrigin3D/RightXRHandModifier3D"]
+hand = 1
+
 [node name="OpenXRFbSceneManager" type="OpenXRFbSceneManager" parent="XROrigin3D"]
 default_scene = ExtResource("4_3u3ah")
 
@@ -107,9 +118,11 @@ mesh = SubResource("PlaneMesh_mjcgt")
 
 [node name="TrackedFace" type="Node3D" parent="Floor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -1)
-script = ExtResource("4_fsql8")
 
 [node name="Face" parent="Floor/TrackedFace" instance=ExtResource("4_wrwst")]
+
+[node name="XRFaceModifier3D" type="XRFaceModifier3D" parent="Floor/TrackedFace/Face/Face" index="0"]
+target = NodePath("..")
 
 [connection signal="button_pressed" from="XROrigin3D/LeftHand" to="." method="_on_left_hand_button_pressed"]
 [connection signal="openxr_fb_render_model_loaded" from="XROrigin3D/LeftHand/LeftControllerFbRenderModel" to="." method="_on_left_controller_fb_render_model_render_model_loaded"]
