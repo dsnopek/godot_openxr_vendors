@@ -35,8 +35,6 @@
 
 using namespace godot;
 
-HashMap<uint64_t, Ref<OpenXRFbSpatialEntityQuery>> OpenXRFbSpatialEntityQuery::queries_in_progress;
-
 void OpenXRFbSpatialEntityQuery::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_max_results", "count"), &OpenXRFbSpatialEntityQuery::set_max_results);
 	ClassDB::bind_method(D_METHOD("get_max_results"), &OpenXRFbSpatialEntityQuery::get_max_results);
@@ -118,29 +116,28 @@ OpenXRFbSpatialEntity::ComponentType OpenXRFbSpatialEntityQuery::get_component_t
 }
 
 Error OpenXRFbSpatialEntityQuery::execute() {
-	ERR_FAIL_COND_V(request_id != 0, ERR_ALREADY_IN_USE);
+	ERR_FAIL_COND_V(executed, ERR_ALREADY_IN_USE);
+	executed = true;
 
+	bool succeeded = false;
 	switch (query_type) {
 		case QUERY_ALL: {
-			request_id = _execute_query_all();
+			succeeded = _execute_query_all();
 		} break;
 		case QUERY_BY_UUID: {
-			request_id = _execute_query_by_uuid();
+			succeeded = _execute_query_by_uuid();
 		} break;
 		case QUERY_BY_COMPONENT: {
-			request_id = _execute_query_by_component();
+			succeeded = _execute_query_by_component();
 		} break;
 		default:
 			return ERR_INVALID_DATA;
 	}
 
-	// Keep the query alive until we get its results.
-	queries_in_progress[request_id] = Ref<OpenXRFbSpatialEntityQuery>(this);
-
-	return request_id == 0 ? FAILED : OK;
+	return succeeded ? OK : FAILED;
 }
 
-XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_all() {
+bool OpenXRFbSpatialEntityQuery::_execute_query_all() {
 	XrSpaceQueryInfoFB query = {
 		XR_TYPE_SPACE_QUERY_INFO_FB, // type
 		nullptr, // next
@@ -151,10 +148,11 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_all() {
 		nullptr, // excludeFilter
 	};
 
-	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, this);
+	Ref<OpenXRFbSpatialEntityQuery> *userdata = memnew(Ref<OpenXRFbSpatialEntityQuery>(this));
+	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, userdata);
 }
 
-XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_uuid() {
+bool OpenXRFbSpatialEntityQuery::_execute_query_by_uuid() {
 	XrSpaceStorageLocationFilterInfoFB location_filter = {
 		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
 		nullptr, // next
@@ -186,10 +184,11 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_uuid() {
 		nullptr, // excludeFilter
 	};
 
-	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, this);
+	Ref<OpenXRFbSpatialEntityQuery> *userdata = memnew(Ref<OpenXRFbSpatialEntityQuery>(this));
+	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, userdata);
 }
 
-XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
+bool OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 	XrSpaceStorageLocationFilterInfoFB location_filter = {
 		XR_TYPE_SPACE_STORAGE_LOCATION_FILTER_INFO_FB, // type
 		nullptr, // next
@@ -212,11 +211,12 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityQuery::_execute_query_by_component() {
 		nullptr, // excludeFilter
 	};
 
-	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, this);
+	Ref<OpenXRFbSpatialEntityQuery> *userdata = memnew(Ref<OpenXRFbSpatialEntityQuery>(this));
+	return OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->query_spatial_entities((XrSpaceQueryInfoBaseHeaderFB *)&query, &OpenXRFbSpatialEntityQuery::_results_callback, userdata);
 }
 
-void OpenXRFbSpatialEntityQuery::_results_callback(XrAsyncRequestIdFB p_request_id, const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata) {
-	OpenXRFbSpatialEntityQuery *self = (OpenXRFbSpatialEntityQuery *)p_userdata;
+void OpenXRFbSpatialEntityQuery::_results_callback(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata) {
+	Ref<OpenXRFbSpatialEntityQuery> *userdata = (Ref<OpenXRFbSpatialEntityQuery> *)p_userdata;
 
 	Array results;
 	results.resize(p_results.size());
@@ -225,8 +225,7 @@ void OpenXRFbSpatialEntityQuery::_results_callback(XrAsyncRequestIdFB p_request_
 		results[i] = entity;
 	}
 
-	self->emit_signal("completed", results);
+	(*userdata)->emit_signal("completed", results);
 
-	// Remove our reference now that the query is completed.
-	queries_in_progress.erase(p_request_id);
+	memdelete(userdata);
 }

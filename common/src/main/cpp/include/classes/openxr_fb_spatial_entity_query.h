@@ -56,16 +56,14 @@ private:
 	float timeout = 0.0f;
 	Array uuids;
 
-	XrAsyncRequestIdFB request_id = 0;
-
-	static HashMap<XrAsyncRequestIdFB, Ref<OpenXRFbSpatialEntityQuery>> queries_in_progress;
+	bool executed = false;
 
 protected:
 	static void _bind_methods();
 
-	XrAsyncRequestIdFB _execute_query_all();
-	XrAsyncRequestIdFB _execute_query_by_uuid();
-	XrAsyncRequestIdFB _execute_query_by_component();
+	bool _execute_query_all();
+	bool _execute_query_by_uuid();
+	bool _execute_query_by_component();
 
 public:
 	void set_max_results(uint32_t p_max_results);
@@ -84,8 +82,9 @@ public:
 	OpenXRFbSpatialEntity::ComponentType get_component_type() const;
 
 	Error execute();
+	bool is_executed() const;
 
-	static void _results_callback(XrAsyncRequestIdFB p_request_id, const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
+	static void _results_callback(const Vector<XrSpaceQueryResultFB> &p_results, void *p_userdata);
 };
 
 } // namespace godot
