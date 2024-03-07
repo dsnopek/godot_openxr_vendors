@@ -101,6 +101,12 @@ private:
 			(XrSpaceComponentTypeFB), componentType,
 			(XrSpaceComponentStatusFB *), status)
 
+	EXT_PROTO_XRRESULT_FUNC4(xrLocateSpace,
+		(XrSpace), space,
+		(XrSpace), baseSpace,
+		(XrTime), time,
+		(XrSpaceLocation *), location)
+
 	bool initialize_fb_spatial_entity_extension(const XrInstance &instance);
 	void on_set_component_enabled_complete(const XrEventDataSpaceSetStatusCompleteFB *event);
 

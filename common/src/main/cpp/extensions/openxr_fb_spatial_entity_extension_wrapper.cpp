@@ -141,6 +141,7 @@ bool OpenXRFbSpatialEntityExtensionWrapper::initialize_fb_spatial_entity_extensi
 	GDEXTENSION_INIT_XR_FUNC_V(xrEnumerateSpaceSupportedComponentsFB);
 	GDEXTENSION_INIT_XR_FUNC_V(xrSetSpaceComponentStatusFB);
 	GDEXTENSION_INIT_XR_FUNC_V(xrGetSpaceComponentStatusFB);
+	GDEXTENSION_INIT_XR_FUNC_V(xrLocateSpace);
 
 	return true;
 }
