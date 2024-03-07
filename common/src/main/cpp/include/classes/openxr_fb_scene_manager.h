@@ -54,8 +54,18 @@ class OpenXRFbSceneManager : public Node {
 
 	XROrigin3D *xr_origin = nullptr;
 
+	struct Anchor {
+		ObjectID node;
+		Ref<OpenXRFbSpatialEntity> entity;
+
+		Anchor(Node *p_node, const Ref<OpenXRFbSpatialEntity> &p_entity) {
+			node = p_node->get_instance_id();
+			entity = p_entity;
+		}
+		Anchor();
+	};
+	HashMap<StringName, Anchor> anchors;
 	bool anchors_created = false;
-	HashMap<StringName, ObjectID> anchor_nodes;
 
 protected:
 	bool _set(const StringName &p_name, const Variant &p_value);
@@ -96,8 +106,9 @@ public:
 	void remove_scene_anchors();
 	bool are_scene_anchors_created() const;
 
+	Array get_anchor_uuids() const;
 	XRAnchor3D *get_anchor_node(const StringName &p_uuid) const;
-	Array get_anchor_nodes() const;
+	Ref<OpenXRFbSpatialEntity> get_spatial_entity(const StringName &p_uuids) const;
 };
 
 } // namespace godot

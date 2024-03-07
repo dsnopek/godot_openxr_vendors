@@ -58,13 +58,17 @@ void OpenXRFbSceneManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("remove_scene_anchors"), &OpenXRFbSceneManager::remove_scene_anchors);
 	ClassDB::bind_method(D_METHOD("are_scene_anchors_created"), &OpenXRFbSceneManager::are_scene_anchors_created);
 
+	ClassDB::bind_method(D_METHOD("get_anchor_uuids"), &OpenXRFbSceneManager::get_anchor_uuids);
 	ClassDB::bind_method(D_METHOD("get_anchor_node", "uuid"), &OpenXRFbSceneManager::get_anchor_node);
-	ClassDB::bind_method(D_METHOD("get_anchor_nodes"), &OpenXRFbSceneManager::get_anchor_nodes);
+	ClassDB::bind_method(D_METHOD("get_spatial_entity", "uuid"), &OpenXRFbSceneManager::get_spatial_entity);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "default_scene", PROPERTY_HINT_RESOURCE_TYPE, "PackedScene"), "set_default_scene", "get_default_scene");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "scene_setup_method", PROPERTY_HINT_NONE, ""), "set_scene_setup_method", "get_scene_setup_method");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_create", PROPERTY_HINT_NONE, ""), "set_auto_create", "get_auto_create");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "visible", PROPERTY_HINT_NONE, ""), "set_visible", "get_visible");
+
+	ADD_SIGNAL(MethodInfo("scene_anchor_created", PropertyInfo(Variant::Type::OBJECT, "scene_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
+	ADD_SIGNAL(MethodInfo("scene_data_missing"));
 }
 
 bool OpenXRFbSceneManager::_set(const StringName &p_name, const Variant &p_value) {
@@ -178,7 +182,14 @@ bool OpenXRFbSceneManager::get_auto_create() const {
 
 void OpenXRFbSceneManager::set_visible(bool p_visible) {
 	visible = p_visible;
-	// @todo Loop over anchors and change their visibility
+
+	for (KeyValue<StringName, Anchor> &E : anchors) {
+		Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(E.value.node));
+		ERR_CONTINUE_MSG(!node, vformat("Cannot find node for anchor %s.", E.key));
+		if (node) {
+			node->set_visible(p_visible);
+		}
+	}
 }
 
 bool OpenXRFbSceneManager::get_visible() const {
@@ -224,6 +235,12 @@ void OpenXRFbSceneManager::_on_room_layout_query_completed(Array p_results) {
 		anchor_uuids.append_array(room_layout->get_contained_uuids());
 	}
 
+	if (anchor_uuids.size() == 0) {
+		anchors_created = false;
+		emit_signal("scene_data_missing");
+		return;
+	}
+
 	// Find all the anchors that are part of the room layout.
 	Ref<OpenXRFbSpatialEntityQuery> query;
 	query.instantiate();
@@ -261,15 +278,19 @@ void OpenXRFbSceneManager::_on_anchor_enable_locatable_completed(bool p_succeede
 void OpenXRFbSceneManager::_create_scene_anchor(const Ref<OpenXRFbSpatialEntity> &p_entity, const Ref<PackedScene> &p_packed_scene) {
 	p_entity->track();
 
-	XRAnchor3D *anchor = memnew(XRAnchor3D);
-	anchor->set_name(p_entity->get_uuid());
-	anchor->set_tracker(p_entity->get_uuid());
-	xr_origin->add_child(anchor);
+	XRAnchor3D *node = memnew(XRAnchor3D);
+	node->set_name(p_entity->get_uuid());
+	node->set_tracker(p_entity->get_uuid());
+	node->set_visible(visible);
+	xr_origin->add_child(node);
 
 	Node *scene = p_packed_scene->instantiate();
-	anchor->add_child(scene);
+	node->add_child(scene);
+
+	anchors[p_entity->get_uuid()] = Anchor(node, p_entity);
 
 	scene->call(scene_setup_method, p_entity);
+	emit_signal("scene_anchor_created", scene, p_entity);
 }
 
 Ref<PackedScene> OpenXRFbSceneManager::get_scene_for_entity(const Ref<OpenXRFbSpatialEntity> &p_entity) const {
@@ -287,9 +308,20 @@ Ref<PackedScene> OpenXRFbSceneManager::get_scene_for_entity(const Ref<OpenXRFbSp
 
 void OpenXRFbSceneManager::remove_scene_anchors() {
 	ERR_FAIL_COND(!anchors_created);
-	ERR_FAIL_COND(!xr_origin);
 
-	// @todo it!
+	for (KeyValue<StringName, Anchor> &E : anchors) {
+		Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(E.value.node));
+		if (node) {
+			Node *parent = node->get_parent();
+			if (parent) {
+				parent->remove_child(node);
+			}
+			node->queue_free();
+		}
+
+		E.value.entity->untrack();
+	}
+	anchors.clear();
 
 	anchors_created = false;
 }
@@ -298,14 +330,36 @@ bool OpenXRFbSceneManager::are_scene_anchors_created() const {
 	return anchors_created;
 }
 
+Array OpenXRFbSceneManager::get_anchor_uuids() const {
+	ERR_FAIL_COND_V(!anchors_created, Array());
+
+	Array ret;
+	ret.resize(anchors.size());
+	int i = 0;
+	for (const KeyValue<StringName, Anchor> &E : anchors) {
+		ret[i++] = E.key;
+	}
+	return ret;
+}
+
 XRAnchor3D *OpenXRFbSceneManager::get_anchor_node(const StringName &p_uuid) const {
 	ERR_FAIL_COND_V(!anchors_created, nullptr);
-	// @todo it!
+
+	const Anchor *anchor = anchors.getptr(p_uuid);
+	if (anchor) {
+		return Object::cast_to<XRAnchor3D>(ObjectDB::get_instance(anchor->node));
+	}
+
 	return nullptr;
 }
 
-Array OpenXRFbSceneManager::get_anchor_nodes() const {
-	ERR_FAIL_COND_V(!anchors_created, Array());
-	// @todo it!
-	return Array();
+Ref<OpenXRFbSpatialEntity> OpenXRFbSceneManager::get_spatial_entity(const StringName &p_uuid) const {
+	ERR_FAIL_COND_V(!anchors_created, nullptr);
+
+	const Anchor *anchor = anchors.getptr(p_uuid);
+	if (anchor) {
+		return anchor->entity;
+	}
+
+	return Ref<OpenXRFbSpatialEntity>();
 }
