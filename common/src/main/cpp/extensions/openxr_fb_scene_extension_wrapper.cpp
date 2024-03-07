@@ -135,9 +135,9 @@ PackedStringArray OpenXRFbSceneExtensionWrapper::get_semantic_labels(const XrSpa
 	return String(label_data).split(",");
 }
 
-Dictionary OpenXRFbSceneExtensionWrapper::get_room_layout(const XrSpace p_space) {
+bool OpenXRFbSceneExtensionWrapper::get_room_layout(const XrSpace p_space, RoomLayout &r_room_layout) {
 	if (!OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(p_space, XR_SPACE_COMPONENT_TYPE_ROOM_LAYOUT_FB)) {
-		return Dictionary();
+		return false;
 	}
 
 	XrResult result;
@@ -156,33 +156,24 @@ Dictionary OpenXRFbSceneExtensionWrapper::get_room_layout(const XrSpace p_space)
 	if (XR_FAILED(result)) {
 		WARN_PRINT("xrGetSpaceRoomLayoutFB failed to get wall count!");
 		WARN_PRINT(get_openxr_api()->get_error_string(result));
-		return Dictionary();
+		return false;
 	}
 
-	LocalVector<XrUuidEXT> walls;
-	walls.resize(room_layout.wallUuidCountOutput);
-	room_layout.wallUuidCapacityInput = walls.size();
-	room_layout.wallUuids = walls.ptr();
+	r_room_layout.walls.resize(room_layout.wallUuidCountOutput);
+	room_layout.wallUuidCapacityInput = room_layout.wallUuidCountOutput;
+	room_layout.wallUuids = r_room_layout.walls.ptrw();
 
 	result = xrGetSpaceRoomLayoutFB(SESSION, p_space, &room_layout);
 	if (XR_FAILED(result)) {
 		WARN_PRINT("xrGetSpaceRoomLayoutFB failed to get room layout!");
 		WARN_PRINT(get_openxr_api()->get_error_string(result));
-		return Dictionary();
+		return false;
 	}
 
-	Dictionary ret;
-	ret["floor"] = OpenXRUtilities::uuid_to_string_name(room_layout.floorUuid);
-	ret["ceiling"] = OpenXRUtilities::uuid_to_string_name(room_layout.ceilingUuid);
+	r_room_layout.ceiling = room_layout.ceilingUuid;
+	r_room_layout.floor = room_layout.floorUuid;
 
-	Array walls_array;
-	walls_array.resize(walls.size());
-	for (int i = 0; i < walls.size(); i++) {
-		walls_array[i] = OpenXRUtilities::uuid_to_string_name(walls[i]);
-	}
-	ret["walls"] = walls_array;
-
-	return ret;
+	return true;
 }
 
 Rect2 OpenXRFbSceneExtensionWrapper::get_bounding_box_2d(const XrSpace p_space) {

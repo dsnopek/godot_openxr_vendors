@@ -61,8 +61,14 @@ public:
 
 	static const PackedStringArray &get_supported_semantic_labels();
 
+	struct RoomLayout {
+		XrUuidEXT floor;
+		XrUuidEXT ceiling;
+		Vector<XrUuidEXT> walls;
+	};
+
 	PackedStringArray get_semantic_labels(const XrSpace p_space);
-	Dictionary get_room_layout(const XrSpace p_space);
+	bool get_room_layout(const XrSpace p_space, RoomLayout &r_room_layout);
 	Rect2 get_bounding_box_2d(const XrSpace p_space);
 	AABB get_bounding_box_3d(const XrSpace p_space);
 	PackedVector2Array get_boundary_2d(const XrSpace p_space);

@@ -116,7 +116,23 @@ PackedStringArray OpenXRFbSpatialEntity::get_semantic_labels() const {
 }
 
 Dictionary OpenXRFbSpatialEntity::get_room_layout() const {
-	return OpenXRFbSceneExtensionWrapper::get_singleton()->get_room_layout(space);
+	OpenXRFbSceneExtensionWrapper::RoomLayout room_layout;
+	if (!OpenXRFbSceneExtensionWrapper::get_singleton()->get_room_layout(space, room_layout)) {
+		return Dictionary();
+	}
+
+	Dictionary ret;
+	ret["floor"] = OpenXRUtilities::uuid_to_string_name(room_layout.floor);
+	ret["ceiling"] = OpenXRUtilities::uuid_to_string_name(room_layout.ceiling);
+
+	Array walls_array;
+	walls_array.resize(room_layout.walls.size());
+	for (int i = 0; i < room_layout.walls.size(); i++) {
+		walls_array[i] = OpenXRUtilities::uuid_to_string_name(room_layout.walls[i]);
+	}
+	ret["walls"] = walls_array;
+
+	return ret;
 }
 
 Array OpenXRFbSpatialEntity::get_contained_uuids() const {
