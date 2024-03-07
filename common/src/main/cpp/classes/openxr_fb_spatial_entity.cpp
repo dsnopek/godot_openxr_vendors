@@ -35,8 +35,6 @@
 
 using namespace godot;
 
-HashMap<XrAsyncRequestIdFB, Ref<OpenXRFbSpatialEntity>> OpenXRFbSpatialEntity::requests_in_progress;
-
 void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_uuid"), &OpenXRFbSpatialEntity::get_uuid);
 
@@ -103,16 +101,14 @@ bool OpenXRFbSpatialEntity::is_component_enabled(ComponentType p_component) cons
 }
 
 void OpenXRFbSpatialEntity::set_component_enabled(ComponentType p_component, bool p_enabled) {
-	XrAsyncRequestIdFB request_id = OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->set_component_enabled(space, to_openxr_component_type(p_component), p_enabled, OpenXRFbSpatialEntity::_on_set_component_enabled_completed, this);
-	// Keep the object alive until the end of the request.
-	requests_in_progress[request_id] = Ref<OpenXRFbSpatialEntity>(this);
+	Ref<OpenXRFbSpatialEntity> *userdata = memnew(Ref<OpenXRFbSpatialEntity>(this));
+	XrAsyncRequestIdFB request_id = OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->set_component_enabled(space, to_openxr_component_type(p_component), p_enabled, OpenXRFbSpatialEntity::_on_set_component_enabled_completed, userdata);
 }
 
-void OpenXRFbSpatialEntity::_on_set_component_enabled_completed(XrAsyncRequestIdFB p_request_id, XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata) {
-	OpenXRFbSpatialEntity *self = (OpenXRFbSpatialEntity *)p_userdata;
-	self->emit_signal("set_component_enabled_completed", XR_SUCCEEDED(p_result), from_openxr_component_type(p_component), p_enabled);
-	// Remove our reference to the object.
-	requests_in_progress.erase(p_request_id);
+void OpenXRFbSpatialEntity::_on_set_component_enabled_completed(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata) {
+	Ref<OpenXRFbSpatialEntity> *userdata = (Ref<OpenXRFbSpatialEntity> *)p_userdata;
+	(*userdata)->emit_signal("set_component_enabled_completed", XR_SUCCEEDED(p_result), from_openxr_component_type(p_component), p_enabled);
+	memdelete(userdata);
 }
 
 PackedStringArray OpenXRFbSpatialEntity::get_semantic_labels() const {

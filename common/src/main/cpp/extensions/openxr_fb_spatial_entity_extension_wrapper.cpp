@@ -178,7 +178,7 @@ bool OpenXRFbSpatialEntityExtensionWrapper::is_component_enabled(const XrSpace &
 	return (status.enabled && !status.changePending);
 }
 
-XrAsyncRequestIdFB OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata) {
+bool OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata) {
 	XrSpaceComponentStatusSetInfoFB request = {
 		XR_TYPE_SPACE_COMPONENT_STATUS_SET_INFO_FB,
 		nullptr,
@@ -189,13 +189,13 @@ XrAsyncRequestIdFB OpenXRFbSpatialEntityExtensionWrapper::set_component_enabled(
 	XrAsyncRequestIdFB request_id = 0;
 	XrResult result = xrSetSpaceComponentStatusFB(p_space, &request, &request_id);
 	if (!XR_SUCCEEDED(result)) {
-		p_callback(request_id, result, p_component, p_enabled, p_userdata);
-		return request_id;
+		p_callback(result, p_component, p_enabled, p_userdata);
+		return false;
 	}
 
 	set_component_enabled_info[request_id] = SetComponentEnabledInfo(p_callback, p_userdata);
 
-	return request_id;
+	return true;
 }
 
 void OpenXRFbSpatialEntityExtensionWrapper::on_set_component_enabled_complete(const XrEventDataSpaceSetStatusCompleteFB *event) {
@@ -205,7 +205,7 @@ void OpenXRFbSpatialEntityExtensionWrapper::on_set_component_enabled_complete(co
 	}
 
 	SetComponentEnabledInfo *info = set_component_enabled_info.getptr(event->requestId);
-	info->callback(event->requestId, event->result, event->componentType, event->enabled, info->userdata);
+	info->callback(event->result, event->componentType, event->enabled, info->userdata);
 	set_component_enabled_info.erase(event->requestId);
 }
 

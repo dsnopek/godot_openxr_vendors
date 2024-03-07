@@ -63,12 +63,10 @@ private:
 	XrSpace space = XR_NULL_HANDLE;
 	StringName uuid;
 
-	static HashMap<XrAsyncRequestIdFB, Ref<OpenXRFbSpatialEntity>> requests_in_progress;
-
 protected:
 	static void _bind_methods();
 
-	static void _on_set_component_enabled_completed(XrAsyncRequestIdFB p_request_id, XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *userdata);
+	static void _on_set_component_enabled_completed(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *userdata);
 
 	String _to_string() const;
 

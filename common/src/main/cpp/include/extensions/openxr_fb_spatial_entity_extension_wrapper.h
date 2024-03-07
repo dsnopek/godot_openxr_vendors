@@ -55,11 +55,11 @@ public:
 		return fb_spatial_entity_ext;
 	}
 
-	typedef void (*SetComponentEnabledCallback)(XrAsyncRequestIdFB p_request_id, XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata);
+	typedef void (*SetComponentEnabledCallback)(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata);
 
 	Vector<XrSpaceComponentTypeFB> get_support_components(const XrSpace &p_space);
 	bool is_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component);
-	XrAsyncRequestIdFB set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata);
+	bool set_component_enabled(const XrSpace &p_space, XrSpaceComponentTypeFB p_component, bool p_enabled, SetComponentEnabledCallback p_callback, void *p_userdata);
 
 	void track_entity(const StringName &p_name, const XrSpace &p_space);
 	void untrack_entity(const StringName &p_name);
