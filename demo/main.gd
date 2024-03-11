@@ -20,7 +20,6 @@ func _ready():
 	if xr_interface and xr_interface.is_initialized():
 		var vp: Viewport = get_viewport()
 		vp.use_xr = true
-		print("blend modes: ", xr_interface.get_supported_environment_blend_modes())
 
 	hand_tracking_source.resize(OpenXRInterface.HAND_MAX)
 	for hand in OpenXRInterface.HAND_MAX:
