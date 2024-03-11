@@ -4,10 +4,10 @@ extends Node3D
 @onready var right_hand: XRController3D = $XROrigin3D/RightHand
 @onready var left_hand_mesh: MeshInstance3D = $XROrigin3D/LeftHand/LeftHandMesh
 @onready var right_hand_mesh: MeshInstance3D = $XROrigin3D/RightHand/RightHandMesh
-@onready var floor_mesh: MeshInstance3D = $Floor
-@onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var left_controller_model: OpenXRFbRenderModel = $XROrigin3D/LeftHand/LeftControllerFbRenderModel
 @onready var right_controller_model: OpenXRFbRenderModel = $XROrigin3D/RightHand/RightControllerFbRenderModel
+@onready var floor_mesh: MeshInstance3D = $Floor
+@onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var scene_manager: OpenXRFbSceneManager = $XROrigin3D/OpenXRFbSceneManager
 
 var xr_interface : XRInterface = null
