@@ -29,6 +29,12 @@
 
 #include "classes/openxr_fb_spatial_entity.h"
 
+#include <godot_cpp/classes/box_mesh.hpp>
+#include <godot_cpp/classes/box_shape3d.hpp>
+#include <godot_cpp/classes/collision_shape3d.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/plane_mesh.hpp>
+
 #include "extensions/openxr_fb_spatial_entity_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_container_extension_wrapper.h"
 #include "extensions/openxr_fb_scene_extension_wrapper.h"
@@ -53,6 +59,9 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("track"), &OpenXRFbSpatialEntity::track);
 	ClassDB::bind_method(D_METHOD("untrack"), &OpenXRFbSpatialEntity::untrack);
 	ClassDB::bind_method(D_METHOD("is_tracked"), &OpenXRFbSpatialEntity::is_tracked);
+
+	ClassDB::bind_method(D_METHOD("create_mesh_instance"), &OpenXRFbSpatialEntity::create_mesh_instance);
+	ClassDB::bind_method(D_METHOD("create_collision_shape"), &OpenXRFbSpatialEntity::create_collision_shape);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
 
@@ -169,6 +178,71 @@ void OpenXRFbSpatialEntity::untrack() {
 
 bool OpenXRFbSpatialEntity::is_tracked() const {
 	return OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_entity_tracked(uuid);
+}
+
+MeshInstance3D *OpenXRFbSpatialEntity::create_mesh_instance() const {
+	MeshInstance3D *mesh_instance = nullptr;
+
+	if (is_component_enabled(COMPONENT_TYPE_BOUNDED_3D)) {
+		Ref<BoxMesh> box_mesh;
+		box_mesh.instantiate();
+
+		AABB bounding_box = get_bounding_box_3d();
+		box_mesh->set_size(bounding_box.size);
+
+		mesh_instance = memnew(MeshInstance3D);
+		mesh_instance->set_mesh(box_mesh);
+		mesh_instance->set_position(bounding_box.get_center());
+
+	} else if (is_component_enabled(COMPONENT_TYPE_BOUNDED_2D)) {
+		Ref<PlaneMesh> plane_mesh;
+		plane_mesh.instantiate();
+
+		Rect2 bounding_box = get_bounding_box_2d();
+		plane_mesh->set_size(bounding_box.size);
+
+		mesh_instance = memnew(MeshInstance3D);
+		mesh_instance->set_mesh(plane_mesh);
+
+		Vector2 plane_center = bounding_box.get_center();
+		mesh_instance->set_position(Vector3(plane_center.x, 0, plane_center.y));
+		mesh_instance->rotate_x(Math_PI / 2.0);
+	}
+
+	return mesh_instance;
+}
+
+Node3D *OpenXRFbSpatialEntity::create_collision_shape() const {
+	if (is_component_enabled(COMPONENT_TYPE_BOUNDED_3D)) {
+		Ref<BoxShape3D> box_shape;
+		box_shape.instantiate();
+
+		AABB bounding_box = get_bounding_box_3d();
+		box_shape->set_size(bounding_box.size);
+
+		CollisionShape3D *collision_shape = memnew(CollisionShape3D);
+		collision_shape->set_shape(box_shape);
+		collision_shape->set_position(bounding_box.get_center());
+
+		return collision_shape;
+	} else if (is_component_enabled(COMPONENT_TYPE_BOUNDED_2D)) {
+		Ref<BoxShape3D> box_shape;
+		box_shape.instantiate();
+
+		Rect2 bounding_box = get_bounding_box_2d();
+		box_shape->set_size(Vector3(bounding_box.size.x, 0, bounding_box.size.y));
+
+		CollisionShape3D *collision_shape = memnew(CollisionShape3D);
+		collision_shape->set_shape(box_shape);
+
+		Vector2 plane_center = bounding_box.get_center();
+		collision_shape->set_position(Vector3(plane_center.x, 0, plane_center.y));
+		collision_shape->rotate_x(Math_PI / 2.0);
+
+		return collision_shape;
+	}
+
+	return nullptr;
 }
 
 XrSpaceStorageLocationFB OpenXRFbSpatialEntity::to_openxr_storage_location(StorageLocation p_location) {

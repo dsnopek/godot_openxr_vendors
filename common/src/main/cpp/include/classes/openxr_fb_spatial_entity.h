@@ -37,6 +37,9 @@
 
 namespace godot {
 
+class Node3D;
+class MeshInstance3D;
+
 class OpenXRFbSpatialEntity : public RefCounted {
 	GDCLASS(OpenXRFbSpatialEntity, RefCounted);
 
@@ -88,6 +91,9 @@ public:
 	void track();
 	void untrack();
 	bool is_tracked() const;
+
+	MeshInstance3D *create_mesh_instance() const;
+	Node3D *create_collision_shape() const;
 
 	static XrSpaceStorageLocationFB to_openxr_storage_location(StorageLocation p_location);
 	static XrSpaceComponentTypeFB to_openxr_component_type(ComponentType p_component);
