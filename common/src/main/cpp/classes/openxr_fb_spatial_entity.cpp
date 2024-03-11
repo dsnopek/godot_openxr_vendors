@@ -230,7 +230,7 @@ Node3D *OpenXRFbSpatialEntity::create_collision_shape() const {
 		box_shape.instantiate();
 
 		Rect2 bounding_box = get_bounding_box_2d();
-		box_shape->set_size(Vector3(bounding_box.size.x, bounding_box.size.y, 0));
+		box_shape->set_size(Vector3(bounding_box.size.x, 0, bounding_box.size.y));
 
 		CollisionShape3D *collision_shape = memnew(CollisionShape3D);
 		collision_shape->set_shape(box_shape);

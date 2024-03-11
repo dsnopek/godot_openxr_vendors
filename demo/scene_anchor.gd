@@ -3,6 +3,7 @@ extends Node3D
 const GRID_MATERIAL: StandardMaterial3D = preload("res://assets/cross-grid-material.tres")
 
 @onready var label: Label3D = $Label3D
+@onready var static_body: StaticBody3D = $StaticBody3D
 
 var mesh_instance: MeshInstance3D
 
@@ -10,6 +11,10 @@ func setup_scene(entity: OpenXRFbSpatialEntity) -> void:
 	var semantic_labels: PackedStringArray = entity.get_semantic_labels()
 
 	label.text = ", ".join(semantic_labels)
+
+	var collision_shape = entity.create_collision_shape()
+	if collision_shape:
+		static_body.add_child(collision_shape)
 
 	mesh_instance = entity.create_mesh_instance()
 	if not mesh_instance:
