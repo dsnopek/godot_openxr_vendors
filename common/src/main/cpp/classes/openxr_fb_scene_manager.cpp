@@ -34,6 +34,7 @@
 #include <godot_cpp/classes/xr_anchor3d.hpp>
 #include <godot_cpp/classes/xr_server.hpp>
 
+#include "extensions/openxr_fb_scene_capture_extension_wrapper.h"
 #include "extensions/openxr_fb_scene_extension_wrapper.h"
 #include "classes/openxr_fb_spatial_entity_query.h"
 
@@ -58,6 +59,9 @@ void OpenXRFbSceneManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("remove_scene_anchors"), &OpenXRFbSceneManager::remove_scene_anchors);
 	ClassDB::bind_method(D_METHOD("are_scene_anchors_created"), &OpenXRFbSceneManager::are_scene_anchors_created);
 
+	ClassDB::bind_method(D_METHOD("request_scene_capture", "request"), &OpenXRFbSceneManager::request_scene_capture, DEFVAL(""));
+	ClassDB::bind_method(D_METHOD("is_scene_capture_enabled"), &OpenXRFbSceneManager::is_scene_capture_enabled);
+
 	ClassDB::bind_method(D_METHOD("get_anchor_uuids"), &OpenXRFbSceneManager::get_anchor_uuids);
 	ClassDB::bind_method(D_METHOD("get_anchor_node", "uuid"), &OpenXRFbSceneManager::get_anchor_node);
 	ClassDB::bind_method(D_METHOD("get_spatial_entity", "uuid"), &OpenXRFbSceneManager::get_spatial_entity);
@@ -69,6 +73,7 @@ void OpenXRFbSceneManager::_bind_methods() {
 
 	ADD_SIGNAL(MethodInfo("scene_anchor_created", PropertyInfo(Variant::Type::OBJECT, "scene_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
 	ADD_SIGNAL(MethodInfo("scene_data_missing"));
+	ADD_SIGNAL(MethodInfo("scene_capture_completed", PropertyInfo(Variant::Type::BOOL, "success")));
 }
 
 bool OpenXRFbSceneManager::_set(const StringName &p_name, const Variant &p_value) {
@@ -328,6 +333,26 @@ void OpenXRFbSceneManager::remove_scene_anchors() {
 
 bool OpenXRFbSceneManager::are_scene_anchors_created() const {
 	return anchors_created;
+}
+
+bool OpenXRFbSceneManager::request_scene_capture(const String &p_request) const {
+	ObjectID *userdata = memnew(ObjectID(get_instance_id()));
+	return OpenXRFbSceneCaptureExtensionWrapper::get_singleton()->request_scene_capture(p_request, &OpenXRFbSceneManager::_scene_capture_callback, userdata);
+}
+
+bool OpenXRFbSceneManager::is_scene_capture_enabled() const {
+	return OpenXRFbSceneCaptureExtensionWrapper::get_singleton()->is_scene_capture_enabled();
+}
+
+void OpenXRFbSceneManager::_scene_capture_callback(XrResult p_result, void *p_userdata) {
+	ObjectID *userdata = (ObjectID *)p_userdata;
+
+	OpenXRFbSceneManager *self = Object::cast_to<OpenXRFbSceneManager>(ObjectDB::get_instance(*userdata));
+	if (self) {
+		self->emit_signal("scene_capture_completed", XR_SUCCEEDED(p_result));
+	}
+
+	memdelete(userdata);
 }
 
 Array OpenXRFbSceneManager::get_anchor_uuids() const {

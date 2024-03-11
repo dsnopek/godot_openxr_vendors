@@ -106,6 +106,11 @@ public:
 	void remove_scene_anchors();
 	bool are_scene_anchors_created() const;
 
+	bool request_scene_capture(const String &p_request = "") const;
+	bool is_scene_capture_enabled() const;
+
+	static void _scene_capture_callback(XrResult p_result, void *p_userdata);
+
 	Array get_anchor_uuids() const;
 	XRAnchor3D *get_anchor_node(const StringName &p_uuid) const;
 	Ref<OpenXRFbSpatialEntity> get_spatial_entity(const StringName &p_uuids) const;

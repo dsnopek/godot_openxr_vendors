@@ -35,6 +35,7 @@
 
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/open_xr_extension_wrapper_extension.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "util.h"
@@ -58,8 +59,13 @@ public:
 		return fb_scene_capture_ext;
 	}
 
-	bool request_scene_capture();
+	typedef void (*SceneCaptureCompleteCallback)(XrResult p_result, void *p_userdata);
+
+	bool request_scene_capture(String p_request, SceneCaptureCompleteCallback p_callback, void *p_userdata);
 	bool is_scene_capture_enabled();
+
+	// Supports legacy exposed API.
+	bool _request_scene_capture_bind();
 
 	virtual bool _on_event_polled(const void *event) override;
 
@@ -78,8 +84,23 @@ private:
 			(XrAsyncRequestIdFB *), requestId)
 
 	bool initialize_fb_scene_capture_extension(const XrInstance instance);
+	void on_scene_capture_complete(const XrEventDataSceneCaptureCompleteFB *p_event);
 
 	std::map<godot::String, bool *> request_extensions;
+
+	struct RequestInfo {
+		SceneCaptureCompleteCallback callback = nullptr;
+		void *userdata = nullptr;
+
+		RequestInfo(SceneCaptureCompleteCallback p_callback, void *p_userdata) {
+			callback = p_callback;
+			userdata = p_userdata;
+		}
+
+		RequestInfo() { }
+	};
+
+	HashMap<XrAsyncRequestIdFB, RequestInfo> requests;
 
 	void cleanup();
 
