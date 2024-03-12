@@ -6,13 +6,22 @@ extends Node3D
 @onready var right_hand_mesh: MeshInstance3D = $XROrigin3D/RightHand/RightHandMesh
 @onready var left_controller_model: OpenXRFbRenderModel = $XROrigin3D/LeftHand/LeftControllerFbRenderModel
 @onready var right_controller_model: OpenXRFbRenderModel = $XROrigin3D/RightHand/RightControllerFbRenderModel
+@onready var left_hand_pointer: XRController3D = $XROrigin3D/LeftHandPointer
+@onready var left_hand_pointer_raycast: RayCast3D = $XROrigin3D/LeftHandPointer/RayCast3D
+@onready var scene_pointer_mesh: MeshInstance3D = $XROrigin3D/LeftHandPointer/ScenePointerMesh
+@onready var scene_colliding_mesh: MeshInstance3D = $XROrigin3D/LeftHandPointer/SceneCollidingMesh
 @onready var floor_mesh: MeshInstance3D = $Floor
 @onready var world_environment: WorldEnvironment = $WorldEnvironment
 @onready var scene_manager: OpenXRFbSceneManager = $XROrigin3D/OpenXRFbSceneManager
+@onready var spatial_anchor_manager: OpenXRFbSpatialAnchorManager = $XROrigin3D/OpenXRFbSpatialAnchorManager
+
+const SPATIAL_ANCHOR_FILE = "user://spatial_anchors.json"
+const SpatialAnchor = preload("res://spatial_anchor.tscn")
 
 var xr_interface : XRInterface = null
 var hand_tracking_source: Array[OpenXRInterface.HandTrackedSource]
 var passthrough_enabled: bool = false
+var spatial_anchors := {}
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -20,11 +29,45 @@ func _ready():
 	if xr_interface and xr_interface.is_initialized():
 		var vp: Viewport = get_viewport()
 		vp.use_xr = true
+		xr_interface.session_begun.connect(self._on_openxr_session_begun)
 
 	hand_tracking_source.resize(OpenXRInterface.HAND_MAX)
 	for hand in OpenXRInterface.HAND_MAX:
 		hand_tracking_source[hand] = xr_interface.get_hand_tracking_source(hand)
 
+func _on_openxr_session_begun() -> void:
+	await get_tree().create_timer(1.0).timeout
+
+	var query := OpenXRFbSpatialEntityQuery.new()
+	query.query_all()
+	if query.execute() == OK:
+		print("Anchors: ")
+		var results = await query.openxr_fb_spatial_entity_query_completed
+		for result in results:
+			var semantic_labels = result.get_semantic_labels()
+			print(semantic_labels[0] if semantic_labels.size() > 0 else "[ANCHOR]", ": ", result.get_uuid())
+
+	if FileAccess.file_exists(SPATIAL_ANCHOR_FILE):
+		load_spatial_anchors_file()
+
+func load_spatial_anchors_file() -> void:
+	var file := FileAccess.open(SPATIAL_ANCHOR_FILE, FileAccess.READ)
+	if not file:
+		return
+
+	var data = JSON.parse_string(file.get_as_text())
+	if data is Dictionary:
+		spatial_anchors = data
+	else:
+		print("ERROR: Unable to parse spatial anchors file at ", SPATIAL_ANCHOR_FILE)
+
+	# @todo Load and track the Spatial Anchors found in the file
+	print ("Loaded anchors: ", spatial_anchors)
+
+
+func save_spatial_anchors_file() -> void:
+	var file := FileAccess.open(SPATIAL_ANCHOR_FILE, FileAccess.WRITE)
+	file.store_string(JSON.stringify(spatial_anchors))
 
 func enable_passthrough(enable: bool) -> void:
 	if passthrough_enabled == enable:
@@ -42,6 +85,8 @@ func enable_passthrough(enable: bool) -> void:
 			world_environment.environment.background_color = Color(0.0, 0.0, 0.0, 0.0)
 			floor_mesh.visible = false
 			scene_manager.visible = true
+			left_hand_pointer.visible = true
+			left_hand_pointer_raycast.enabled = true
 			if not scene_manager.are_scene_anchors_created():
 				scene_manager.create_scene_anchors()
 		else:
@@ -51,6 +96,8 @@ func enable_passthrough(enable: bool) -> void:
 			world_environment.environment.background_mode = Environment.BG_SKY
 			floor_mesh.visible = true
 			scene_manager.visible = false
+			left_hand_pointer.visible = false
+			left_hand_pointer_raycast.enabled = false
 		passthrough_enabled = enable
 	else:
 		print("Switching to/from passthrough not supported.")
@@ -82,6 +129,18 @@ func _physics_process(_delta: float) -> void:
 
 		hand_tracking_source[hand] = source
 
+	if left_hand_pointer.visible:
+		if left_hand_pointer_raycast.is_colliding():
+			var collision_point: Vector3 = left_hand_pointer_raycast.get_collision_point()
+			scene_colliding_mesh.global_position = collision_point
+
+			var pointer_length: float = (collision_point - left_hand_pointer.global_position).length()
+			scene_pointer_mesh.mesh.size.z = pointer_length
+			scene_pointer_mesh.position.z = -pointer_length / 2.0
+		else:
+			scene_pointer_mesh.mesh.size.z = 5
+			scene_pointer_mesh.position.z = -2.5
+
 
 func _on_left_hand_button_pressed(name):
 	if name == "menu_button":
@@ -90,6 +149,28 @@ func _on_left_hand_button_pressed(name):
 
 	elif name == "by_button":
 		enable_passthrough(not passthrough_enabled)
+
+	elif name == "trigger_click" and left_hand_pointer.visible:
+		if left_hand_pointer_raycast.is_colliding():
+			var transform := Transform3D()
+			transform.basis = Basis.looking_at(left_hand_pointer_raycast.get_collision_normal())
+			transform.origin = left_hand_pointer_raycast.get_collision_point()
+
+			print ("Attempting to create spatial anchor at: ", transform)
+			var request: OpenXRFbSpatialAnchorCreationRequest = spatial_anchor_manager.create_anchor(transform)
+			var success = await request.openxr_fb_spatial_anchor_creation_request_completed
+			print ("Spatial anchor creation was a success = ", success)
+			if success:
+				var spatial_anchor = request.get_spatial_entity()
+				print("UUID: ", spatial_anchor.uuid)
+
+				print ("Is locatable: ", spatial_anchor.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_LOCATABLE))
+				print ("Is storable: ", spatial_anchor.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_STORABLE))
+
+				spatial_anchor.set_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_STORABLE, true)
+				var res: Array = await spatial_anchor.openxr_fb_spatial_entity_set_component_enabled_completed
+				print("Made storeable: ", res[0])
+
 
 
 func _on_left_controller_fb_render_model_render_model_loaded() -> void:

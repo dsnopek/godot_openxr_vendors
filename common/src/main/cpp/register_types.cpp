@@ -58,6 +58,8 @@
 #include "classes/openxr_fb_hand_tracking_mesh.h"
 #include "classes/openxr_fb_render_model.h"
 #include "classes/openxr_fb_scene_manager.h"
+#include "classes/openxr_fb_spatial_anchor_manager.h"
+#include "classes/openxr_fb_spatial_anchor_creation_request.h"
 #include "classes/openxr_fb_spatial_entity.h"
 #include "classes/openxr_fb_spatial_entity_query.h"
 
@@ -118,6 +120,8 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRFbRenderModel>();
 			ClassDB::register_class<OpenXRFbHandTrackingMesh>();
 			ClassDB::register_class<OpenXRFbSceneManager>();
+			ClassDB::register_class<OpenXRFbSpatialAnchorManager>();
+			ClassDB::register_class<OpenXRFbSpatialAnchorCreationRequest>();
 			ClassDB::register_class<OpenXRFbSpatialEntity>();
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
 
