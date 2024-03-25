@@ -63,6 +63,9 @@ func _on_left_hand_button_pressed(name):
 		print("Triggering scene capture")
 		scene_capture.request_scene_capture()
 
+	if name == "ax_button":
+		$OpenXRCompositionLayerQuad.visible = not $OpenXRCompositionLayerQuad.visible
+
 
 func _on_left_controller_fb_render_model_render_model_loaded() -> void:
 	left_hand_mesh.hide()

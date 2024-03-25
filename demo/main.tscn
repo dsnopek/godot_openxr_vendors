@@ -128,8 +128,19 @@ target = NodePath("..")
 transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -1, 1, -1)
 
 [node name="OpenXRCompositionLayerQuad" type="OpenXRCompositionLayerQuad" parent="." node_paths=PackedStringArray("layer_viewport")]
-transform = Transform3D(1, 0, 0, 0, 0.945712, -0.325007, 0, 0.325007, 0.945712, 0, 1.568, -0.893)
+transform = Transform3D(1, 0, 0, 0, 0.945712, -0.325007, 0, 0.325007, 0.945712, 0, 1.568, -0.845354)
+visible = false
+layer_viewport = NodePath("../SubViewport")
 quad_size = Vector2(2, 2)
+
+[node name="OpenXRCompositionLayerCylinder" type="OpenXRCompositionLayerCylinder" parent="." node_paths=PackedStringArray("layer_viewport")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.681, 0)
+visible = false
+layer_viewport = NodePath("../SubViewport")
+
+[node name="OpenXRCompositionLayerEquirect" type="OpenXRCompositionLayerEquirect" parent="." node_paths=PackedStringArray("layer_viewport")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.29233, 0.0992684)
+visible = false
 layer_viewport = NodePath("../SubViewport")
 
 [node name="SubViewport" type="SubViewport" parent="."]
