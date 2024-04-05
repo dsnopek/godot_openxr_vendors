@@ -56,13 +56,13 @@ func _physics_process(_delta: float) -> void:
 	#print ("Ray intersection: ", ray_intersection)
 	#$SubViewport/Control.update_pointer(ray_intersection)
 
-	#var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
-	#print ("Ray intersection: ", ray_intersection)
-	#$SubViewport/Control.update_pointer(ray_intersection)
-
-	var ray_intersection: Vector2 = quad_intersects_ray($XROrigin3D/OpenXRCompositionLayerQuad, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	print ("Ray intersection: ", ray_intersection)
 	$SubViewport/Control.update_pointer(ray_intersection)
+
+	#var ray_intersection: Vector2 = quad_intersects_ray($XROrigin3D/OpenXRCompositionLayerQuad, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	#print ("Ray intersection: ", ray_intersection)
+	#$SubViewport/Control.update_pointer(ray_intersection)
 
 
 func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: Vector3, p_direction: Vector3) -> Vector2:
@@ -137,6 +137,7 @@ func equirect_intersects_ray(p_layer: OpenXRCompositionLayerEquirect, p_origin: 
 		return Vector2(-1.0, -1.0)
 
 	var vertical_intersection_angle = acos(relative_point.y / equirect_radius) - (PI / 2.0)
+	print ("Vertical intersection angle: ", vertical_intersection_angle)
 	if vertical_intersection_angle < 0:
 		if abs(vertical_intersection_angle) > equirect_upper_vertical_angle:
 			return Vector2(-1.0, -1.0)
@@ -144,8 +145,12 @@ func equirect_intersects_ray(p_layer: OpenXRCompositionLayerEquirect, p_origin: 
 		if vertical_intersection_angle > equirect_lower_vertical_angle:
 			return Vector2(-1.0, -1.0)
 
+	# Recenter the vertical angle if it's uneven.
+	if equirect_upper_vertical_angle != equirect_lower_vertical_angle:
+		vertical_intersection_angle -= (-equirect_upper_vertical_angle + equirect_lower_vertical_angle) / 2.0
+
 	var u: float = 0.5 + (horizontal_intersection_angle / equirect_central_horizontal_angle)
-	var v: float = 0.5 + (vertical_intersection_angle / (equirect_lower_vertical_angle + equirect_upper_vertical_angle))
+	var v: float = 0.5 + (vertical_intersection_angle / (equirect_upper_vertical_angle + equirect_lower_vertical_angle))
 
 	return Vector2(u, v)
 
