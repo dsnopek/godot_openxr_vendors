@@ -56,7 +56,11 @@ func _physics_process(_delta: float) -> void:
 	#print ("Ray intersection: ", ray_intersection)
 	#$SubViewport/Control.update_pointer(ray_intersection)
 
-	var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	#var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	#print ("Ray intersection: ", ray_intersection)
+	#$SubViewport/Control.update_pointer(ray_intersection)
+
+	var ray_intersection: Vector2 = quad_intersects_ray($XROrigin3D/OpenXRCompositionLayerQuad, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	print ("Ray intersection: ", ray_intersection)
 	$SubViewport/Control.update_pointer(ray_intersection)
 
@@ -129,12 +133,52 @@ func equirect_intersects_ray(p_layer: OpenXRCompositionLayerEquirect, p_origin: 
 
 	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - equirect_center)
 	var horizontal_intersection_angle = (PI / 2.0) + atan2(relative_point.z, relative_point.x)
+	if abs(horizontal_intersection_angle) > equirect_central_horizontal_angle / 2.0:
+		return Vector2(-1.0, -1.0)
+
 	var vertical_intersection_angle = acos(relative_point.y / equirect_radius) - (PI / 2.0)
+	if vertical_intersection_angle < 0:
+		if abs(vertical_intersection_angle) > equirect_upper_vertical_angle:
+			return Vector2(-1.0, -1.0)
+	else:
+		if vertical_intersection_angle > equirect_lower_vertical_angle:
+			return Vector2(-1.0, -1.0)
 
 	var u: float = 0.5 + (horizontal_intersection_angle / equirect_central_horizontal_angle)
 	var v: float = 0.5 + (vertical_intersection_angle / (equirect_lower_vertical_angle + equirect_upper_vertical_angle))
 
 	return Vector2(u, v)
+
+func quad_intersects_ray(p_layer: OpenXRCompositionLayerQuad, p_origin: Vector3, p_direction: Vector3) -> Vector2:
+	var quad_center = p_layer.position
+	var quad_normal = p_layer.transform.basis.z
+	var quad_width = p_layer.quad_size.x
+	var quad_height = p_layer.quad_size.y
+
+	var denom = quad_normal.dot(p_direction)
+	if abs(denom) > 0.0001:
+		var vector: Vector3 = quad_center - p_origin
+		var t = vector.dot(quad_normal) / denom
+		if t < 0.0:
+			return Vector2(-1.0, -1.0)
+		var intersection: Vector3 = p_origin + p_direction * t
+		$IntersectionSphere.position = intersection
+
+		var relative_point: Vector3 = intersection - quad_center
+		var projected_point: Vector2 = Vector2(
+			relative_point.dot(p_layer.transform.basis.x),
+			relative_point.dot(p_layer.transform.basis.y))
+		if abs(projected_point.x) > quad_width / 2.0:
+			return Vector2(-1.0, -1.0)
+		if abs(projected_point.y) > quad_height / 2.0:
+			return Vector2(-1.0, -1.0)
+
+		var u: float = 0.5 + (projected_point.x / quad_width)
+		var v: float = 1.0 - (0.5 + (projected_point.y / quad_height))
+
+		return Vector2(u, v)
+
+	return Vector2(-1.0, -1.0)
 
 func _on_scene_capture_completed():
 	print("Scene Capture completed")
