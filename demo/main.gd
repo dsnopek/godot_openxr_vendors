@@ -91,8 +91,14 @@ func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: 
 	$IntersectionSphere.position = intersection
 
 	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - cylinder_center)
+
+	# We point -Z but all the math points +X so correct it.
+	var correction := Basis()
+	correction = correction.rotated(Vector3.UP, -PI / 2.0)
+	relative_point = correction * relative_point
+
 	var projected_point: Vector2 = Vector2(relative_point.x, relative_point.z)
-	var intersection_angle: float = (PI / 2.0) + atan2(projected_point.y, projected_point.x)
+	var intersection_angle: float = atan2(projected_point.y, projected_point.x)
 	if abs(intersection_angle) > cylinder_angle / 2.0:
 		return Vector2(-1.0, -1.0)
 
@@ -132,7 +138,13 @@ func equirect_intersects_ray(p_layer: OpenXRCompositionLayerEquirect, p_origin: 
 	$IntersectionSphere.position = intersection
 
 	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - equirect_center)
-	var horizontal_intersection_angle = (PI / 2.0) + atan2(relative_point.z, relative_point.x)
+
+	# We point -Z but all the math points +X so correct it.
+	var correction := Basis()
+	correction = correction.rotated(Vector3.UP, -PI / 2.0)
+	relative_point = correction * relative_point
+
+	var horizontal_intersection_angle = atan2(relative_point.z, relative_point.x)
 	if abs(horizontal_intersection_angle) > equirect_central_horizontal_angle / 2.0:
 		return Vector2(-1.0, -1.0)
 
