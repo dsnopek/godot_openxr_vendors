@@ -52,13 +52,13 @@ func _physics_process(_delta: float) -> void:
 
 		hand_tracking_source[hand] = source
 
-	#var ray_intersection: Vector2 = cylinder_intersects_ray($XROrigin3D/OpenXRCompositionLayerCylinder, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
-	#print ("Ray intersection: ", ray_intersection)
-	#$SubViewport/Control.update_pointer(ray_intersection)
-
-	var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	var ray_intersection: Vector2 = cylinder_intersects_ray($XROrigin3D/OpenXRCompositionLayerCylinder, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	print ("Ray intersection: ", ray_intersection)
 	$SubViewport/Control.update_pointer(ray_intersection)
+
+	#var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	#print ("Ray intersection: ", ray_intersection)
+	#$SubViewport/Control.update_pointer(ray_intersection)
 
 	#var ray_intersection: Vector2 = quad_intersects_ray($XROrigin3D/OpenXRCompositionLayerQuad, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	#print ("Ray intersection: ", ray_intersection)
