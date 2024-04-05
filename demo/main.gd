@@ -52,9 +52,14 @@ func _physics_process(_delta: float) -> void:
 
 		hand_tracking_source[hand] = source
 
-	var ray_intersection: Vector2 = cylinder_intersects_ray($XROrigin3D/OpenXRCompositionLayerCylinder, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	#var ray_intersection: Vector2 = cylinder_intersects_ray($XROrigin3D/OpenXRCompositionLayerCylinder, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	#print ("Ray intersection: ", ray_intersection)
+	#$SubViewport/Control.update_pointer(ray_intersection)
+
+	var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	print ("Ray intersection: ", ray_intersection)
 	$SubViewport/Control.update_pointer(ray_intersection)
+
 
 func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: Vector3, p_direction: Vector3) -> Vector2:
 	var cylinder_radius: float = p_layer.radius
@@ -78,9 +83,9 @@ func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: 
 
 	if t < 0.0:
 		return Vector2(-1.0, -1.0)
-
 	var intersection: Vector3 = p_origin + p_direction * t
 	$IntersectionSphere.position = intersection
+
 	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - cylinder_center)
 	var projected_point: Vector2 = Vector2(relative_point.x, relative_point.z)
 	var intersection_angle: float = (PI / 2.0) + atan2(projected_point.y, projected_point.x)
@@ -94,6 +99,40 @@ func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: 
 
 	var u: float = 0.5 + (intersection_angle / cylinder_angle)
 	var v: float = 1.0 - (0.5 + (relative_point.y / height))
+
+	return Vector2(u, v)
+
+func equirect_intersects_ray(p_layer: OpenXRCompositionLayerEquirect, p_origin: Vector3, p_direction: Vector3) -> Vector2:
+	var equirect_radius: float = p_layer.radius
+	var equirect_center: Vector3 = p_layer.position
+	var equirect_central_horizontal_angle: float = p_layer.central_horizontal_angle
+	var equirect_upper_vertical_angle: float = p_layer.upper_vertical_angle
+	var equirect_lower_vertical_angle: float = p_layer.lower_vertical_angle
+
+	var offset: Vector3 = p_origin - equirect_center
+	var a: float = p_direction.dot(p_direction)
+	var b: float = 2.0 * offset.dot(p_direction)
+	var c: float = offset.dot(offset) - equirect_radius * equirect_radius
+
+	var discriminant: float = b * b - 4.0 * a * c
+	if discriminant < 0.0:
+		return Vector2(-1.0, -1.0)
+
+	var t0: float = (-b - sqrt(discriminant)) / (2.0 * a)
+	var t1: float = (-b + sqrt(discriminant)) / (2.0 * a)
+	var t: float = max(t0, t1)
+
+	if t < 0.0:
+		return Vector2(-1.0, -1.0)
+	var intersection: Vector3 = p_origin + p_direction * t
+	$IntersectionSphere.position = intersection
+
+	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - equirect_center)
+	var horizontal_intersection_angle = (PI / 2.0) + atan2(relative_point.z, relative_point.x)
+	var vertical_intersection_angle = acos(relative_point.y / equirect_radius) - (PI / 2.0)
+
+	var u: float = 0.5 + (horizontal_intersection_angle / equirect_central_horizontal_angle)
+	var v: float = 0.5 + (vertical_intersection_angle / (equirect_lower_vertical_angle + equirect_upper_vertical_angle))
 
 	return Vector2(u, v)
 
