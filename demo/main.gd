@@ -81,7 +81,7 @@ func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: 
 
 	var intersection: Vector3 = p_origin + p_direction * t
 	$IntersectionSphere.position = intersection
-	var relative_point: Vector3 = intersection - cylinder_center
+	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - cylinder_center)
 	var projected_point: Vector2 = Vector2(relative_point.x, relative_point.z)
 	var intersection_angle: float = (PI / 2.0) + atan2(projected_point.y, projected_point.x)
 	if abs(intersection_angle) > cylinder_angle / 2.0:

@@ -135,7 +135,7 @@ visible = false
 quad_size = Vector2(2, 2)
 
 [node name="OpenXRCompositionLayerCylinder" type="OpenXRCompositionLayerCylinder" parent="XROrigin3D" node_paths=PackedStringArray("layer_viewport")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.681, 0)
+transform = Transform3D(0.414693, 0, -0.909961, 0, 1, 0, 0.909961, 0, 0.414693, 0.647058, 1.681, -0.707727)
 layer_viewport = NodePath("../../SubViewport")
 
 [node name="OpenXRCompositionLayerEquirect" type="OpenXRCompositionLayerEquirect" parent="XROrigin3D"]
