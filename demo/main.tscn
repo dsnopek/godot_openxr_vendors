@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://cqsodpswgup8w"]
+[gd_scene load_steps=19 format=3 uid="uid://cqsodpswgup8w"]
 
 [ext_resource type="Script" path="res://main.gd" id="1_fsva1"]
 [ext_resource type="PackedScene" uid="uid://c0uv4eu2yjm3b" path="res://viewport_2d_in_3d.tscn" id="2_7whgo"]
@@ -34,6 +34,9 @@ albedo_color = Color(0.203922, 0.203922, 0.203922, 1)
 [sub_resource type="BoxMesh" id="BoxMesh_ey3x4"]
 size = Vector3(0.1, 0.1, 0.1)
 
+[sub_resource type="BoxMesh" id="BoxMesh_i1ec4"]
+size = Vector3(0.01, 0.01, -10)
+
 [sub_resource type="SphereMesh" id="SphereMesh_5gcab"]
 radius = 0.025
 height = 0.05
@@ -43,6 +46,10 @@ height = 0.05
 [sub_resource type="PlaneMesh" id="PlaneMesh_mjcgt"]
 material = SubResource("StandardMaterial3D_k604q")
 size = Vector2(10, 10)
+
+[sub_resource type="SphereMesh" id="SphereMesh_jdy6b"]
+radius = 0.05
+height = 0.1
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_fsva1")
@@ -94,6 +101,15 @@ mesh = SubResource("BoxMesh_ey3x4")
 [node name="RightControllerFbRenderModel" type="OpenXRFbRenderModel" parent="XROrigin3D/RightHand"]
 render_model_type = 1
 
+[node name="RightHandPointer" type="XRController3D" parent="XROrigin3D"]
+tracker = &"right_hand"
+pose = &"aim"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightHandPointer"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
+mesh = SubResource("BoxMesh_i1ec4")
+skeleton = NodePath("../../RightHand")
+
 [node name="EyeGaze" type="XRController3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.977669, 0)
 tracker = &"/user/eyes_ext"
@@ -118,13 +134,13 @@ transform = Transform3D(1, 0, 0, 0, 0.945712, -0.325007, 0, 0.325007, 0.945712, 
 visible = false
 quad_size = Vector2(2, 2)
 
-[node name="OpenXRCompositionLayerCylinder" type="OpenXRCompositionLayerCylinder" parent="XROrigin3D"]
+[node name="OpenXRCompositionLayerCylinder" type="OpenXRCompositionLayerCylinder" parent="XROrigin3D" node_paths=PackedStringArray("layer_viewport")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.681, 0)
-visible = false
-
-[node name="OpenXRCompositionLayerEquirect" type="OpenXRCompositionLayerEquirect" parent="XROrigin3D" node_paths=PackedStringArray("layer_viewport")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.29233, 0.0992684)
 layer_viewport = NodePath("../../SubViewport")
+
+[node name="OpenXRCompositionLayerEquirect" type="OpenXRCompositionLayerEquirect" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.29233, 0.0992684)
+visible = false
 
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_mjcgt")
@@ -146,6 +162,9 @@ gui_embed_subwindows = true
 render_target_update_mode = 4
 
 [node name="Control" parent="SubViewport" instance=ExtResource("6_kubns")]
+
+[node name="IntersectionSphere" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_jdy6b")
 
 [connection signal="button_pressed" from="XROrigin3D/LeftHand" to="." method="_on_left_hand_button_pressed"]
 [connection signal="button_pressed" from="XROrigin3D/LeftHand" to="XRFbHandTrackingAimDemo" method="_on_left_hand_button_pressed"]
