@@ -52,13 +52,13 @@ func _physics_process(_delta: float) -> void:
 
 		hand_tracking_source[hand] = source
 
-	var ray_intersection: Vector2 = cylinder_intersects_ray($XROrigin3D/OpenXRCompositionLayerCylinder, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
-	print ("Ray intersection: ", ray_intersection)
-	$SubViewport/Control.update_pointer(ray_intersection)
-
-	#var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	#var ray_intersection: Vector2 = cylinder_intersects_ray($XROrigin3D/OpenXRCompositionLayerCylinder, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	#print ("Ray intersection: ", ray_intersection)
 	#$SubViewport/Control.update_pointer(ray_intersection)
+
+	var ray_intersection: Vector2 = equirect_intersects_ray($XROrigin3D/OpenXRCompositionLayerEquirect, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
+	print ("Ray intersection: ", ray_intersection)
+	$SubViewport/Control.update_pointer(ray_intersection)
 
 	#var ray_intersection: Vector2 = quad_intersects_ray($XROrigin3D/OpenXRCompositionLayerQuad, right_hand.transform.origin, -$XROrigin3D/RightHandPointer.transform.basis.z)
 	#print ("Ray intersection: ", ray_intersection)
@@ -90,12 +90,9 @@ func cylinder_intersects_ray(p_layer: OpenXRCompositionLayerCylinder, p_origin: 
 	var intersection: Vector3 = p_origin + p_direction * t
 	$IntersectionSphere.position = intersection
 
-	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - cylinder_center)
-
-	# We point -Z but all the math points +X so correct it.
-	var correction := Basis()
+	var correction: Basis = p_layer.transform.basis.inverse()
 	correction = correction.rotated(Vector3.UP, -PI / 2.0)
-	relative_point = correction * relative_point
+	var relative_point: Vector3 = correction * (intersection - cylinder_center)
 
 	var projected_point: Vector2 = Vector2(relative_point.x, relative_point.z)
 	var intersection_angle: float = atan2(projected_point.y, projected_point.x)
@@ -137,12 +134,9 @@ func equirect_intersects_ray(p_layer: OpenXRCompositionLayerEquirect, p_origin: 
 	var intersection: Vector3 = p_origin + p_direction * t
 	$IntersectionSphere.position = intersection
 
-	var relative_point: Vector3 = p_layer.transform.basis.inverse() * (intersection - equirect_center)
-
-	# We point -Z but all the math points +X so correct it.
-	var correction := Basis()
+	var correction: Basis = p_layer.transform.basis.inverse()
 	correction = correction.rotated(Vector3.UP, -PI / 2.0)
-	relative_point = correction * relative_point
+	var relative_point: Vector3 = correction * (intersection - equirect_center)
 
 	var horizontal_intersection_angle = atan2(relative_point.z, relative_point.x)
 	if abs(horizontal_intersection_angle) > equirect_central_horizontal_angle / 2.0:

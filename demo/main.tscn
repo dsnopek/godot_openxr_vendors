@@ -134,13 +134,13 @@ transform = Transform3D(1, 0, 0, 0, 0.945712, -0.325007, 0, 0.325007, 0.945712, 
 visible = false
 quad_size = Vector2(2, 2)
 
-[node name="OpenXRCompositionLayerCylinder" type="OpenXRCompositionLayerCylinder" parent="XROrigin3D" node_paths=PackedStringArray("layer_viewport")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.681, -0.708)
-layer_viewport = NodePath("../../SubViewport")
-
-[node name="OpenXRCompositionLayerEquirect" type="OpenXRCompositionLayerEquirect" parent="XROrigin3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.292, -0.527)
+[node name="OpenXRCompositionLayerCylinder" type="OpenXRCompositionLayerCylinder" parent="XROrigin3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.681, 0)
 visible = false
+
+[node name="OpenXRCompositionLayerEquirect" type="OpenXRCompositionLayerEquirect" parent="XROrigin3D" node_paths=PackedStringArray("layer_viewport")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.292, -0.527)
+layer_viewport = NodePath("../../SubViewport")
 
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_mjcgt")
