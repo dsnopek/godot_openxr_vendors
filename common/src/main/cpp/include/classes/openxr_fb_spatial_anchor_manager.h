@@ -38,12 +38,18 @@
 #include "classes/openxr_fb_spatial_entity.h"
 
 namespace godot {
+class PackedScene;
 class XROrigin3D;
 class XRAnchor3D;
 
 class OpenXRFbSpatialAnchorManager : public Node {
 	GDCLASS(OpenXRFbSpatialAnchorManager, Node);
 
+	Ref<PackedScene> scene;
+	StringName scene_setup_method = "setup_scene";
+	bool persist_in_local_file = true;
+	String local_file_path = "user://openxr_fb_spatial_anchors.json";
+	bool auto_load = true;
 	bool visible = true;
 
 	XROrigin3D *xr_origin = nullptr;
@@ -77,6 +83,21 @@ protected:
 public:
 	PackedStringArray _get_configuration_warnings() const override;
 
+	void set_scene(const Ref<PackedScene> &p_scene);
+	Ref<PackedScene> get_scene() const;
+
+	void set_scene_setup_method(const StringName &p_method);
+	StringName get_scene_setup_method() const;
+
+	void set_persist_in_local_file(bool p_persist_in_local_file);
+	bool get_persist_in_local_file() const;
+
+	void set_local_file_path(const String &p_local_file);
+	String get_local_file_path() const;
+
+	void set_auto_load(bool p_auto_load);
+	bool get_auto_load() const;
+
 	void set_visible(bool p_visible);
 	bool get_visible() const;
 	void show();
@@ -87,6 +108,9 @@ public:
 	void track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 	void untrack_anchor(const Variant &p_spatial_entity_or_uuid);
 	void untrack_all_anchors();
+
+	Error save_anchors_to_local_file();
+	Error load_anchors_from_local_file();
 
 	Array get_anchor_uuids() const;
 	XRAnchor3D *get_anchor_node(const StringName &p_uuid) const;

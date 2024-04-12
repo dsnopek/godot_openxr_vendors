@@ -29,6 +29,8 @@
 
 #include "classes/openxr_fb_spatial_anchor_manager.h"
 
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/open_xr_interface.hpp>
 #include <godot_cpp/classes/xr_origin3d.hpp>
 #include <godot_cpp/classes/xr_anchor3d.hpp>
@@ -100,6 +102,46 @@ PackedStringArray OpenXRFbSpatialAnchorManager::_get_configuration_warnings() co
 	}
 
 	return warnings;
+}
+
+void OpenXRFbSpatialAnchorManager::set_scene(const Ref<PackedScene> &p_scene) {
+	scene = p_scene;
+}
+
+Ref<PackedScene> OpenXRFbSpatialAnchorManager::get_scene() const {
+	return scene;
+}
+
+void OpenXRFbSpatialAnchorManager::set_scene_setup_method(const StringName &p_method) {
+	scene_setup_method = p_method;
+}
+
+StringName OpenXRFbSpatialAnchorManager::get_scene_setup_method() const {
+	return scene_setup_method;
+}
+
+void OpenXRFbSpatialAnchorManager::set_persist_in_local_file(bool p_persist_in_local_file) {
+	persist_in_local_file = p_persist_in_local_file;
+}
+
+bool OpenXRFbSpatialAnchorManager::get_persist_in_local_file() const {
+	return persist_in_local_file;
+}
+
+void OpenXRFbSpatialAnchorManager::set_local_file_path(const String &p_local_file) {
+	local_file_path = p_local_file;
+}
+
+String OpenXRFbSpatialAnchorManager::get_local_file_path() const {
+	return local_file_path;
+}
+
+void OpenXRFbSpatialAnchorManager::set_auto_load(bool p_auto_load) {
+	auto_load = p_auto_load;
+}
+
+bool OpenXRFbSpatialAnchorManager::get_auto_load() const {
+	return auto_load;
 }
 
 void OpenXRFbSpatialAnchorManager::set_visible(bool p_visible) {
@@ -212,6 +254,48 @@ void OpenXRFbSpatialAnchorManager::untrack_all_anchors() {
 		E.value.entity->untrack();
 	}
 	anchors.clear();
+}
+
+Error OpenXRFbSpatialAnchorManager::save_anchors_to_local_file() {
+	Ref<FileAccess> file = FileAccess::open(local_file_path, FileAccess::WRITE);
+	if (file.is_null()) {
+		return FileAccess::get_open_error();
+	}
+
+	Dictionary anchor_data;
+	for (const KeyValue<StringName, Anchor> &E : anchors) {
+		anchor_data[E.key] = E.value.entity->get_custom_data();
+	}
+
+	file->store_string(JSON::stringify(anchor_data));
+
+	return OK;
+}
+
+Error OpenXRFbSpatialAnchorManager::load_anchors_from_local_file() {
+	Ref<FileAccess> file = FileAccess::open(local_file_path, FileAccess::READ);
+	if (file.is_null()) {
+		return FileAccess::get_open_error();
+	}
+
+	Ref<JSON> json;
+	json.instantiate();
+	Error parse_error = json->parse(file->get_as_text());
+	if (parse_error != OK) {
+		return parse_error;
+	}
+
+	Dictionary anchor_data = json->get_data();
+	Array uuids = anchor_data.keys();
+	for (int i = 0; i < uuids.size(); i++) {
+		Variant key = uuids[i];
+		StringName uuid = key;
+		if (!uuid.is_empty()) {
+			load_anchor(uuid, anchor_data[key], OpenXRFbSpatialEntity::STORAGE_LOCAL);
+		}
+	}
+
+	return OK;
 }
 
 Array OpenXRFbSpatialAnchorManager::get_anchor_uuids() const {
