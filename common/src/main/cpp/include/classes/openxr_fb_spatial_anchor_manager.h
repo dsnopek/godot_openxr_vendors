@@ -35,7 +35,6 @@
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 
-#include "classes/openxr_fb_spatial_anchor_creation_request.h"
 #include "classes/openxr_fb_spatial_entity.h"
 
 namespace godot {
@@ -61,7 +60,7 @@ class OpenXRFbSpatialAnchorManager : public Node {
 	};
 	HashMap<StringName, Anchor> anchors;
 
-	void _on_anchor_created(bool p_success, const Dictionary &p_custom_data, const Ref<OpenXRFbSpatialAnchorCreationRequest> &p_request);
+	void _on_anchor_created(bool p_success, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 	XRAnchor3D *_create_anchor_node(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_emit_signal = true);
 	void _on_anchor_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
 
@@ -81,7 +80,7 @@ public:
 	void show();
 	void hide();
 
-	Ref<OpenXRFbSpatialAnchorCreationRequest> create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data);
+	void create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data);
 	void load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location);
 	void track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 	void untrack_anchor(const Variant &p_spatial_entity_or_uuid);

@@ -18,6 +18,19 @@ extends Node3D
 const SPATIAL_ANCHOR_FILE = "user://spatial_anchors.json"
 const SpatialAnchor = preload("res://spatial_anchor.tscn")
 
+const COLORS = [
+    Color(1, 0, 0, 1), # Red
+    Color(0, 1, 0, 1), # Green
+    Color(0, 0, 1, 1), # Blue
+    Color(1, 1, 0, 1), # Yellow
+    Color(0, 1, 1, 1), # Cyan
+    Color(1, 0, 1, 1), # Magenta
+    Color(1, 0.5, 0, 1), # Orange
+    Color(0.5, 0, 0.5, 1), # Purple
+    Color(0, 0, 0, 1), # Black
+    Color(1, 1, 1, 1)  # White
+]
+
 var xr_interface : XRInterface = null
 var hand_tracking_source: Array[OpenXRInterface.HandTrackedSource]
 var passthrough_enabled: bool = false
@@ -34,6 +47,8 @@ func _ready():
 	hand_tracking_source.resize(OpenXRInterface.HAND_MAX)
 	for hand in OpenXRInterface.HAND_MAX:
 		hand_tracking_source[hand] = xr_interface.get_hand_tracking_source(hand)
+
+	randomize()
 
 func _on_openxr_session_begun() -> void:
 	await get_tree().create_timer(1.0).timeout
@@ -157,20 +172,16 @@ func _on_left_hand_button_pressed(name):
 			transform.origin = left_hand_pointer_raycast.get_collision_point()
 
 			print ("Attempting to create spatial anchor at: ", transform)
-			var request: OpenXRFbSpatialAnchorCreationRequest = spatial_anchor_manager.create_anchor(transform)
-			var success = await request.openxr_fb_spatial_anchor_creation_request_completed
-			print ("Spatial anchor creation was a success = ", success)
-			if success:
-				var spatial_anchor = request.get_spatial_entity()
-				print("UUID: ", spatial_anchor.uuid)
+			spatial_anchor_manager.create_anchor(transform, { color = COLORS[randi() % COLORS.size()] })
 
-				print ("Is locatable: ", spatial_anchor.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_LOCATABLE))
-				print ("Is storable: ", spatial_anchor.is_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_STORABLE))
 
-				spatial_anchor.set_component_enabled(OpenXRFbSpatialEntity.COMPONENT_TYPE_STORABLE, true)
-				var res: Array = await spatial_anchor.openxr_fb_spatial_entity_set_component_enabled_completed
-				print("Made storeable: ", res[0])
+func _on_spatial_anchor_tracked(anchor_node: XRAnchor3D, spatial_entity: OpenXRFbSpatialEntity) -> void:
+	var scene: Node3D = SpatialAnchor.instantiate()
+	scene.setup_scene(spatial_entity)
+	anchor_node.add_child(scene)
 
+#func _on_spatial_anchor_track_failed(spatial_entity:Object, spatial_entity:Object) -> void:
+#	print("Failed to track anchor")
 
 
 func _on_left_controller_fb_render_model_render_model_loaded() -> void:
@@ -193,3 +204,5 @@ func _on_scene_manager_scene_capture_completed(success: bool) -> void:
 
 func _on_scene_manager_scene_data_missing() -> void:
 	scene_manager.request_scene_capture()
+
+

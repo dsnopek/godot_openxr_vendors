@@ -56,13 +56,11 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "visible", PROPERTY_HINT_NONE, ""), "set_visible", "get_visible");
 
-	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_created", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
-	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_destroyed", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_tracked", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_untracked", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
-	// @todo better names?
-	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_load_failed", PropertyInfo(Variant::Type::STRING_NAME, "uuid"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
-	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_track_failed", PropertyInfo(Variant::Type::OBJECT, "spatial_entity"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
+	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_create_failed", PropertyInfo(Variant::Type::TRANSFORM3D, "transform"), PropertyInfo(Variant::Type::DICTIONARY, "custom_data")));
+	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_load_failed", PropertyInfo(Variant::Type::STRING_NAME, "uuid"), PropertyInfo(Variant::Type::DICTIONARY, "custom_data"), PropertyInfo(Variant::Type::INT, "location")));
+	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_track_failed", PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
 }
 
 void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
@@ -128,28 +126,18 @@ void OpenXRFbSpatialAnchorManager::hide() {
 	set_visible(false);
 }
 
-Ref<OpenXRFbSpatialAnchorCreationRequest> OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data) {
-	Ref<OpenXRFbSpatialAnchorCreationRequest> request;
-	request.instantiate();
-
+void OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data) {
 	Ref<OpenXRFbSpatialEntity> spatial_entity = OpenXRFbSpatialEntity::create_spatial_anchor(p_transform);
-	request->spatial_entity = spatial_entity;
-	spatial_entity->connect("openxr_fb_spatial_entity_created", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_created).bind(p_custom_data, request));
-
-	return request;
+	spatial_entity->set_custom_data(p_custom_data);
+	spatial_entity->connect("openxr_fb_spatial_entity_created", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_created).bind(spatial_entity));
 }
 
-void OpenXRFbSpatialAnchorManager::_on_anchor_created(bool p_success, const Dictionary &p_custom_data, const Ref<OpenXRFbSpatialAnchorCreationRequest> &p_request) {
-	if (p_success) {
-		// We can assume that any anchors created here will already be locatable.
-		p_request->anchor_node = _create_anchor_node(p_request->spatial_entity, false);
-	}
-	p_request->completed = true;
-	p_request->success = p_success;
-	p_request->emit_signal("openxr_fb_spatial_anchor_creation_request_completed", p_success);
+void OpenXRFbSpatialAnchorManager::_on_anchor_created(bool p_success, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
+	// We can assume that any anchors created here will already be locatable.
+	//p_request->anchor_node = _create_anchor_node(p_request->spatial_entity, false);
 
-	emit_signal("openxr_fb_spatial_anchor_created", p_request->anchor_node, p_request->spatial_entity);
-	emit_signal("openxr_fb_spatial_anchor_tracked", p_request->anchor_node, p_request->spatial_entity);
+	//emit_signal("openxr_fb_spatial_anchor_created", p_request->anchor_node, p_request->spatial_entity);
+	//emit_signal("openxr_fb_spatial_anchor_tracked", p_request->anchor_node, p_request->spatial_entity);
 }
 
 XRAnchor3D *OpenXRFbSpatialAnchorManager::_create_anchor_node(const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_emit_signal) {
