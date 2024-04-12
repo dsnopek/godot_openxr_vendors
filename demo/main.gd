@@ -177,8 +177,8 @@ func _on_left_hand_button_pressed(name):
 
 func _on_spatial_anchor_tracked(anchor_node: XRAnchor3D, spatial_entity: OpenXRFbSpatialEntity) -> void:
 	var scene: Node3D = SpatialAnchor.instantiate()
-	scene.setup_scene(spatial_entity)
 	anchor_node.add_child(scene)
+	scene.setup_scene(spatial_entity)
 
 #func _on_spatial_anchor_track_failed(spatial_entity:Object, spatial_entity:Object) -> void:
 #	print("Failed to track anchor")

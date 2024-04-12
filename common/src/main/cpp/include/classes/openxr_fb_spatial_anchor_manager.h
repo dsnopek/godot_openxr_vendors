@@ -60,9 +60,11 @@ class OpenXRFbSpatialAnchorManager : public Node {
 	};
 	HashMap<StringName, Anchor> anchors;
 
-	void _on_anchor_created(bool p_success, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
-	XRAnchor3D *_create_anchor_node(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_emit_signal = true);
+	void _on_anchor_created(bool p_success, const Transform3D &p_transform, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 	void _on_anchor_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
+	void _on_anchor_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
+	void _on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
+	void _complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 
 protected:
 	void _notification(int p_what);

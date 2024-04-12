@@ -44,6 +44,8 @@ using namespace godot;
 
 void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_uuid"), &OpenXRFbSpatialEntity::get_uuid);
+	ClassDB::bind_method(D_METHOD("set_custom_data"), &OpenXRFbSpatialEntity::set_custom_data);
+	ClassDB::bind_method(D_METHOD("get_custom_data"), &OpenXRFbSpatialEntity::get_custom_data);
 
 	ClassDB::bind_method(D_METHOD("get_supported_components"), &OpenXRFbSpatialEntity::get_supported_components);
 	ClassDB::bind_method(D_METHOD("is_component_supported", "component"), &OpenXRFbSpatialEntity::is_component_supported);
@@ -71,6 +73,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("destroy"), &OpenXRFbSpatialEntity::destroy);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
+	ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "custom_data", PROPERTY_HINT_NONE, ""), "set_custom_data", "get_custom_data");
 
 	BIND_ENUM_CONSTANT(STORAGE_LOCAL);
 	BIND_ENUM_CONSTANT(STORAGE_CLOUD);
@@ -375,6 +378,8 @@ OpenXRFbSpatialEntity::StorageLocation OpenXRFbSpatialEntity::from_openxr_storag
 		case XR_SPACE_STORAGE_LOCATION_CLOUD_FB: {
 			return STORAGE_CLOUD;
 		} break;
+		case XR_SPACE_STORAGE_LOCATION_INVALID_FB:
+		case XR_SPACE_STORAGE_LOCATION_MAX_ENUM_FB:
 		default: {
 			WARN_PRINT_ONCE(vformat("Received invalid XrSpaceStorageLocationFB: %s.", (int)p_location));
 			return STORAGE_LOCAL;
