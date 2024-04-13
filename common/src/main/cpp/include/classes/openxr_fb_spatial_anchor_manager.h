@@ -66,11 +66,16 @@ class OpenXRFbSpatialAnchorManager : public Node {
 	};
 	HashMap<StringName, Anchor> anchors;
 
+	void _load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_save_file);
+	void _track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
+
 	void _on_anchor_created(bool p_success, const Transform3D &p_transform, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
-	void _on_anchor_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
-	void _on_anchor_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
-	void _on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
-	void _complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
+	void _on_anchor_load_query_completed(const Array &p_results, const Dictionary &p_anchors_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_save_file);
+	void _on_anchor_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_save_file);
+	void _on_anchor_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_save_file);
+	void _on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
+	void _complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
+
 
 protected:
 	void _notification(int p_what);
