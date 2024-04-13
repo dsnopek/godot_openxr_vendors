@@ -112,7 +112,6 @@ public:
 	void load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location);
 	void track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 	void untrack_anchor(const Variant &p_spatial_entity_or_uuid);
-	void untrack_all_anchors();
 
 	Error save_anchors_to_local_file();
 	Error load_anchors_from_local_file();

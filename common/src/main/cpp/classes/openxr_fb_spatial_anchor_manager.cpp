@@ -67,7 +67,6 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("load_anchor", "uuid", "custom_data", "location"), &OpenXRFbSpatialAnchorManager::load_anchor, DEFVAL(Dictionary()), DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
 	ClassDB::bind_method(D_METHOD("track_anchor", "spatial_entity"), &OpenXRFbSpatialAnchorManager::track_anchor);
 	ClassDB::bind_method(D_METHOD("untrack_anchor", "spatial_entity_or_uuid"), &OpenXRFbSpatialAnchorManager::untrack_anchor);
-	ClassDB::bind_method(D_METHOD("untrack_all_anchors"), &OpenXRFbSpatialAnchorManager::untrack_all_anchors);
 
 	ClassDB::bind_method(D_METHOD("get_anchor_uuids"), &OpenXRFbSpatialAnchorManager::get_anchor_uuids);
 	ClassDB::bind_method(D_METHOD("get_anchor_node", "uuid"), &OpenXRFbSpatialAnchorManager::get_anchor_node);
@@ -92,6 +91,7 @@ void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			Ref<OpenXRInterface> openxr_interface = XRServer::get_singleton()->find_interface("OpenXR");
 			if (openxr_interface.is_valid()) {
+				openxr_interface->connect("session_begun", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_openxr_session_begun));
 				openxr_interface->connect("session_stopping", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_openxr_session_stopping));
 			}
 
@@ -100,17 +100,24 @@ void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
 		case NOTIFICATION_EXIT_TREE: {
 			Ref<OpenXRInterface> openxr_interface = XRServer::get_singleton()->find_interface("OpenXR");
 			if (openxr_interface.is_valid()) {
+				openxr_interface->disconnect("session_begun", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_openxr_session_begun));
 				openxr_interface->disconnect("session_stopping", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_openxr_session_stopping));
 			}
 
-			untrack_all_anchors();
+			// @todo clean-up!
 			xr_origin = nullptr;
 		} break;
 	}
 }
 
+void OpenXRFbSpatialAnchorManager::_on_openxr_session_begun() {
+	if (auto_load && persist_in_local_file) {
+		load_anchors_from_local_file();
+	}
+}
+
 void OpenXRFbSpatialAnchorManager::_on_openxr_session_stopping() {
-	untrack_all_anchors();
+	// @todo clean-up!
 }
 
 PackedStringArray OpenXRFbSpatialAnchorManager::_get_configuration_warnings() const {
@@ -232,7 +239,7 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_load_query_completed(const Array &
 	}
 
 	Array failed_uuids = anchors_custom_data.keys();
-	for (int i = 0; i < p_results.size(); i++) {
+	for (int i = 0; i < failed_uuids.size(); i++) {
 		StringName uuid = failed_uuids[i];
 		emit_signal("openxr_fb_spatial_anchor_load_failed", uuid, anchors_custom_data[uuid], p_location);
 	}
@@ -296,6 +303,7 @@ void OpenXRFbSpatialAnchorManager::untrack_anchor(const Variant &p_spatial_entit
 	// @todo be sure to emit "anchor_untracked"
 }
 
+/*
 void OpenXRFbSpatialAnchorManager::untrack_all_anchors() {
 	for (KeyValue<StringName, Anchor> &E : anchors) {
 		emit_signal("openxr_fb_spatial_anchor_untracked", E.value.node, E.value.entity);
@@ -313,6 +321,7 @@ void OpenXRFbSpatialAnchorManager::untrack_all_anchors() {
 	}
 	anchors.clear();
 }
+*/
 
 Error OpenXRFbSpatialAnchorManager::save_anchors_to_local_file() {
 	Ref<FileAccess> file = FileAccess::open(local_file_path, FileAccess::WRITE);
