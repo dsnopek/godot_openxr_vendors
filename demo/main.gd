@@ -33,7 +33,7 @@ const COLORS = [
 var xr_interface : XRInterface = null
 var hand_tracking_source: Array[OpenXRInterface.HandTrackedSource]
 var passthrough_enabled: bool = false
-var spatial_anchors := {}
+var selected_spatial_anchor_node: Node3D = null
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -127,6 +127,8 @@ func _physics_process(_delta: float) -> void:
 		hand_tracking_source[hand] = source
 
 	if left_hand_pointer.visible:
+		var previous_selected_spatial_anchor_node = selected_spatial_anchor_node
+
 		if left_hand_pointer_raycast.is_colliding():
 			var collision_point: Vector3 = left_hand_pointer_raycast.get_collision_point()
 			scene_colliding_mesh.global_position = collision_point
@@ -134,9 +136,25 @@ func _physics_process(_delta: float) -> void:
 			var pointer_length: float = (collision_point - left_hand_pointer.global_position).length()
 			scene_pointer_mesh.mesh.size.z = pointer_length
 			scene_pointer_mesh.position.z = -pointer_length / 2.0
+
+			var collider: CollisionObject3D = left_hand_pointer_raycast.get_collider()
+			if collider.get_collision_layer_value(3):
+				selected_spatial_anchor_node = collider
+			else:
+				selected_spatial_anchor_node = null
 		else:
 			scene_pointer_mesh.mesh.size.z = 5
 			scene_pointer_mesh.position.z = -2.5
+			selected_spatial_anchor_node = null
+
+		if previous_selected_spatial_anchor_node != selected_spatial_anchor_node:
+			if previous_selected_spatial_anchor_node:
+				previous_selected_spatial_anchor_node.set_selected(false)
+			if selected_spatial_anchor_node:
+				selected_spatial_anchor_node.set_selected(true)
+				scene_colliding_mesh.visible = false
+			else:
+				scene_colliding_mesh.visible = true
 
 
 func _on_left_hand_button_pressed(name):
@@ -149,19 +167,25 @@ func _on_left_hand_button_pressed(name):
 
 	elif name == "trigger_click" and left_hand_pointer.visible:
 		if left_hand_pointer_raycast.is_colliding():
-			var anchor_transform := Transform3D()
-			anchor_transform.origin = left_hand_pointer_raycast.get_collision_point()
-
-			var collision_normal: Vector3 = left_hand_pointer_raycast.get_collision_normal()
-			if collision_normal.is_equal_approx(Vector3.UP):
-				anchor_transform.basis = anchor_transform.basis.rotated(Vector3(1.0, 0.0, 0.0), PI / 2.0)
-			elif collision_normal.is_equal_approx(Vector3.DOWN):
-				anchor_transform.basis = anchor_transform.basis.rotated(Vector3(1.0, 0.0, 0.0), -PI / 2.0)
+			var collider: CollisionObject3D = left_hand_pointer_raycast.get_collider()
+			if collider.get_collision_layer_value(3):
+				var anchor_parent = collider.get_parent()
+				if anchor_parent is XRAnchor3D:
+					spatial_anchor_manager.untrack_anchor(anchor_parent.tracker)
 			else:
-				anchor_transform.basis = Basis.looking_at(left_hand_pointer_raycast.get_collision_normal())
+				var anchor_transform := Transform3D()
+				anchor_transform.origin = left_hand_pointer_raycast.get_collision_point()
 
-			print ("Attempting to create spatial anchor at: ", anchor_transform)
-			spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
+				var collision_normal: Vector3 = left_hand_pointer_raycast.get_collision_normal()
+				if collision_normal.is_equal_approx(Vector3.UP):
+					anchor_transform.basis = anchor_transform.basis.rotated(Vector3(1.0, 0.0, 0.0), PI / 2.0)
+				elif collision_normal.is_equal_approx(Vector3.DOWN):
+					anchor_transform.basis = anchor_transform.basis.rotated(Vector3(1.0, 0.0, 0.0), -PI / 2.0)
+				else:
+					anchor_transform.basis = Basis.looking_at(left_hand_pointer_raycast.get_collision_normal())
+
+				print ("Attempting to create spatial anchor at: ", anchor_transform)
+				spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
 
 
 func _on_spatial_anchor_tracked(anchor_node: XRAnchor3D, spatial_entity: OpenXRFbSpatialEntity) -> void:
