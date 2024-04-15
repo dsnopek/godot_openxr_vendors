@@ -314,25 +314,68 @@ void OpenXRFbSpatialAnchorManager::_complete_anchor_setup(const Ref<OpenXRFbSpat
 		save_anchors_to_local_file();
 	}
 
+	if (scene.is_valid()) {
+		Node *scene_node = scene->instantiate();
+		node->add_child(scene_node);
+		scene_node->call(scene_setup_method, p_entity);
+	}
+
 	emit_signal("openxr_fb_spatial_anchor_tracked", node, p_entity);
 }
 
 void OpenXRFbSpatialAnchorManager::untrack_anchor(const Variant &p_spatial_entity_or_uuid) {
-	// @todo Remove from the list and save the file here - we don't need to wait for the rest to complete.
-	// @todo be sure to emit "anchor_untracked"
+	StringName uuid;
+
+	if (p_spatial_entity_or_uuid.get_type() == Variant::OBJECT) {
+		Ref<OpenXRFbSpatialEntity> spatial_entity = p_spatial_entity_or_uuid;
+		ERR_FAIL_COND(spatial_entity.is_null());
+		uuid = spatial_entity->get_uuid();
+	} else if (p_spatial_entity_or_uuid.get_type() == Variant::STRING || p_spatial_entity_or_uuid.get_type() == Variant::STRING_NAME) {
+		uuid = p_spatial_entity_or_uuid;
+	} else {
+		ERR_FAIL_MSG("Invalid argument passed to OpenXRFbSpatialAnchorManager::untrack_anchor().");
+	}
+
+	Anchor *anchor = anchors.getptr(uuid);
+	ERR_FAIL_COND(!anchor);
+
+	Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(anchor->node));
+	if (node) {
+		Node *parent = node->get_parent();
+		if (parent) {
+			parent->remove_child(node);
+		}
+		node->queue_free();
+	}
+
+	Ref<OpenXRFbSpatialEntity> spatial_entity = anchor->entity;
+	spatial_entity->untrack();
+
+	anchors.erase(uuid);
+
+	if (persist_in_local_file) {
+		save_anchors_to_local_file();
+	}
+
+	_untrack_anchor(spatial_entity);
+
+	emit_signal("openxr_fb_spatial_anchor_untracked", node, spatial_entity);
 }
 
 void OpenXRFbSpatialAnchorManager::_untrack_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
 	if (p_spatial_entity->is_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE)) {
-		_on_anchor_untrack_enable_storable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, false, p_spatial_entity);
+		_on_anchor_untrack_enable_storable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true, p_spatial_entity);
 	} else {
-		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_storable_completed).bind(p_spatial_entity), CONNECT_ONE_SHOT);
-		p_spatial_entity->set_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, false);
+		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_untrack_enable_storable_completed).bind(p_spatial_entity), CONNECT_ONE_SHOT);
+		p_spatial_entity->set_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true);
 	}
 }
 
 void OpenXRFbSpatialAnchorManager::_on_anchor_untrack_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
-	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to make spatial anchor %s storable.", p_spatial_entity->get_uuid()));
+	if (!p_succeeded) {
+		// If we couldn't make it storable, just exit silently since we were trying to remove it anyway.
+		return;
+	}
 
 	p_spatial_entity->connect("openxr_fb_spatial_entity_erased", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_erase_completed).bind(p_spatial_entity), CONNECT_ONE_SHOT);
 	p_spatial_entity->erase_from_storage(OpenXRFbSpatialEntity::STORAGE_LOCAL);

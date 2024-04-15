@@ -26,8 +26,6 @@ const COLORS = [
 	"#FF00FF", # Magenta
 	"#FF8000", # Orange
 	"#800080", # Purple
-	"#000000", # Black
-	"#FFFFFF", # White
 ]
 
 var xr_interface : XRInterface = null
@@ -186,15 +184,6 @@ func _on_left_hand_button_pressed(name):
 
 				print ("Attempting to create spatial anchor at: ", anchor_transform)
 				spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
-
-
-func _on_spatial_anchor_tracked(anchor_node: XRAnchor3D, spatial_entity: OpenXRFbSpatialEntity) -> void:
-	var scene: Node3D = SpatialAnchor.instantiate()
-	anchor_node.add_child(scene)
-	scene.setup_scene(spatial_entity)
-
-#func _on_spatial_anchor_track_failed(spatial_entity:Object, spatial_entity:Object) -> void:
-#	print("Failed to track anchor")
 
 
 func _on_left_controller_fb_render_model_render_model_loaded() -> void:
