@@ -15,20 +15,19 @@ extends Node3D
 @onready var scene_manager: OpenXRFbSceneManager = $XROrigin3D/OpenXRFbSceneManager
 @onready var spatial_anchor_manager: OpenXRFbSpatialAnchorManager = $XROrigin3D/OpenXRFbSpatialAnchorManager
 
-const SPATIAL_ANCHOR_FILE = "user://spatial_anchors.json"
 const SpatialAnchor = preload("res://spatial_anchor.tscn")
 
 const COLORS = [
-    Color(1, 0, 0, 1), # Red
-    Color(0, 1, 0, 1), # Green
-    Color(0, 0, 1, 1), # Blue
-    Color(1, 1, 0, 1), # Yellow
-    Color(0, 1, 1, 1), # Cyan
-    Color(1, 0, 1, 1), # Magenta
-    Color(1, 0.5, 0, 1), # Orange
-    Color(0.5, 0, 0.5, 1), # Purple
-    Color(0, 0, 0, 1), # Black
-    Color(1, 1, 1, 1)  # White
+	"#FF0000", # Red
+	"#00FF00", # Green
+	"#0000FF", # Blue
+	"#FFFF00", # Yellow
+	"#00FFFF", # Cyan
+	"#FF00FF", # Magenta
+	"#FF8000", # Orange
+	"#800080", # Purple
+	"#000000", # Black
+	"#FFFFFF", # White
 ]
 
 var xr_interface : XRInterface = null
@@ -50,11 +49,13 @@ func _ready():
 
 	randomize()
 
+
 func _on_openxr_session_begun() -> void:
 	await get_tree().create_timer(1.0).timeout
 
 	var query := OpenXRFbSpatialEntityQuery.new()
 	query.query_all()
+	query.max_results = 1000
 	if query.execute() == OK:
 		print("Anchors: ")
 		var results = await query.openxr_fb_spatial_entity_query_completed
@@ -62,27 +63,6 @@ func _on_openxr_session_begun() -> void:
 			var semantic_labels = result.get_semantic_labels()
 			print(semantic_labels[0] if semantic_labels.size() > 0 else "[ANCHOR]", ": ", result.get_uuid())
 
-	if FileAccess.file_exists(SPATIAL_ANCHOR_FILE):
-		load_spatial_anchors_file()
-
-func load_spatial_anchors_file() -> void:
-	var file := FileAccess.open(SPATIAL_ANCHOR_FILE, FileAccess.READ)
-	if not file:
-		return
-
-	var data = JSON.parse_string(file.get_as_text())
-	if data is Dictionary:
-		spatial_anchors = data
-	else:
-		print("ERROR: Unable to parse spatial anchors file at ", SPATIAL_ANCHOR_FILE)
-
-	# @todo Load and track the Spatial Anchors found in the file
-	print ("Loaded anchors: ", spatial_anchors)
-
-
-func save_spatial_anchors_file() -> void:
-	var file := FileAccess.open(SPATIAL_ANCHOR_FILE, FileAccess.WRITE)
-	file.store_string(JSON.stringify(spatial_anchors))
 
 func enable_passthrough(enable: bool) -> void:
 	if passthrough_enabled == enable:
@@ -100,6 +80,7 @@ func enable_passthrough(enable: bool) -> void:
 			world_environment.environment.background_color = Color(0.0, 0.0, 0.0, 0.0)
 			floor_mesh.visible = false
 			scene_manager.visible = true
+			spatial_anchor_manager.visible = true
 			left_hand_pointer.visible = true
 			left_hand_pointer_raycast.enabled = true
 			if not scene_manager.are_scene_anchors_created():
@@ -111,6 +92,7 @@ func enable_passthrough(enable: bool) -> void:
 			world_environment.environment.background_mode = Environment.BG_SKY
 			floor_mesh.visible = true
 			scene_manager.visible = false
+			spatial_anchor_manager.visible = false
 			left_hand_pointer.visible = false
 			left_hand_pointer_raycast.enabled = false
 		passthrough_enabled = enable
@@ -167,12 +149,19 @@ func _on_left_hand_button_pressed(name):
 
 	elif name == "trigger_click" and left_hand_pointer.visible:
 		if left_hand_pointer_raycast.is_colliding():
-			var transform := Transform3D()
-			transform.basis = Basis.looking_at(left_hand_pointer_raycast.get_collision_normal())
-			transform.origin = left_hand_pointer_raycast.get_collision_point()
+			var anchor_transform := Transform3D()
+			anchor_transform.origin = left_hand_pointer_raycast.get_collision_point()
 
-			print ("Attempting to create spatial anchor at: ", transform)
-			spatial_anchor_manager.create_anchor(transform, { color = COLORS[randi() % COLORS.size()] })
+			var collision_normal: Vector3 = left_hand_pointer_raycast.get_collision_normal()
+			if collision_normal.is_equal_approx(Vector3.UP):
+				anchor_transform.basis = anchor_transform.basis.rotated(Vector3(1.0, 0.0, 0.0), PI / 2.0)
+			elif collision_normal.is_equal_approx(Vector3.DOWN):
+				anchor_transform.basis = anchor_transform.basis.rotated(Vector3(1.0, 0.0, 0.0), -PI / 2.0)
+			else:
+				anchor_transform.basis = Basis.looking_at(left_hand_pointer_raycast.get_collision_normal())
+
+			print ("Attempting to create spatial anchor at: ", anchor_transform)
+			spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
 
 
 func _on_spatial_anchor_tracked(anchor_node: XRAnchor3D, spatial_entity: OpenXRFbSpatialEntity) -> void:

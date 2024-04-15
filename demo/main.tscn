@@ -143,6 +143,7 @@ auto_create = false
 visible = false
 
 [node name="OpenXRFbSpatialAnchorManager" type="OpenXRFbSpatialAnchorManager" parent="XROrigin3D"]
+visible = false
 
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("PlaneMesh_mjcgt")

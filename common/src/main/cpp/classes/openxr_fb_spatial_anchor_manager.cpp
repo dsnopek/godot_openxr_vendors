@@ -37,6 +37,8 @@
 #include <godot_cpp/classes/xr_anchor3d.hpp>
 #include <godot_cpp/classes/xr_server.hpp>
 
+#include <godot_cpp/variant/utility_functions.hpp>
+
 #include "classes/openxr_fb_spatial_entity_query.h"
 #include "extensions/openxr_fb_spatial_entity_extension_wrapper.h"
 
@@ -58,6 +60,9 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_auto_load", "enable"), &OpenXRFbSpatialAnchorManager::set_auto_load);
 	ClassDB::bind_method(D_METHOD("get_auto_load"), &OpenXRFbSpatialAnchorManager::get_auto_load);
 
+	ClassDB::bind_method(D_METHOD("set_erase_unknown_anchors_on_load", "enable"), &OpenXRFbSpatialAnchorManager::set_erase_unknown_anchors_on_load);
+	ClassDB::bind_method(D_METHOD("get_erase_unknown_anchors_on_load"), &OpenXRFbSpatialAnchorManager::get_erase_unknown_anchors_on_load);
+
 	ClassDB::bind_method(D_METHOD("set_visible", "visible"), &OpenXRFbSpatialAnchorManager::set_visible);
 	ClassDB::bind_method(D_METHOD("get_visible"), &OpenXRFbSpatialAnchorManager::get_visible);
 	ClassDB::bind_method(D_METHOD("show"), &OpenXRFbSpatialAnchorManager::show);
@@ -77,6 +82,7 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "persist_in_local_file", PROPERTY_HINT_NONE, ""), "set_persist_in_local_file", "get_persist_in_local_file");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "local_file_path", PROPERTY_HINT_NONE, ""), "set_local_file_path", "get_local_file_path");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_load", PROPERTY_HINT_NONE, ""), "set_auto_load", "get_auto_load");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "erase_unknown_anchors_on_load", PROPERTY_HINT_NONE, ""), "set_erase_unknown_anchors_on_load", "get_erase_unknown_anchors_on_load");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "visible", PROPERTY_HINT_NONE, ""), "set_visible", "get_visible");
 
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_tracked", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
@@ -149,8 +155,8 @@ StringName OpenXRFbSpatialAnchorManager::get_scene_setup_method() const {
 	return scene_setup_method;
 }
 
-void OpenXRFbSpatialAnchorManager::set_persist_in_local_file(bool p_persist_in_local_file) {
-	persist_in_local_file = p_persist_in_local_file;
+void OpenXRFbSpatialAnchorManager::set_persist_in_local_file(bool p_enable) {
+	persist_in_local_file = p_enable;
 }
 
 bool OpenXRFbSpatialAnchorManager::get_persist_in_local_file() const {
@@ -165,12 +171,20 @@ String OpenXRFbSpatialAnchorManager::get_local_file_path() const {
 	return local_file_path;
 }
 
-void OpenXRFbSpatialAnchorManager::set_auto_load(bool p_auto_load) {
-	auto_load = p_auto_load;
+void OpenXRFbSpatialAnchorManager::set_auto_load(bool p_enable) {
+	auto_load = p_enable;
 }
 
 bool OpenXRFbSpatialAnchorManager::get_auto_load() const {
 	return auto_load;
+}
+
+void OpenXRFbSpatialAnchorManager::set_erase_unknown_anchors_on_load(bool p_enable) {
+	erase_unknown_anchors_on_load = p_enable;
+}
+
+bool OpenXRFbSpatialAnchorManager::get_erase_unknown_anchors_on_load() const {
+	return erase_unknown_anchors_on_load;
 }
 
 void OpenXRFbSpatialAnchorManager::set_visible(bool p_visible) {
@@ -231,10 +245,15 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_load_query_completed(const Array &
 		Ref<OpenXRFbSpatialEntity> spatial_entity = p_results[i];
 		if (spatial_entity.is_valid()) {
 			StringName uuid = spatial_entity->get_uuid();
-			spatial_entity->set_custom_data(anchors_custom_data[uuid]);
-			anchors_custom_data.erase(uuid);
+			if (anchors_custom_data.has(uuid)) {
+				spatial_entity->set_custom_data(anchors_custom_data[uuid]);
+				anchors_custom_data.erase(uuid);
 
-			_track_anchor(spatial_entity, p_save_file);
+				_track_anchor(spatial_entity, p_save_file);
+			} else if (erase_unknown_anchors_on_load && spatial_entity->is_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE)) {
+				// This will ideally succeed, but if it doesn't, let it be - we'll try again on next load.
+				spatial_entity->erase_from_storage(p_location);
+			}
 		}
 	}
 
@@ -334,6 +353,7 @@ Error OpenXRFbSpatialAnchorManager::save_anchors_to_local_file() {
 		anchor_data[E.key] = E.value.entity->get_custom_data();
 	}
 
+	UtilityFunctions::print("Saving file: ", anchor_data);
 	file->store_string(JSON::stringify(anchor_data));
 
 	return OK;
@@ -353,10 +373,19 @@ Error OpenXRFbSpatialAnchorManager::load_anchors_from_local_file() {
 	}
 
 	Dictionary anchor_data = json->get_data();
+	UtilityFunctions::print("Loading file: ", anchor_data);
 
 	Ref<OpenXRFbSpatialEntityQuery> query;
 	query.instantiate();
-	query->query_by_uuid(anchor_data.keys(), OpenXRFbSpatialEntity::STORAGE_LOCAL);
+	if (erase_unknown_anchors_on_load) {
+		// If we want to clear out unknown anchors, then we need to query everything.
+		query->query_all();
+		query->set_max_results(1000);
+	} else {
+		// Otherwise, we just query the specific anchors we know about.
+		query->query_by_uuid(anchor_data.keys(), OpenXRFbSpatialEntity::STORAGE_LOCAL);
+		query->set_max_results(anchor_data.size());
+	}
 	query->connect("openxr_fb_spatial_entity_query_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_load_query_completed).bind(anchor_data, OpenXRFbSpatialEntity::STORAGE_LOCAL, false));
 	query->execute();
 

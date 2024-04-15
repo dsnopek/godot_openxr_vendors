@@ -50,6 +50,7 @@ class OpenXRFbSpatialAnchorManager : public Node {
 	bool persist_in_local_file = true;
 	String local_file_path = "user://openxr_fb_spatial_anchors.json";
 	bool auto_load = true;
+	bool erase_unknown_anchors_on_load = true;
 	bool visible = true;
 
 	XROrigin3D *xr_origin = nullptr;
@@ -94,14 +95,17 @@ public:
 	void set_scene_setup_method(const StringName &p_method);
 	StringName get_scene_setup_method() const;
 
-	void set_persist_in_local_file(bool p_persist_in_local_file);
+	void set_persist_in_local_file(bool p_enable);
 	bool get_persist_in_local_file() const;
 
 	void set_local_file_path(const String &p_local_file);
 	String get_local_file_path() const;
 
-	void set_auto_load(bool p_auto_load);
+	void set_auto_load(bool p_enable);
 	bool get_auto_load() const;
+
+	void set_erase_unknown_anchors_on_load(bool p_enable);
+	bool get_erase_unknown_anchors_on_load() const;
 
 	void set_visible(bool p_visible);
 	bool get_visible() const;
