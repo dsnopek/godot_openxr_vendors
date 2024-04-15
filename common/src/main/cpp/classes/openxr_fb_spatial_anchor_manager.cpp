@@ -102,6 +102,10 @@ void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
 			}
 
 			xr_origin = Object::cast_to<XROrigin3D>(get_parent());
+			if (xr_origin && auto_load && persist_in_local_file && openxr_interface.is_valid() && openxr_interface->is_initialized()) {
+				load_anchors_from_local_file();
+			}
+
 		} break;
 		case NOTIFICATION_EXIT_TREE: {
 			Ref<OpenXRInterface> openxr_interface = XRServer::get_singleton()->find_interface("OpenXR");
@@ -110,20 +114,37 @@ void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
 				openxr_interface->disconnect("session_stopping", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_openxr_session_stopping));
 			}
 
-			// @todo clean-up!
 			xr_origin = nullptr;
+			_cleanup_anchors();
 		} break;
 	}
 }
 
 void OpenXRFbSpatialAnchorManager::_on_openxr_session_begun() {
-	if (auto_load && persist_in_local_file) {
+	if (xr_origin && auto_load && persist_in_local_file) {
 		load_anchors_from_local_file();
 	}
 }
 
 void OpenXRFbSpatialAnchorManager::_on_openxr_session_stopping() {
-	// @todo clean-up!
+	_cleanup_anchors();
+}
+
+// Removes anchor nodes and clears the anchor list - but doesn't change the local file.
+void OpenXRFbSpatialAnchorManager::_cleanup_anchors() {
+	for (KeyValue<StringName, Anchor> &E : anchors) {
+		Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(E.value.node));
+		if (node) {
+			Node *parent = node->get_parent();
+			if (parent) {
+				parent->remove_child(node);
+			}
+			node->queue_free();
+		}
+
+		E.value.entity->untrack();
+	}
+	anchors.clear();
 }
 
 PackedStringArray OpenXRFbSpatialAnchorManager::_get_configuration_warnings() const {
@@ -212,6 +233,8 @@ void OpenXRFbSpatialAnchorManager::hide() {
 }
 
 void OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data) {
+	ERR_FAIL_COND(!xr_origin);
+
 	Ref<OpenXRFbSpatialEntity> spatial_entity = OpenXRFbSpatialEntity::create_spatial_anchor(p_transform);
 	spatial_entity->set_custom_data(p_custom_data);
 	spatial_entity->connect("openxr_fb_spatial_entity_created", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_created).bind(p_transform, spatial_entity));
@@ -226,6 +249,8 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_created(bool p_success, const Tran
 }
 
 void OpenXRFbSpatialAnchorManager::load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location) {
+	ERR_FAIL_COND(!xr_origin);
+
 	Array uuids;
 	uuids.push_back(p_uuid);
 
@@ -264,7 +289,9 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_load_query_completed(const Array &
 }
 
 void OpenXRFbSpatialAnchorManager::track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
-		_track_anchor(p_spatial_entity, true);
+	ERR_FAIL_COND(!xr_origin);
+
+	_track_anchor(p_spatial_entity, true);
 }
 
 void OpenXRFbSpatialAnchorManager::_track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file) {
@@ -280,7 +307,7 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_locatable_completed(b
 	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to make spatial anchor %s locatable.", p_spatial_entity->get_uuid()));
 
 	if (p_spatial_entity->is_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE)) {
-		_on_anchor_track_enable_locatable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true, p_spatial_entity, p_save_file);
+		_on_anchor_track_enable_storable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true, p_spatial_entity, p_save_file);
 	} else {
 		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_storable_completed).bind(p_spatial_entity, p_save_file), CONNECT_ONE_SHOT);
 		p_spatial_entity->set_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true);
@@ -300,6 +327,8 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_saved(bool p_succeeded, OpenXRFbSp
 }
 
 void OpenXRFbSpatialAnchorManager::_complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_save_file) {
+	ERR_FAIL_COND(!xr_origin);
+
 	p_entity->track();
 
 	XRAnchor3D *node = memnew(XRAnchor3D);
@@ -385,26 +414,6 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_erase_completed(bool p_succeeded, 
 	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to erase spatial anchor %s.", p_spatial_entity->get_uuid()));
 }
 
-/*
-void OpenXRFbSpatialAnchorManager::untrack_all_anchors() {
-	for (KeyValue<StringName, Anchor> &E : anchors) {
-		emit_signal("openxr_fb_spatial_anchor_untracked", E.value.node, E.value.entity);
-
-		Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(E.value.node));
-		if (node) {
-			Node *parent = node->get_parent();
-			if (parent) {
-				parent->remove_child(node);
-			}
-			node->queue_free();
-		}
-
-		E.value.entity->untrack();
-	}
-	anchors.clear();
-}
-*/
-
 Error OpenXRFbSpatialAnchorManager::save_anchors_to_local_file() {
 	Ref<FileAccess> file = FileAccess::open(local_file_path, FileAccess::WRITE);
 	if (file.is_null()) {
@@ -422,6 +431,9 @@ Error OpenXRFbSpatialAnchorManager::save_anchors_to_local_file() {
 }
 
 Error OpenXRFbSpatialAnchorManager::load_anchors_from_local_file() {
+	ERR_FAIL_COND_V(!xr_origin, FAILED);
+	ERR_FAIL_COND_V(anchors.size() > 0, FAILED);
+
 	Ref<FileAccess> file = FileAccess::open(local_file_path, FileAccess::READ);
 	if (file.is_null()) {
 		return FileAccess::get_open_error();

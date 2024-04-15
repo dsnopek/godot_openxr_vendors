@@ -67,6 +67,8 @@ class OpenXRFbSpatialAnchorManager : public Node {
 	};
 	HashMap<StringName, Anchor> anchors;
 
+	void _cleanup_anchors();
+
 	void _load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_save_file);
 	void _track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
 
