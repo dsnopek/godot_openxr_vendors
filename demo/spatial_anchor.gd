@@ -15,12 +15,11 @@ func setup_scene(spatial_entity: OpenXRFbSpatialEntity) -> void:
 	mesh_instance.set_surface_override_material(0, material)
 
 func set_selected(p_selected: bool) -> void:
-	if selected != p_selected:
-		selected = p_selected
+	selected = p_selected
 
-		var material: StandardMaterial3D = mesh_instance.get_surface_override_material(0)
-		if selected:
-			material.albedo_color = Color(0.5, 0.5, 0.5)
-		else:
-			material.albedo_color = color
-		mesh_instance.set_surface_override_material(0, material)
+	var material: StandardMaterial3D = mesh_instance.get_surface_override_material(0)
+	if selected:
+		material.albedo_color = Color(0.5, 0.5, 0.5)
+	else:
+		material.albedo_color = color
+	mesh_instance.set_surface_override_material(0, material)

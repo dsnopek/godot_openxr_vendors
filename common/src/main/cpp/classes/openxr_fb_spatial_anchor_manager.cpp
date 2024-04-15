@@ -32,6 +32,7 @@
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/classes/open_xr_interface.hpp>
+#include <godot_cpp/classes/open_xrapi_extension.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/classes/xr_origin3d.hpp>
 #include <godot_cpp/classes/xr_anchor3d.hpp>
@@ -101,9 +102,18 @@ void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
 				openxr_interface->connect("session_stopping", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_openxr_session_stopping));
 			}
 
+
 			xr_origin = Object::cast_to<XROrigin3D>(get_parent());
-			if (xr_origin && auto_load && persist_in_local_file && openxr_interface.is_valid() && openxr_interface->is_initialized()) {
-				load_anchors_from_local_file();
+			if (xr_origin && auto_load && persist_in_local_file && anchors.size() == 0) {
+				// We need to make sure the session is actually running. Just checking if the interface is
+				// initialized isn't enough, and we don't want to accidentally load from the file twice.
+				OpenXRFbSpatialEntityExtensionWrapper *ext = OpenXRFbSpatialEntityExtensionWrapper::get_singleton();
+				if (ext) {
+					Ref<OpenXRAPIExtension> openxr_api = ext->get_openxr_api();
+					if (openxr_api.is_valid() && openxr_api->is_running()) {
+						load_anchors_from_local_file();
+					}
+				}
 			}
 
 		} break;
@@ -121,7 +131,7 @@ void OpenXRFbSpatialAnchorManager::_notification(int p_what) {
 }
 
 void OpenXRFbSpatialAnchorManager::_on_openxr_session_begun() {
-	if (xr_origin && auto_load && persist_in_local_file) {
+	if (xr_origin && auto_load && persist_in_local_file && anchors.size() == 0) {
 		load_anchors_from_local_file();
 	}
 }
@@ -328,6 +338,7 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_saved(bool p_succeeded, OpenXRFbSp
 
 void OpenXRFbSpatialAnchorManager::_complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_save_file) {
 	ERR_FAIL_COND(!xr_origin);
+	ERR_FAIL_COND(anchors.has(p_entity->get_uuid()));
 
 	p_entity->track();
 

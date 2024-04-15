@@ -165,9 +165,8 @@ func _on_left_hand_button_pressed(name):
 
 	elif name == "trigger_click" and left_hand_pointer.visible:
 		if left_hand_pointer_raycast.is_colliding():
-			var collider: CollisionObject3D = left_hand_pointer_raycast.get_collider()
-			if collider.get_collision_layer_value(3):
-				var anchor_parent = collider.get_parent()
+			if selected_spatial_anchor_node:
+				var anchor_parent = selected_spatial_anchor_node.get_parent()
 				if anchor_parent is XRAnchor3D:
 					spatial_anchor_manager.untrack_anchor(anchor_parent.tracker)
 			else:

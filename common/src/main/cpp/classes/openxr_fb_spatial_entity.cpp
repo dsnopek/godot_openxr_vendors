@@ -127,16 +127,19 @@ Array OpenXRFbSpatialEntity::get_supported_components() const {
 
 bool OpenXRFbSpatialEntity::is_component_supported(ComponentType p_component) const {
 	ERR_FAIL_COND_V_MSG(space == XR_NULL_HANDLE, false, "Underlying spatial entity doesn't exist (yet) or has been destroyed.");
+	ERR_FAIL_COND_V(p_component == COMPONENT_TYPE_UNKNOWN, false);
 	return get_supported_components().has(p_component);
 }
 
 bool OpenXRFbSpatialEntity::is_component_enabled(ComponentType p_component) const {
 	ERR_FAIL_COND_V_MSG(space == XR_NULL_HANDLE, false, "Underlying spatial entity doesn't exist (yet) or has been destroyed.");
+	ERR_FAIL_COND_V(p_component == COMPONENT_TYPE_UNKNOWN, false);
 	return OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->is_component_enabled(space, to_openxr_component_type(p_component));
 }
 
 void OpenXRFbSpatialEntity::set_component_enabled(ComponentType p_component, bool p_enabled) {
 	ERR_FAIL_COND_MSG(space == XR_NULL_HANDLE, "Underlying spatial entity doesn't exist (yet) or has been destroyed.");
+	ERR_FAIL_COND(p_component == COMPONENT_TYPE_UNKNOWN);
 	Ref<OpenXRFbSpatialEntity> *userdata = memnew(Ref<OpenXRFbSpatialEntity>(this));
 	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->set_component_enabled(space, to_openxr_component_type(p_component), p_enabled, OpenXRFbSpatialEntity::_on_set_component_enabled_completed, userdata);
 }
@@ -416,6 +419,7 @@ XrSpaceComponentTypeFB OpenXRFbSpatialEntity::to_openxr_component_type(Component
 		case COMPONENT_TYPE_TRIANGLE_MESH: {
 			return XR_SPACE_COMPONENT_TYPE_TRIANGLE_MESH_META;
 		} break;
+		case COMPONENT_TYPE_UNKNOWN:
 		default: {
 			ERR_FAIL_V_MSG(XR_SPACE_COMPONENT_TYPE_LOCATABLE_FB, vformat("Unknown component type: %s", p_component));
 		}
@@ -453,7 +457,7 @@ OpenXRFbSpatialEntity::ComponentType OpenXRFbSpatialEntity::from_openxr_componen
 		} break;
 		case XR_SPACE_COMPONENT_TYPE_MAX_ENUM_FB:
 		default: {
-			ERR_FAIL_V_MSG(COMPONENT_TYPE_LOCATABLE, vformat("Unknown OpenXR component type: %s", p_component));
+			ERR_FAIL_V_MSG(COMPONENT_TYPE_UNKNOWN, vformat("Unknown OpenXR component type: %s", p_component));
 		}
 	}
 }
