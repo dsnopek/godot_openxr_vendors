@@ -56,6 +56,7 @@
 #include "extensions/openxr_fb_spatial_entity_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_query_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_storage_extension_wrapper.h"
+#include "extensions/openxr_fb_spatial_entity_storage_batch_extension_wrapper.h"
 
 #include "classes/openxr_fb_hand_tracking_mesh.h"
 #include "classes/openxr_fb_passthrough_geometry.h"
@@ -63,6 +64,7 @@
 #include "classes/openxr_fb_scene_manager.h"
 #include "classes/openxr_fb_spatial_anchor_manager.h"
 #include "classes/openxr_fb_spatial_entity.h"
+#include "classes/openxr_fb_spatial_entity_batch.h"
 #include "classes/openxr_fb_spatial_entity_query.h"
 
 using namespace godot;
@@ -84,6 +86,9 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 
 			ClassDB::register_class<OpenXRFbSpatialEntityStorageExtensionWrapper>();
 			OpenXRFbSpatialEntityStorageExtensionWrapper::get_singleton()->register_extension_wrapper();
+
+			ClassDB::register_class<OpenXRFbSpatialEntityStorageBatchExtensionWrapper>();
+			OpenXRFbSpatialEntityStorageBatchExtensionWrapper::get_singleton()->register_extension_wrapper();
 
 			ClassDB::register_class<OpenXRFbSpatialEntityQueryExtensionWrapper>();
 			OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton()->register_extension_wrapper();
@@ -131,6 +136,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRFbSceneManager>();
 			ClassDB::register_class<OpenXRFbSpatialAnchorManager>();
 			ClassDB::register_class<OpenXRFbSpatialEntity>();
+			ClassDB::register_class<OpenXRFbSpatialEntityBatch>();
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
 			ClassDB::register_class<OpenXRFbPassthroughGeometry>();
 

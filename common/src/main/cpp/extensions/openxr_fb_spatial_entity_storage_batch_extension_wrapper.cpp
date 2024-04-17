@@ -111,11 +111,11 @@ bool OpenXRFbSpatialEntityStorageBatchExtensionWrapper::save_spaces(const XrSpac
 	if (!XR_SUCCEEDED(result)) {
 		WARN_PRINT("xrSaveSpaceList failed!");
 		WARN_PRINT(get_openxr_api()->get_error_string(result));
-		p_callback(result, p_userdata);
+		p_callback(result, p_info->location, p_userdata);
 		return false;
 	}
 
-	requests[request_id] = RequestInfo(p_callback, p_userdata);
+	requests[request_id] = RequestInfo(p_callback, p_userdata, p_info->location);
 	return true;
 }
 
@@ -126,6 +126,6 @@ void OpenXRFbSpatialEntityStorageBatchExtensionWrapper::on_space_list_save_compl
 	}
 
 	RequestInfo *request = requests.getptr(event->requestId);
-	request->callback(event->result, request->userdata);
+	request->callback(event->result, request->location, request->userdata);
 	requests.erase(event->requestId);
 }

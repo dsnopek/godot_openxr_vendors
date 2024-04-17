@@ -51,7 +51,7 @@ public:
 		return fb_spatial_entity_storage_batch_ext;
 	}
 
-	typedef void (*SaveSpacesCompleteCallback)(XrResult p_result, void *p_userdata);
+	typedef void (*SaveSpacesCompleteCallback)(XrResult p_result, XrSpaceStorageLocationFB p_location, void *p_userdata);
 
 	bool save_spaces(const XrSpaceListSaveInfoFB *p_info, SaveSpacesCompleteCallback p_callback, void *p_userdata);
 
@@ -79,12 +79,14 @@ private:
 	struct RequestInfo {
 		SaveSpacesCompleteCallback callback = nullptr;
 		void *userdata = nullptr;
+		XrSpaceStorageLocationFB location = XR_SPACE_STORAGE_LOCATION_INVALID_FB;
 
 		RequestInfo() { }
 
-		RequestInfo(SaveSpacesCompleteCallback p_callback, void *p_userdata) {
+		RequestInfo(SaveSpacesCompleteCallback p_callback, void *p_userdata, XrSpaceStorageLocationFB p_location) {
 			callback = p_callback;
 			userdata = p_userdata;
+			location = p_location;
 		}
 	};
 
