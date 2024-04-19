@@ -176,6 +176,14 @@ func _on_left_hand_button_pressed(name):
 				print ("Attempting to create spatial anchor at: ", anchor_transform)
 				spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
 
+	elif name == "ax_button" and left_hand_pointer.visible:
+		var entities := []
+		for uuid in spatial_anchor_manager.get_anchor_uuids():
+			entities.push_back(spatial_anchor_manager.get_spatial_entity(uuid))
+		var batch = OpenXRFbSpatialEntityBatch.create_batch(entities)
+		batch.openxr_fb_spatial_entity_batch_saved.connect(self._on_spatial_anchors_saved_to_cloud.bind(batch))
+		batch.save_to_storage(OpenXRFbSpatialEntity.STORAGE_CLOUD)
+
 
 func _on_right_hand_button_pressed(name: String) -> void:
 	match name:
@@ -248,3 +256,10 @@ func update_passthrough_filter() -> void:
 		OpenXRFbPassthroughExtensionWrapper.PASSTHROUGH_FILTER_BRIGHTNESS_CONTRAST_SATURATION:
 			fb_passthrough.set_passthrough_filter(OpenXRFbPassthroughExtensionWrapper.PASSTHROUGH_FILTER_DISABLED)
 			passthrough_filter_info.text = STRING_BASE + "Disabled"
+
+
+func _on_spatial_anchors_saved_to_cloud(p_success: bool, p_location: OpenXRFbSpatialEntity.StorageLocation, p_batch: OpenXRFbSpatialEntityBatch):
+	if p_success:
+		print("Saved anchors to the cloud")
+	else:
+		print("Failed to save anchors to the cloud")

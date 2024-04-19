@@ -100,7 +100,6 @@ bool OpenXRFbSpatialEntityStorageBatchExtensionWrapper::_on_event_polled(const v
 		return true;
 	}
 
-
 	return false;
 }
 

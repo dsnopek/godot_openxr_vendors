@@ -61,7 +61,7 @@ TypedArray<OpenXRFbSpatialEntity> OpenXRFbSpatialEntityBatch::get_entities() con
 
 void OpenXRFbSpatialEntityBatch::save_to_storage(OpenXRFbSpatialEntity::StorageLocation p_location) {
 	XrSpaceListSaveInfoFB save_info = {
-		XR_TYPE_SPACE_SAVE_INFO_FB, // type
+		XR_TYPE_SPACE_LIST_SAVE_INFO_FB, // type
 		nullptr, // next
 		(uint32_t)spaces.size(), // spaceCount
 		const_cast<XrSpace *>(spaces.ptr()), // spaces
