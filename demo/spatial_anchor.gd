@@ -43,7 +43,8 @@ func _on_enable_sharable(p_success: bool, p_component: OpenXRFbSpatialEntity.Sto
 		var spatial_entity_user = OpenXRFbSpatialEntityUser.create_user(1234)
 
 		p_spatial_entity.openxr_fb_spatial_entity_shared.connect(self._on_shared.bind(p_spatial_entity))
-		p_spatial_entity.share_with_users([ spatial_entity_user ])
+		# Note: Uncomment to test sharing.
+		#p_spatial_entity.share_with_users([ spatial_entity_user ])
 
 func _on_shared(p_success: bool, p_spatial_entity: OpenXRFbSpatialEntity) -> void:
 	print("Share ", p_spatial_entity.uuid, " is success: ", p_success)
