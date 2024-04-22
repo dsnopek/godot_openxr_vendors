@@ -55,6 +55,7 @@
 #include "extensions/openxr_fb_spatial_entity_container_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_query_extension_wrapper.h"
+#include "extensions/openxr_fb_spatial_entity_sharing_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_storage_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_storage_batch_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_user_extension_wrapper.h"
@@ -85,6 +86,9 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 
 			ClassDB::register_class<OpenXRFbSpatialEntityExtensionWrapper>();
 			OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->register_extension_wrapper();
+
+			ClassDB::register_class<OpenXRFbSpatialEntitySharingExtensionWrapper>();
+			OpenXRFbSpatialEntitySharingExtensionWrapper::get_singleton()->register_extension_wrapper();
 
 			ClassDB::register_class<OpenXRFbSpatialEntityStorageExtensionWrapper>();
 			OpenXRFbSpatialEntityStorageExtensionWrapper::get_singleton()->register_extension_wrapper();
