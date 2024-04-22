@@ -58,10 +58,6 @@ func enable_passthrough(enable: bool) -> void:
 	if passthrough_enabled == enable:
 		return
 
-	var spatial_entity_user = OpenXRFbSpatialEntityUser.create_user(1234)
-	print ("User: ", spatial_entity_user)
-	print ("User ID: ", spatial_entity_user.user_id)
-
 	var supported_blend_modes = xr_interface.get_supported_environment_blend_modes()
 	print("Supported blend modes: ", supported_blend_modes)
 	if XRInterface.XR_ENV_BLEND_MODE_ALPHA_BLEND in supported_blend_modes and XRInterface.XR_ENV_BLEND_MODE_OPAQUE in supported_blend_modes:
@@ -180,13 +176,13 @@ func _on_left_hand_button_pressed(name):
 				print ("Attempting to create spatial anchor at: ", anchor_transform)
 				spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
 
-	elif name == "ax_button" and left_hand_pointer.visible:
-		var entities := []
-		for uuid in spatial_anchor_manager.get_anchor_uuids():
-			entities.push_back(spatial_anchor_manager.get_spatial_entity(uuid))
-		var batch = OpenXRFbSpatialEntityBatch.create_batch(entities)
-		batch.openxr_fb_spatial_entity_batch_saved.connect(self._on_spatial_anchors_saved_to_cloud.bind(batch))
-		batch.save_to_storage(OpenXRFbSpatialEntity.STORAGE_CLOUD)
+#	elif name == "ax_button" and left_hand_pointer.visible:
+#		var entities := []
+#		for uuid in spatial_anchor_manager.get_anchor_uuids():
+#			entities.push_back(spatial_anchor_manager.get_spatial_entity(uuid))
+#		var batch = OpenXRFbSpatialEntityBatch.create_batch(entities)
+#		batch.openxr_fb_spatial_entity_batch_saved.connect(self._on_spatial_anchors_saved_to_cloud.bind(batch))
+#		batch.save_to_storage(OpenXRFbSpatialEntity.STORAGE_CLOUD)
 
 
 func _on_right_hand_button_pressed(name: String) -> void:
@@ -264,6 +260,16 @@ func update_passthrough_filter() -> void:
 
 func _on_spatial_anchors_saved_to_cloud(p_success: bool, p_location: OpenXRFbSpatialEntity.StorageLocation, p_batch: OpenXRFbSpatialEntityBatch):
 	if p_success:
-		print("Saved anchors to the cloud")
+		print("Spatial anchors saved to CLOUD storage.")
+
+		# Note: For this to really work, we'd need a real user ID from the platform SDK. This is
+		#       outside the scope of what we can do in the demo here.
+		var spatial_entity_user = OpenXRFbSpatialEntityUser.create_user(1234)
+		var spatial_entity = p_batch.get_entities()[0]
+		spatial_entity.openxr_fb_spatial_entity_shared.connect(self._on_spatial_anchor_shared_with_users)
+		spatial_entity.share_with_users([ spatial_entity_user ])
 	else:
 		print("Failed to save anchors to the cloud")
+
+func _on_spatial_anchor_shared_with_users(p_success: bool):
+	print ("Share success = ", p_success)

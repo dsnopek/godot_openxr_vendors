@@ -34,11 +34,15 @@
 #include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/plane_mesh.hpp>
+#include <godot_cpp/templates/local_vector.hpp>
 
 #include "extensions/openxr_fb_spatial_entity_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_container_extension_wrapper.h"
+#include "extensions/openxr_fb_spatial_entity_sharing_extension_wrapper.h"
 #include "extensions/openxr_fb_spatial_entity_storage_extension_wrapper.h"
 #include "extensions/openxr_fb_scene_extension_wrapper.h"
+
+#include "classes/openxr_fb_spatial_entity_user.h"
 
 using namespace godot;
 
@@ -70,6 +74,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("save_to_storage", "location"), &OpenXRFbSpatialEntity::save_to_storage, DEFVAL(STORAGE_LOCAL));
 	ClassDB::bind_method(D_METHOD("erase_from_storage", "location"), &OpenXRFbSpatialEntity::erase_from_storage, DEFVAL(STORAGE_LOCAL));
+	ClassDB::bind_method(D_METHOD("share_with_users", "users"), &OpenXRFbSpatialEntity::share_with_users);
 	ClassDB::bind_method(D_METHOD("destroy"), &OpenXRFbSpatialEntity::destroy);
 
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "uuid", PROPERTY_HINT_NONE, ""), "", "get_uuid");
@@ -92,6 +97,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_created", PropertyInfo(Variant::Type::BOOL, "succeeded")));
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_saved", PropertyInfo(Variant::Type::BOOL, "succeeded"), PropertyInfo(Variant::Type::INT, "location")));
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_erased", PropertyInfo(Variant::Type::BOOL, "succeeded"), PropertyInfo(Variant::Type::INT, "location")));
+	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_shared", PropertyInfo(Variant::Type::BOOL, "succeeded")));
 }
 
 String OpenXRFbSpatialEntity::_to_string() const {
@@ -99,7 +105,6 @@ String OpenXRFbSpatialEntity::_to_string() const {
 }
 
 StringName OpenXRFbSpatialEntity::get_uuid() const {
-	ERR_FAIL_COND_V_MSG(space == XR_NULL_HANDLE, StringName(), "Underlying spatial entity doesn't exist (yet) or has been destroyed.");
 	return uuid;
 }
 
@@ -346,6 +351,38 @@ void OpenXRFbSpatialEntity::erase_from_storage(StorageLocation p_location) {
 void OpenXRFbSpatialEntity::_on_erase_from_storage(XrResult p_result, XrSpaceStorageLocationFB p_location, void *p_userdata) {
 	Ref<OpenXRFbSpatialEntity> *userdata = (Ref<OpenXRFbSpatialEntity> *)p_userdata;
 	(*userdata)->emit_signal("openxr_fb_spatial_entity_erased", XR_SUCCEEDED(p_result), from_openxr_storage_location(p_location));
+	memdelete(userdata);
+}
+
+void OpenXRFbSpatialEntity::share_with_users(const TypedArray<OpenXRFbSpatialEntityUser> &p_users) {
+	ERR_FAIL_COND_MSG(space == XR_NULL_HANDLE, "Underlying spatial entity doesn't exist (yet) or has been destroyed.");
+
+	LocalVector<XrSpaceUserFB> users;
+	users.resize(p_users.size());
+	for (int i = 0; i < p_users.size(); i++) {
+		Ref<OpenXRFbSpatialEntityUser> user = p_users[i];
+		users[i] = user->get_user_handle();
+		UtilityFunctions::print("User handle: ", (uint64_t)user->get_user_handle());
+	}
+
+	XrSpace spaces[1] = { space };
+
+	XrSpaceShareInfoFB info = {
+		XR_TYPE_SPACE_SHARE_INFO_FB, // type
+		nullptr, // next
+		1, // spaceCount
+		spaces, // spaces
+		(uint32_t)users.size(), // userCount
+		users.ptr(), // users
+	};
+
+	Ref<OpenXRFbSpatialEntity> *userdata = memnew(Ref<OpenXRFbSpatialEntity>(this));
+	OpenXRFbSpatialEntitySharingExtensionWrapper::get_singleton()->share_spaces(&info, OpenXRFbSpatialEntity::_on_share_with_users, userdata);
+}
+
+void OpenXRFbSpatialEntity::_on_share_with_users(XrResult p_result, void *p_userdata) {
+	Ref<OpenXRFbSpatialEntity> *userdata = (Ref<OpenXRFbSpatialEntity> *)p_userdata;
+	(*userdata)->emit_signal("openxr_fb_spatial_entity_shared", XR_SUCCEEDED(p_result));
 	memdelete(userdata);
 }
 
