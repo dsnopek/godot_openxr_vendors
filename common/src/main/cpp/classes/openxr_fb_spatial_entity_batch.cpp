@@ -29,7 +29,12 @@
 
 #include "classes/openxr_fb_spatial_entity_batch.h"
 
+#include <godot_cpp/templates/local_vector.hpp>
+
 #include "extensions/openxr_fb_spatial_entity_storage_batch_extension_wrapper.h"
+#include "extensions/openxr_fb_spatial_entity_sharing_extension_wrapper.h"
+
+#include "classes/openxr_fb_spatial_entity_user.h"
 
 using namespace godot;
 
@@ -37,12 +42,14 @@ void OpenXRFbSpatialEntityBatch::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_entities"), &OpenXRFbSpatialEntityBatch::get_entities);
 
 	ClassDB::bind_method(D_METHOD("save_to_storage", "location"), &OpenXRFbSpatialEntityBatch::save_to_storage);
+	ClassDB::bind_method(D_METHOD("share_with_users", "users"), &OpenXRFbSpatialEntityBatch::share_with_users);
 
 	ClassDB::bind_static_method("OpenXRFbSpatialEntityBatch", D_METHOD("create_batch", "entities"), &OpenXRFbSpatialEntityBatch::create_batch);
 
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "entities", PROPERTY_HINT_ARRAY_TYPE, "OpenXRFbSpatialEntity"), "", "get_entities");
 
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_batch_saved", PropertyInfo(Variant::Type::BOOL, "succeeded"), PropertyInfo(Variant::Type::INT, "location")));
+	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_entity_batch_shared", PropertyInfo(Variant::Type::BOOL, "succeeded")));
 }
 
 String OpenXRFbSpatialEntityBatch::_to_string() const {
@@ -77,6 +84,34 @@ void OpenXRFbSpatialEntityBatch::_on_save_to_storage(XrResult p_result, XrSpaceS
 	(*userdata)->emit_signal("openxr_fb_spatial_entity_batch_saved", XR_SUCCEEDED(p_result), OpenXRFbSpatialEntity::from_openxr_storage_location(p_location));
 	memdelete(userdata);
 }
+
+void OpenXRFbSpatialEntityBatch::share_with_users(const TypedArray<OpenXRFbSpatialEntityUser> &p_users) {
+	LocalVector<XrSpaceUserFB> users;
+	users.resize(p_users.size());
+	for (int i = 0; i < p_users.size(); i++) {
+		Ref<OpenXRFbSpatialEntityUser> user = p_users[i];
+		users[i] = user->get_user_handle();
+	}
+
+	XrSpaceShareInfoFB info = {
+		XR_TYPE_SPACE_SHARE_INFO_FB, // type
+		nullptr, // next
+		(uint32_t)spaces.size(), // spaceCount
+		const_cast<XrSpace *>(spaces.ptr()), // spaces
+		(uint32_t)users.size(), // userCount
+		users.ptr(), // users
+	};
+
+	Ref<OpenXRFbSpatialEntityBatch> *userdata = memnew(Ref<OpenXRFbSpatialEntityBatch>(this));
+	OpenXRFbSpatialEntitySharingExtensionWrapper::get_singleton()->share_spaces(&info, OpenXRFbSpatialEntityBatch::_on_share_with_users, userdata);
+}
+
+void OpenXRFbSpatialEntityBatch::_on_share_with_users(XrResult p_result, void *p_userdata) {
+	Ref<OpenXRFbSpatialEntityBatch> *userdata = (Ref<OpenXRFbSpatialEntityBatch> *)p_userdata;
+	(*userdata)->emit_signal("openxr_fb_spatial_entity_batch_shared", XR_SUCCEEDED(p_result));
+	memdelete(userdata);
+}
+
 
 Ref<OpenXRFbSpatialEntityBatch> OpenXRFbSpatialEntityBatch::create_batch(const TypedArray<OpenXRFbSpatialEntity> &p_entities) {
 	return Ref<OpenXRFbSpatialEntityBatch>(memnew(OpenXRFbSpatialEntityBatch(p_entities)));

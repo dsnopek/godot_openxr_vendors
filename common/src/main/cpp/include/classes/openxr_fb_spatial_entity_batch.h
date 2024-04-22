@@ -35,6 +35,7 @@
 #include "openxr_fb_spatial_entity.h"
 
 namespace godot {
+class OpenXRFbSpatialEntityUser;
 
 class OpenXRFbSpatialEntityBatch : public RefCounted {
 	GDCLASS(OpenXRFbSpatialEntityBatch, RefCounted);
@@ -46,6 +47,7 @@ protected:
 	static void _bind_methods();
 
 	static void _on_save_to_storage(XrResult p_result, XrSpaceStorageLocationFB p_location, void *p_userdata);
+	static void _on_share_with_users(XrResult p_result, void *p_userdata);
 
 	String _to_string() const;
 
@@ -53,6 +55,7 @@ public:
 	TypedArray<OpenXRFbSpatialEntity> get_entities() const;
 
 	void save_to_storage(OpenXRFbSpatialEntity::StorageLocation p_location);
+	void share_with_users(const TypedArray<OpenXRFbSpatialEntityUser> &p_users);
 
 	static Ref<OpenXRFbSpatialEntityBatch> create_batch(const TypedArray<OpenXRFbSpatialEntity> &p_entities);
 

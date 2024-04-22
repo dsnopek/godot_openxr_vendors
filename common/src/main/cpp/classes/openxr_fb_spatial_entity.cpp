@@ -362,7 +362,6 @@ void OpenXRFbSpatialEntity::share_with_users(const TypedArray<OpenXRFbSpatialEnt
 	for (int i = 0; i < p_users.size(); i++) {
 		Ref<OpenXRFbSpatialEntityUser> user = p_users[i];
 		users[i] = user->get_user_handle();
-		UtilityFunctions::print("User handle: ", (uint64_t)user->get_user_handle());
 	}
 
 	XrSpace spaces[1] = { space };
