@@ -58,6 +58,10 @@ func enable_passthrough(enable: bool) -> void:
 	if passthrough_enabled == enable:
 		return
 
+	var spatial_entity_user = OpenXRFbSpatialEntityUser.create_user(1234)
+	print ("User: ", spatial_entity_user)
+	print ("User ID: ", spatial_entity_user.user_id)
+
 	var supported_blend_modes = xr_interface.get_supported_environment_blend_modes()
 	print("Supported blend modes: ", supported_blend_modes)
 	if XRInterface.XR_ENV_BLEND_MODE_ALPHA_BLEND in supported_blend_modes and XRInterface.XR_ENV_BLEND_MODE_OPAQUE in supported_blend_modes:

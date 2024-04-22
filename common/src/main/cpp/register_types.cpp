@@ -67,6 +67,7 @@
 #include "classes/openxr_fb_spatial_entity.h"
 #include "classes/openxr_fb_spatial_entity_batch.h"
 #include "classes/openxr_fb_spatial_entity_query.h"
+#include "classes/openxr_fb_spatial_entity_user.h"
 
 using namespace godot;
 
@@ -142,6 +143,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRFbSpatialEntity>();
 			ClassDB::register_class<OpenXRFbSpatialEntityBatch>();
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
+			ClassDB::register_class<OpenXRFbSpatialEntityUser>();
 			ClassDB::register_class<OpenXRFbPassthroughGeometry>();
 
 			OpenXRFbHandTrackingAimExtensionWrapper::get_singleton()->add_project_setting();
