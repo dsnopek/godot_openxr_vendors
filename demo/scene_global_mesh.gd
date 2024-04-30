@@ -5,9 +5,12 @@ const WIREFRAME_MATERIAL: Material = preload("res://assets/wireframe-material.tr
 @onready var static_body: StaticBody3D = $StaticBody3D
 
 var mesh_instance: MeshInstance3D
+var spatial_entity: OpenXRFbSpatialEntity
 
-func setup_scene(entity: OpenXRFbSpatialEntity) -> void:
-	var collision_shape = entity.create_collision_shape()
+func setup_scene(p_spatial_entity: OpenXRFbSpatialEntity) -> void:
+	spatial_entity = p_spatial_entity
+
+	var collision_shape = spatial_entity.create_collision_shape()
 	if collision_shape:
 		static_body.add_child(collision_shape)
 
@@ -20,7 +23,7 @@ func setup_scene(entity: OpenXRFbSpatialEntity) -> void:
 	# Calling entity.create_mesh_instance() works, however, our wireframe shader only
 	# works right if vertices aren't shared among multiple triangles, so we have to
 	# process the mesh data to ensure that.
-	var mesh_array: Array = entity.get_triangle_mesh()
+	var mesh_array: Array = spatial_entity.get_triangle_mesh()
 	if not mesh_array.is_empty():
 		mesh_instance = MeshInstance3D.new()
 

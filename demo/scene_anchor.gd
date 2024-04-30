@@ -6,17 +6,20 @@ const GRID_MATERIAL: StandardMaterial3D = preload("res://assets/cross-grid-mater
 @onready var static_body: StaticBody3D = $StaticBody3D
 
 var mesh_instance: MeshInstance3D
+var spatial_entity: OpenXRFbSpatialEntity
 
-func setup_scene(entity: OpenXRFbSpatialEntity) -> void:
-	var semantic_labels: PackedStringArray = entity.get_semantic_labels()
+func setup_scene(p_spatial_entity: OpenXRFbSpatialEntity) -> void:
+	spatial_entity = p_spatial_entity
+
+	var semantic_labels: PackedStringArray = spatial_entity.get_semantic_labels()
 
 	label.text = ", ".join(Array(semantic_labels).map(func (x): return x.capitalize()))
 
-	var collision_shape = entity.create_collision_shape()
+	var collision_shape = spatial_entity.create_collision_shape()
 	if collision_shape:
 		static_body.add_child(collision_shape)
 
-	mesh_instance = entity.create_mesh_instance()
+	mesh_instance = spatial_entity.create_mesh_instance()
 	if not mesh_instance:
 		mesh_instance = MeshInstance3D.new()
 		var box_mesh := BoxMesh.new()

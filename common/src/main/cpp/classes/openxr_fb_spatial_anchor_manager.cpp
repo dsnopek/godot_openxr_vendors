@@ -178,9 +178,21 @@ void OpenXRFbSpatialAnchorManager::hide() {
 void OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data, const Ref<OpenXRFbSpatialEntity> &p_parent) {
 	ERR_FAIL_COND(!xr_origin);
 
-	// @todo p_transform should be in global space, and we should transform it into the local space of the parent (or XROrigin)
+	// Convert the transform from global space, to the local space of the parent.
+	Transform3D local_transform = p_transform;
+	if (p_parent.is_valid()) {
+		Ref<XRPositionalTracker> tracker = XRServer::get_singleton()->get_tracker(p_parent->get_uuid());
+		if (tracker.is_valid()) {
+			local_transform = (xr_origin->get_global_transform() * tracker->get_pose("default")->get_transform()).inverse() * local_transform;
+		} else {
+			ERR_PRINT("Cannot create spatial anchor on parent that isn't tracked - using XrOrigin instead.");
+			local_transform = xr_origin->get_global_transform().inverse() * local_transform;
+		}
+	} else {
+		local_transform = xr_origin->get_global_transform().inverse() * local_transform;
+	}
 
-	Ref<OpenXRFbSpatialEntity> spatial_entity = OpenXRFbSpatialEntity::create_spatial_anchor(p_transform);
+	Ref<OpenXRFbSpatialEntity> spatial_entity = OpenXRFbSpatialEntity::create_spatial_anchor(local_transform, p_parent);
 	spatial_entity->set_custom_data(p_custom_data);
 	spatial_entity->connect("openxr_fb_spatial_entity_created", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_created).bind(p_transform, spatial_entity));
 }

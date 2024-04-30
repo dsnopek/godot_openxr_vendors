@@ -56,7 +56,7 @@ public:
 	typedef void (*SpatialAnchorCreatedCallback)(XrResult p_result, XrSpace p_space, const XrUuidEXT *p_uuid, void *p_userdate);
 	typedef void (*SetComponentEnabledCallback)(XrResult p_result, XrSpaceComponentTypeFB p_component, bool p_enabled, void *p_userdata);
 
-	bool create_spatial_anchor(const Transform3D &p_transform, SpatialAnchorCreatedCallback p_callback, void *p_userdata);
+	bool create_spatial_anchor(const Transform3D &p_transform, const XrSpace &p_space, SpatialAnchorCreatedCallback p_callback, void *p_userdata);
 	bool destroy_space(const XrSpace &p_space);
 
 	Vector<XrSpaceComponentTypeFB> get_support_components(const XrSpace &p_space);

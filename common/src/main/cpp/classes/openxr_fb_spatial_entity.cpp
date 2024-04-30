@@ -70,7 +70,7 @@ void OpenXRFbSpatialEntity::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("create_mesh_instance"), &OpenXRFbSpatialEntity::create_mesh_instance);
 	ClassDB::bind_method(D_METHOD("create_collision_shape"), &OpenXRFbSpatialEntity::create_collision_shape);
 
-	ClassDB::bind_static_method("OpenXRFbSpatialEntity", D_METHOD("create_spatial_anchor", "transform"), &OpenXRFbSpatialEntity::create_spatial_anchor);
+	ClassDB::bind_static_method("OpenXRFbSpatialEntity", D_METHOD("create_spatial_anchor", "transform", "parent"), &OpenXRFbSpatialEntity::create_spatial_anchor, DEFVAL(Ref<OpenXRFbSpatialEntity>()));
 
 	ClassDB::bind_method(D_METHOD("save_to_storage", "location"), &OpenXRFbSpatialEntity::save_to_storage, DEFVAL(STORAGE_LOCAL));
 	ClassDB::bind_method(D_METHOD("erase_from_storage", "location"), &OpenXRFbSpatialEntity::erase_from_storage, DEFVAL(STORAGE_LOCAL));
@@ -359,10 +359,11 @@ Node3D *OpenXRFbSpatialEntity::create_collision_shape() const {
 	return nullptr;
 }
 
-Ref<OpenXRFbSpatialEntity> OpenXRFbSpatialEntity::create_spatial_anchor(const Transform3D &p_transform) {
+Ref<OpenXRFbSpatialEntity> OpenXRFbSpatialEntity::create_spatial_anchor(const Transform3D &p_transform, const Ref<OpenXRFbSpatialEntity> &p_parent) {
 	Ref<OpenXRFbSpatialEntity> *userdata = memnew(Ref<OpenXRFbSpatialEntity>());
 	(*userdata).instantiate();
-	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->create_spatial_anchor(p_transform, &OpenXRFbSpatialEntity::_on_spatial_anchor_created, userdata);
+	XrSpace parent = p_parent.is_valid() ? p_parent->get_space() : XR_NULL_HANDLE;
+	OpenXRFbSpatialEntityExtensionWrapper::get_singleton()->create_spatial_anchor(p_transform, parent, &OpenXRFbSpatialEntity::_on_spatial_anchor_created, userdata);
 	return *userdata;
 }
 

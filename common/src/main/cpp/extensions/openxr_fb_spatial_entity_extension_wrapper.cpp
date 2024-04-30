@@ -161,7 +161,7 @@ bool OpenXRFbSpatialEntityExtensionWrapper::_on_event_polled(const void *event) 
 	return false;
 }
 
-bool OpenXRFbSpatialEntityExtensionWrapper::create_spatial_anchor(const Transform3D &p_transform, SpatialAnchorCreatedCallback p_callback, void *p_userdata) {
+bool OpenXRFbSpatialEntityExtensionWrapper::create_spatial_anchor(const Transform3D &p_transform, const XrSpace &p_parent, SpatialAnchorCreatedCallback p_callback, void *p_userdata) {
 	XrAsyncRequestIdFB request_id = 0;
 
 	Quaternion quat = Quaternion(p_transform.basis);
@@ -171,10 +171,12 @@ bool OpenXRFbSpatialEntityExtensionWrapper::create_spatial_anchor(const Transfor
 		{ pos.x, pos.y, pos.z }, // position
 	};
 
+	XrSpace parent = (p_parent == XR_NULL_HANDLE) ? reinterpret_cast<XrSpace>(get_openxr_api()->get_play_space()) : p_parent;
+
 	XrSpatialAnchorCreateInfoFB info = {
 		XR_TYPE_SPATIAL_ANCHOR_CREATE_INFO_FB, // type
 		nullptr, // next
-		reinterpret_cast<XrSpace>(get_openxr_api()->get_play_space()), // space
+		parent, // space
 		pose, // poseInSpace
 		get_openxr_api()->get_next_frame_time(), // time
 	};

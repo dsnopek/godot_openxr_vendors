@@ -103,7 +103,7 @@ public:
 	MeshInstance3D *create_mesh_instance() const;
 	Node3D *create_collision_shape() const;
 
-	static Ref<OpenXRFbSpatialEntity> create_spatial_anchor(const Transform3D &p_transform);
+	static Ref<OpenXRFbSpatialEntity> create_spatial_anchor(const Transform3D &p_transform, const Ref<OpenXRFbSpatialEntity> &p_parent = Ref<OpenXRFbSpatialEntity>());
 
 	void save_to_storage(StorageLocation p_location = STORAGE_LOCAL);
 	void erase_from_storage(StorageLocation p_location = STORAGE_LOCAL);

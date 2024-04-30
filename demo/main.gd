@@ -218,6 +218,11 @@ func _on_left_hand_button_pressed(name):
 				if anchor_parent is XRAnchor3D:
 					spatial_anchor_manager.untrack_anchor(anchor_parent.tracker)
 			else:
+				var collider_parent = left_hand_pointer_raycast.get_collider().get_parent()
+				var parent_anchor: OpenXRFbSpatialEntity
+				if "spatial_entity" in collider_parent:
+					parent_anchor = collider_parent.spatial_entity
+
 				var anchor_transform := Transform3D()
 				anchor_transform.origin = left_hand_pointer_raycast.get_collision_point()
 
@@ -230,7 +235,8 @@ func _on_left_hand_button_pressed(name):
 					anchor_transform.basis = Basis.looking_at(left_hand_pointer_raycast.get_collision_normal())
 
 				print ("Attempting to create spatial anchor at: ", anchor_transform)
-				spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] })
+				print ("Using parent: ", parent_anchor)
+				spatial_anchor_manager.create_anchor(anchor_transform, { color = COLORS[randi() % COLORS.size()] }, parent_anchor)
 
 
 func _on_right_hand_button_pressed(name: String) -> void:
