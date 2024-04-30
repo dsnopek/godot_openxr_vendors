@@ -57,7 +57,7 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("show"), &OpenXRFbSpatialAnchorManager::show);
 	ClassDB::bind_method(D_METHOD("hide"), &OpenXRFbSpatialAnchorManager::hide);
 
-	ClassDB::bind_method(D_METHOD("create_anchor", "transform", "custom_data", "parent"), &OpenXRFbSpatialAnchorManager::create_anchor, DEFVAL(Dictionary()), DEFVAL(Ref<OpenXRFbSpatialEntity>()));
+	ClassDB::bind_method(D_METHOD("create_anchor", "transform", "custom_data"), &OpenXRFbSpatialAnchorManager::create_anchor, DEFVAL(Dictionary()));
 	ClassDB::bind_method(D_METHOD("load_anchor", "uuid", "custom_data", "location"), &OpenXRFbSpatialAnchorManager::load_anchor, DEFVAL(Dictionary()), DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
 	ClassDB::bind_method(D_METHOD("load_anchors", "uuids", "all_custom_data", "location", "erase_unknown_anchors"), &OpenXRFbSpatialAnchorManager::load_anchors, DEFVAL(Dictionary()), DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("track_anchor", "spatial_entity"), &OpenXRFbSpatialAnchorManager::track_anchor);
@@ -175,12 +175,13 @@ void OpenXRFbSpatialAnchorManager::hide() {
 	set_visible(false);
 }
 
-void OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data, const Ref<OpenXRFbSpatialEntity> &p_parent) {
+void OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data) {
 	ERR_FAIL_COND(!xr_origin);
 
-	// @todo p_transform should be in global space, and we should transform it into the local space of the parent (or XROrigin)
+	// Convert transform from global space to be relative to the XROrigin3D node.
+	Transform3D local_transform = xr_origin->get_global_transform().inverse() * p_transform;
 
-	Ref<OpenXRFbSpatialEntity> spatial_entity = OpenXRFbSpatialEntity::create_spatial_anchor(p_transform);
+	Ref<OpenXRFbSpatialEntity> spatial_entity = OpenXRFbSpatialEntity::create_spatial_anchor(local_transform);
 	spatial_entity->set_custom_data(p_custom_data);
 	spatial_entity->connect("openxr_fb_spatial_entity_created", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_created).bind(p_transform, spatial_entity));
 }
@@ -190,7 +191,6 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_created(bool p_success, const Tran
 	if (p_success) {
 		_track_anchor(p_spatial_entity, true);
 	} else {
-		// @todo Should also give the parent
 		emit_signal("openxr_fb_spatial_anchor_create_failed", p_transform, p_spatial_entity->get_custom_data());
 	}
 }

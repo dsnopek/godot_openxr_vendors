@@ -100,7 +100,7 @@ public:
 	void show();
 	void hide();
 
-	void create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data, const Ref<OpenXRFbSpatialEntity> &p_parent = Ref<OpenXRFbSpatialEntity>());
+	void create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data);
 	void load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location);
 	void load_anchors(const TypedArray<StringName> &p_uuids, const Dictionary &p_all_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_erase_unknown_anchors = false);
 	void track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
