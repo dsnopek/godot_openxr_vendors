@@ -71,8 +71,7 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "scene_setup_method", PROPERTY_HINT_NONE, ""), "set_scene_setup_method", "get_scene_setup_method");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "visible", PROPERTY_HINT_NONE, ""), "set_visible", "get_visible");
 
-	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_created", PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
-	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_tracked", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
+	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_tracked", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity"), PropertyInfo(Variant::Type::BOOL, "is_new")));
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_untracked", PropertyInfo(Variant::Type::OBJECT, "anchor_node"), PropertyInfo(Variant::Type::OBJECT, "spatial_entity")));
 	// @todo Add "parent" if that ends up being a thing we want to do
 	ADD_SIGNAL(MethodInfo("openxr_fb_spatial_anchor_create_failed", PropertyInfo(Variant::Type::TRANSFORM3D, "transform"), PropertyInfo(Variant::Type::DICTIONARY, "custom_data")));
@@ -189,8 +188,7 @@ void OpenXRFbSpatialAnchorManager::create_anchor(const Transform3D &p_transform,
 // @todo should take the parent!
 void OpenXRFbSpatialAnchorManager::_on_anchor_created(bool p_success, const Transform3D &p_transform, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
 	if (p_success) {
-		emit_signal("openxr_fb_spatial_anchor_created", p_spatial_entity);
-		track_anchor(p_spatial_entity);
+		_track_anchor(p_spatial_entity, true);
 	} else {
 		// @todo Should also give the parent
 		emit_signal("openxr_fb_spatial_anchor_create_failed", p_transform, p_spatial_entity->get_custom_data());
@@ -214,11 +212,13 @@ void OpenXRFbSpatialAnchorManager::load_anchor(const StringName &p_uuid, const D
 }
 
 void OpenXRFbSpatialAnchorManager::load_anchors(const TypedArray<StringName> &p_uuids, const Dictionary &p_all_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_erase_unknown_anchors) {
+	ERR_FAIL_COND(!xr_origin);
+
 	Ref<OpenXRFbSpatialEntityQuery> query;
+	query.instantiate();
 
 	Dictionary all_custom_data;
 
-	query.instantiate();
 	if (p_erase_unknown_anchors) {
 		// If we want to clear out unknown anchors, then we need to query everything.
 		query->query_all();
@@ -250,7 +250,7 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_load_query_completed(const Array &
 				spatial_entity->set_custom_data(anchors_custom_data[uuid]);
 				anchors_custom_data.erase(uuid);
 
-				track_anchor(spatial_entity);
+				_track_anchor(spatial_entity, false);
 			} else if (p_erase_unknown_anchors) {
 				_untrack_anchor(spatial_entity);
 			}
@@ -266,39 +266,42 @@ void OpenXRFbSpatialAnchorManager::_on_anchor_load_query_completed(const Array &
 
 void OpenXRFbSpatialAnchorManager::track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
 	ERR_FAIL_COND(!xr_origin);
+	_track_anchor(p_spatial_entity, false);
+}
 
+void OpenXRFbSpatialAnchorManager::_track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_new_anchor) {
 	if (p_spatial_entity->is_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE)) {
-		_on_anchor_track_enable_locatable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE, true, p_spatial_entity);
+		_on_anchor_track_enable_locatable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE, true, p_spatial_entity, p_new_anchor);
 	} else {
-		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_locatable_completed).bind(p_spatial_entity), CONNECT_ONE_SHOT);
+		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_locatable_completed).bind(p_spatial_entity, p_new_anchor), CONNECT_ONE_SHOT);
 		p_spatial_entity->set_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_LOCATABLE, true);
 	}
 }
 
-void OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
+void OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_new_anchor) {
 	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to make spatial anchor %s locatable.", p_spatial_entity->get_uuid()));
 
 	if (p_spatial_entity->is_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE)) {
-		_on_anchor_track_enable_storable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true, p_spatial_entity);
+		_on_anchor_track_enable_storable_completed(true, OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true, p_spatial_entity, p_new_anchor);
 	} else {
-		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_storable_completed).bind(p_spatial_entity), CONNECT_ONE_SHOT);
+		p_spatial_entity->connect("openxr_fb_spatial_entity_set_component_enabled_completed", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_storable_completed).bind(p_spatial_entity, p_new_anchor), CONNECT_ONE_SHOT);
 		p_spatial_entity->set_component_enabled(OpenXRFbSpatialEntity::COMPONENT_TYPE_STORABLE, true);
 	}
 }
 
-void OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
+void OpenXRFbSpatialAnchorManager::_on_anchor_track_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_new_anchor) {
 	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to make spatial anchor %s storable.", p_spatial_entity->get_uuid()));
 
-	p_spatial_entity->connect("openxr_fb_spatial_entity_saved", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_saved).bind(p_spatial_entity), CONNECT_ONE_SHOT);
+	p_spatial_entity->connect("openxr_fb_spatial_entity_saved", callable_mp(this, &OpenXRFbSpatialAnchorManager::_on_anchor_saved).bind(p_spatial_entity, p_new_anchor), CONNECT_ONE_SHOT);
 	p_spatial_entity->save_to_storage(OpenXRFbSpatialEntity::STORAGE_LOCAL);
 }
 
-void OpenXRFbSpatialAnchorManager::_on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity) {
+void OpenXRFbSpatialAnchorManager::_on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_new_anchor) {
 	ERR_FAIL_COND_MSG(!p_succeeded, vformat("Unable to save spatial anchor %s to local storage.", p_spatial_entity->get_uuid()));
-	_complete_anchor_setup(p_spatial_entity);
+	_complete_anchor_setup(p_spatial_entity, p_new_anchor);
 }
 
-void OpenXRFbSpatialAnchorManager::_complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_entity) {
+void OpenXRFbSpatialAnchorManager::_complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_new_anchor) {
 	ERR_FAIL_COND(!xr_origin);
 	ERR_FAIL_COND(anchors.has(p_entity->get_uuid()));
 
@@ -318,7 +321,7 @@ void OpenXRFbSpatialAnchorManager::_complete_anchor_setup(const Ref<OpenXRFbSpat
 		scene_node->call(scene_setup_method, p_entity);
 	}
 
-	emit_signal("openxr_fb_spatial_anchor_tracked", node, p_entity);
+	emit_signal("openxr_fb_spatial_anchor_tracked", node, p_entity, p_new_anchor);
 }
 
 void OpenXRFbSpatialAnchorManager::untrack_anchor(const Variant &p_spatial_entity_or_uuid) {

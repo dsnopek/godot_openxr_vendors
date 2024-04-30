@@ -82,7 +82,6 @@ func load_spatial_anchors_from_file() -> void:
 		return
 
 	var anchor_data: Dictionary = json.data
-	print(anchor_data)
 	if anchor_data.size() > 0:
 		spatial_anchor_manager.load_anchors(anchor_data.keys(), anchor_data, OpenXRFbSpatialEntity.STORAGE_LOCAL, true)
 
@@ -102,7 +101,12 @@ func save_spatial_anchors_to_file() -> void:
 	file.close()
 
 
-func _on_spatial_anchor_created(_spatial_entity: OpenXRFbSpatialEntity) -> void:
+func _on_spatial_anchor_tracked(_anchor_node: XRAnchor3D, _spatial_entity: OpenXRFbSpatialEntity, is_new: bool) -> void:
+	if is_new:
+		save_spatial_anchors_to_file()
+
+
+func _on_spatial_anchor_untracked(_anchor_node: XRAnchor3D, _spatial_entity: OpenXRFbSpatialEntity) -> void:
 	save_spatial_anchors_to_file()
 
 
