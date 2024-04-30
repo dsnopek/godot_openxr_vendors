@@ -47,10 +47,6 @@ class OpenXRFbSpatialAnchorManager : public Node {
 
 	Ref<PackedScene> scene;
 	StringName scene_setup_method = "setup_scene";
-	bool persist_in_local_file = true;
-	String local_file_path = "user://openxr_fb_spatial_anchors.json";
-	bool auto_load = true;
-	bool erase_unknown_anchors_on_load = true;
 	bool visible = true;
 
 	XROrigin3D *xr_origin = nullptr;
@@ -69,15 +65,12 @@ class OpenXRFbSpatialAnchorManager : public Node {
 
 	void _cleanup_anchors();
 
-	void _load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_save_file);
-	void _track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
-
 	void _on_anchor_created(bool p_success, const Transform3D &p_transform, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
-	void _on_anchor_load_query_completed(const Array &p_results, const Dictionary &p_anchors_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_save_file);
-	void _on_anchor_track_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_save_file);
-	void _on_anchor_track_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity, bool p_save_file);
-	void _on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
-	void _complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity, bool p_save_file);
+	void _on_anchor_load_query_completed(const Array &p_results, const Dictionary &p_anchors_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_erase_unknown_anchors);
+	void _on_anchor_track_enable_locatable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
+	void _on_anchor_track_enable_storable_completed(bool p_succeeded, OpenXRFbSpatialEntity::ComponentType p_component, bool p_enabled, const Ref<OpenXRFbSpatialEntity> &p_entity);
+	void _on_anchor_saved(bool p_succeeded, OpenXRFbSpatialEntity::StorageLocation p_location, const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
+	void _complete_anchor_setup(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 
 	void _untrack_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 
@@ -87,7 +80,6 @@ class OpenXRFbSpatialAnchorManager : public Node {
 protected:
 	void _notification(int p_what);
 
-	void _on_openxr_session_begun();
 	void _on_openxr_session_stopping();
 
 	static void _bind_methods();
@@ -101,30 +93,16 @@ public:
 	void set_scene_setup_method(const StringName &p_method);
 	StringName get_scene_setup_method() const;
 
-	void set_persist_in_local_file(bool p_enable);
-	bool get_persist_in_local_file() const;
-
-	void set_local_file_path(const String &p_local_file);
-	String get_local_file_path() const;
-
-	void set_auto_load(bool p_enable);
-	bool get_auto_load() const;
-
-	void set_erase_unknown_anchors_on_load(bool p_enable);
-	bool get_erase_unknown_anchors_on_load() const;
-
 	void set_visible(bool p_visible);
 	bool get_visible() const;
 	void show();
 	void hide();
 
-	void create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data);
+	void create_anchor(const Transform3D &p_transform, const Dictionary &p_custom_data, const Ref<OpenXRFbSpatialEntity> &p_parent = Ref<OpenXRFbSpatialEntity>());
 	void load_anchor(const StringName &p_uuid, const Dictionary &p_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location);
+	void load_anchors(const TypedArray<StringName> &p_uuids, const Dictionary &p_all_custom_data, OpenXRFbSpatialEntity::StorageLocation p_location, bool p_erase_unknown_anchors = false);
 	void track_anchor(const Ref<OpenXRFbSpatialEntity> &p_spatial_entity);
 	void untrack_anchor(const Variant &p_spatial_entity_or_uuid);
-
-	Error save_anchors_to_local_file();
-	Error load_anchors_from_local_file();
 
 	Array get_anchor_uuids() const;
 	XRAnchor3D *get_anchor_node(const StringName &p_uuid) const;
