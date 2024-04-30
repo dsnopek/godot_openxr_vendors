@@ -59,7 +59,7 @@ void OpenXRFbSpatialAnchorManager::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("create_anchor", "transform", "custom_data", "parent"), &OpenXRFbSpatialAnchorManager::create_anchor, DEFVAL(Dictionary()), DEFVAL(Ref<OpenXRFbSpatialEntity>()));
 	ClassDB::bind_method(D_METHOD("load_anchor", "uuid", "custom_data", "location"), &OpenXRFbSpatialAnchorManager::load_anchor, DEFVAL(Dictionary()), DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL));
-	ClassDB::bind_method(D_METHOD("load_anchors", "uuids", "all_custom_data", "location", "erase_unknown_anchors"), &OpenXRFbSpatialAnchorManager::load_anchor, DEFVAL(Dictionary()), DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("load_anchors", "uuids", "all_custom_data", "location", "erase_unknown_anchors"), &OpenXRFbSpatialAnchorManager::load_anchors, DEFVAL(Dictionary()), DEFVAL(OpenXRFbSpatialEntity::STORAGE_LOCAL), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("track_anchor", "spatial_entity"), &OpenXRFbSpatialAnchorManager::track_anchor);
 	ClassDB::bind_method(D_METHOD("untrack_anchor", "spatial_entity_or_uuid"), &OpenXRFbSpatialAnchorManager::untrack_anchor);
 

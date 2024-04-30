@@ -33,6 +33,7 @@ var selected_spatial_anchor_node: Node3D = null
 @onready var passthrough_mode_info: Label3D = $XROrigin3D/RightHand/PassthroughModeInfo
 @onready var passthrough_filter_info: Label3D = $XROrigin3D/RightHand/PassthroughFilterInfo
 
+const SPATIAL_ANCHORS_FILE = "user://openxr_fb_spatial_anchors.json"
 const SpatialAnchor = preload("res://spatial_anchor.tscn")
 
 const COLORS = [
@@ -50,6 +51,7 @@ const COLORS = [
 func _ready():
 	xr_interface = XRServer.find_interface("OpenXR")
 	if xr_interface and xr_interface.is_initialized():
+		xr_interface.session_begun.connect(self.load_spatial_anchors_from_file)
 		var vp: Viewport = get_viewport()
 		vp.use_xr = true
 
@@ -62,6 +64,46 @@ func _ready():
 	meta_color_lut2 = OpenXRMetaPassthroughColorLut.create_from_image(color_lut2, OpenXRMetaPassthroughColorLut.COLOR_LUT_CHANNELS_RGB)
 
 	randomize()
+
+
+func load_spatial_anchors_from_file() -> void:
+	var file := FileAccess.open(SPATIAL_ANCHORS_FILE, FileAccess.READ)
+	if not file:
+		print ("no file")
+		return
+
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		print("ERROR: Unable to parse ", SPATIAL_ANCHORS_FILE)
+		return
+
+	if not json.data is Dictionary:
+		print("ERROR: ", SPATIAL_ANCHORS_FILE, " contains invalid data")
+		return
+
+	var anchor_data: Dictionary = json.data
+	print(anchor_data)
+	if anchor_data.size() > 0:
+		spatial_anchor_manager.load_anchors(anchor_data.keys(), anchor_data, OpenXRFbSpatialEntity.STORAGE_LOCAL, true)
+
+
+func save_spatial_anchors_to_file() -> void:
+	var file := FileAccess.open(SPATIAL_ANCHORS_FILE, FileAccess.WRITE)
+	if not file:
+		print("ERROR: Unable to open file for writing: ", SPATIAL_ANCHORS_FILE)
+		return
+
+	var anchor_data := {}
+	for uuid in spatial_anchor_manager.get_anchor_uuids():
+		var entity: OpenXRFbSpatialEntity = spatial_anchor_manager.get_spatial_entity(uuid)
+		anchor_data[uuid] = entity.custom_data
+
+	file.store_string(JSON.stringify(anchor_data))
+	file.close()
+
+
+func _on_spatial_anchor_created(_spatial_entity: OpenXRFbSpatialEntity) -> void:
+	save_spatial_anchors_to_file()
 
 
 func enable_passthrough(enable: bool) -> void:

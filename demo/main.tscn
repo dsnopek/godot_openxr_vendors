@@ -255,5 +255,6 @@ transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, 
 [connection signal="openxr_fb_render_model_loaded" from="XROrigin3D/RightHand/RightControllerFbRenderModel" to="." method="_on_right_controller_fb_render_model_render_model_loaded"]
 [connection signal="openxr_fb_scene_capture_completed" from="XROrigin3D/OpenXRFbSceneManager" to="." method="_on_scene_manager_scene_capture_completed"]
 [connection signal="openxr_fb_scene_data_missing" from="XROrigin3D/OpenXRFbSceneManager" to="." method="_on_scene_manager_scene_data_missing"]
+[connection signal="openxr_fb_spatial_anchor_created" from="XROrigin3D/OpenXRFbSpatialAnchorManager" to="." method="_on_open_xr_fb_spatial_anchor_manager_openxr_fb_spatial_anchor_created"]
 
 [editable path="Floor/AvatarOffset/Avatar/Test-Kun"]
