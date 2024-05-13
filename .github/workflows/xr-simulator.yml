@@ -12,22 +12,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      #- name: Set up Python
-      #  uses: actions/setup-python@v4
-      #  with:
-      #    python-version: '3.10'
-
-      - name: Install pyvrs
+      - name: Download pyvrs
         run: |
           git clone https://github.com/facebookresearch/pyvrs.git
           cd pyvrs
           git submodule sync --recursive
           git submodule update --init --recursive
 
-          cd pyvrs
+      - name: Download Godot
+        run: |
+          Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&id=1CvY7nqkqMbASpUrywtMvVfjXj9zyEj4H" -OutFile "godot.zip"
+        shell: pwsh
 
-          iwr -useb https://pixi.sh/install.ps1 | iex
-          pixi run install_pyvrs
+      - name: Extract Godot
+        run: |
+          Expand-Archive -Path "godot.zip" -DestinationPath ".\"
+          dir
 
       - name: Download Meta XR Simulator
         run: |
@@ -37,3 +37,10 @@ jobs:
       - name: Extract Meta XR Simulator
         run: |
           Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\"
+
+#      - name: Pixi
+#          cd pyvrs
+#          iwr -useb https://pixi.sh/install.ps1 | iex
+#          pixi run install_pyvrs
+#
+#
