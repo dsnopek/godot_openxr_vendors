@@ -21,7 +21,21 @@ jobs:
 
       - name: Download Godot
         run: |
-          Invoke-WebRequest -Uri "https://drive.google.com/uc?export=download&id=1CvY7nqkqMbASpUrywtMvVfjXj9zyEj4H" -OutFile "godot.zip"
+          $fileId = "1CvY7nqkqMbASpUrywtMvVfjXj9zyEj4H"
+          $fileName = "godot.zip"
+          $cookiePath = "$env:TEMP\cookies.txt"
+
+          # Step 1: Get the confirmation token
+          $initialUrl = "https://docs.google.com/uc?export=download&id=$fileId"
+          $response = Invoke-WebRequest -Uri $initialUrl -SessionVariable session -UseBasicParsing
+          $confirmToken = ($response.Content -split "`n" | Where-Object { $_ -match 'confirm=' }).Split("=")[1].Split("&")[0]
+
+          # Step 2: Use the token to download the file
+          $downloadUrl = "https://docs.google.com/uc?export=download&confirm=$confirmToken&id=$fileId"
+          Invoke-WebRequest -Uri $downloadUrl -WebSession $session -OutFile $fileName -UseBasicParsing
+
+          # Clean up
+          Remove-Item $cookiePath -ErrorAction Ignore
         shell: pwsh
 
       - name: Extract Godot
