@@ -12,20 +12,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Clone pyvrs repository
+      #- name: Set up Python
+      #  uses: actions/setup-python@v4
+      #  with:
+      #    python-version: '3.10'
+
+      - name: Install pyvrs
         run: |
           git clone https://github.com/facebookresearch/pyvrs.git
           cd pyvrs
           git submodule sync --recursive
           git submodule update --init --recursive
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install Python dependencies
-        run: |
           cd pyvrs
-          python -m pip install --upgrade pip
-          python -m pip install -e .
+
+          iwr -useb https://pixi.sh/install.ps1 | iex
+          pixi run install_pyvrs
+
+      - name: Download Meta XR Simulator
+        run: |
+          Invoke-WebRequest -Uri "https://securecdn.oculus.com/binaries/download/?id=7377333452380808&access_token=OCASsWfPgbJaWh6YZAJNHSebmBalnkZCtjwQJdZAu7vjdwoHZCAY8MDuTuLDpRZAV1O92ovkZAKYeHc8DK0goz41N1SOlzPkYpv5F6pLjv9fzQZDZD" -OutFile "download.zip"
+        shell: pwsh
+
+      - name: Extract Meta XR Simulator
+        run: |
+          Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\"
