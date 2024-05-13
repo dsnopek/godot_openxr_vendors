@@ -26,7 +26,7 @@ jobs:
 
       - name: Extract Godot
         run: |
-          Expand-Archive -Path "godot.zip" -DestinationPath ".\"
+          Expand-Archive -Path "godot.zip" -DestinationPath .
           dir
 
       - name: Download Meta XR Simulator
