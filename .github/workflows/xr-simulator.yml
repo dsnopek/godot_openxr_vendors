@@ -104,6 +104,8 @@ jobs:
             Set-Content -Path $jsonPath -Value $jsonContent
 
             #$env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+
+            New-Item -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ApiLayers" -Force
             Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1\ApiLayers" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
 
 
