@@ -45,7 +45,7 @@ jobs:
 
       - name: Install tar
         run: |
-          choco install tar -y
+          choco install 7zip -y
         shell: pwsh
 
       - name: Download Godot
@@ -67,8 +67,11 @@ jobs:
         run: |
           Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\"
           $tgzFile = Get-ChildItem -Path "C:\Meta" -Filter *.tgz
-          tar -xzf $tgzFile.FullName -C "C:\Meta"
+          7z x $tgzFile.FullName -oC:\Meta
+          $tarFile = Get-ChildItem -Path "C:\Meta" -Filter *.tar
+          7z x $tarFile.FullName -oC:\Meta
           dir "C:\Meta"
+        shell: pwsh
 
 #      - name: Run tests
 #        run: |
