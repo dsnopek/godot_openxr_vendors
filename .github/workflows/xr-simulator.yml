@@ -98,5 +98,5 @@ jobs:
             $env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
 
             # @todo Point to permanent Godot executable.
-            godot.windows.editor.dev.x86_64.exe --path demo
+            .\godot.windows.editor.dev.x86_64.exe --path demo
           }
