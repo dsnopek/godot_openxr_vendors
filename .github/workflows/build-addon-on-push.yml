@@ -279,7 +279,7 @@ jobs:
             $timeout = 120
             $waitTime = 0
 
-            $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile --verbose" -NoNewWindow -PassThru
+            $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile --verbose -- --quit-with-openxr" -NoNewWindow -PassThru
 
             while ($process.HasExited -eq $false -and $waitTime -lt $timeout) {
                 Start-Sleep -Seconds 1
