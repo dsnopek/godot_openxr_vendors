@@ -104,8 +104,7 @@ jobs:
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
 
-            $workingDirectory = "${{ github.workspace }}"
             # @todo Point to permanent Godot executable.
-            $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
-            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -WorkingDirectory "$workingDirectory" -Wait
+            $godot = "godot.windows.editor.dev.x86_64.exe"
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile" -NoNewWindow -Wait
           }
