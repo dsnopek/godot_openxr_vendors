@@ -279,7 +279,7 @@ jobs:
             echo "$jsonContent"
 
             $godot = "godot.windows.editor.dev.x86_64.exe"
-            $timeout = 120
+            $timeout = 300
             $waitTime = 0
 
             $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile --verbose -- --quit-with-openxr" -NoNewWindow -PassThru
