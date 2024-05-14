@@ -65,12 +65,16 @@ jobs:
 
       - name: Extract Meta XR Simulator
         run: |
+          # Unzip.
           Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\"
+
+          # Gunzip.
           $tgzFile = Get-ChildItem -Path "C:\Meta" -Filter *.tgz
           7z x $tgzFile.FullName -oC:\Meta
+
+          # Untar.
           $tarFile = Get-ChildItem -Path "C:\Meta" -Filter *.tar
           7z x $tarFile.FullName -oC:\Meta
-          dir "C:\Meta"
         shell: pwsh
 
       - name: Configure the Meta XR Simulator as the active OpenXR runtime
@@ -81,25 +85,7 @@ jobs:
 
       - name: Run tests
         run: |
-          #dir "C:\Meta\package\MetaXRSimulator\"
-
-          #$env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
-
-          #New-Item -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Force
-          #Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
-
-
-          # Generate a random password
-          #$chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
-          #$password = -join ((33..126) | Get-Random -Count 16 | ForEach-Object {[char]$_})
-          #$securePassword = ConvertTo-SecureString $password -AsPlainText -Force
-
-          #New-LocalUser "testuser" -Password $securePassword
-          #Add-LocalGroupMember -Group "Users" -Member "testuser"
-
           $jsonPath = "$env:AppData\MetaXR\MetaXrSimulator\persistent_data.json"
-
-          #echo "$jsonPath"
 
           $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
           foreach ($file in $vrsFiles) {
@@ -118,11 +104,10 @@ jobs:
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
 
-            # Run as non-elevated process so the XR_RUNTIME_JSON will get picked up.
             $workingDirectory = "${{ github.workspace }}"
             # @todo Point to permanent Godot executable.
-            $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
-            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow
-            #Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
-            #Start-Process -FilePath "cmd.exe" -ArgumentList "/c $godot --path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
+            #$godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
+            $godot = ".\godot.windows.editor.dev.x86_64.exe"
+            $godot --path demo
+            #Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow
           }
