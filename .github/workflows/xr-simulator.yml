@@ -73,14 +73,20 @@ jobs:
           dir "C:\Meta"
         shell: pwsh
 
+      - name: Configure the Meta XR Simulator as the active OpenXR runtime
+        run: |
+          New-Item -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Force
+          Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+        shell: pwsh
+
       - name: Run tests
         run: |
-          dir "C:\Meta\package\MetaXRSimulator\"
+          #dir "C:\Meta\package\MetaXRSimulator\"
 
           #$env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
 
-          New-Item -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Force
-          Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+          #New-Item -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Force
+          #Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
 
 
           # Generate a random password
@@ -92,7 +98,8 @@ jobs:
           #Add-LocalGroupMember -Group "Users" -Member "testuser"
 
           $jsonPath = "$env:AppData\MetaXR\MetaXrSimulator\persistent_data.json"
-          echo "$jsonPath"
+
+          #echo "$jsonPath"
 
           $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
           foreach ($file in $vrsFiles) {
@@ -110,7 +117,6 @@ jobs:
 
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
-            dir "$env:AppData\Roaming\MetaXR\MetaXrSimulator"
 
             # Run as non-elevated process so the XR_RUNTIME_JSON will get picked up.
             $workingDirectory = "${{ github.workspace }}"
