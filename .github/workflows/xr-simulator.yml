@@ -73,30 +73,30 @@ jobs:
           dir "C:\Meta"
         shell: pwsh
 
-#      - name: Run tests
-#        run: |
-#          $env:AppData = [System.Environment]::GetFolderPath('ApplicationData')
-#
-#          $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
-#          foreach ($file in $vrsFiles) {
-#            $replayPath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + "-replay.vrs")
-#            $jsonContent = @{
-#              session_capture = @{
-#                delay_start_ms = 5000
-#                exec_state = "replay"
-#                quit_buffer_ms = 5000
-#                quit_when_complete = true
-#                record_path = $file.FullName
-#                replay_path = $replayPath
-#              }
-#            } | ConvertTo-Json
-#
-#            $jsonPath = "$env:AppData\Roaming\MetaXR\MetaXrSimulator\persistent_data.json"
-#            New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
-#            Set-Content -Path $jsonPath -Value $jsonContent
-#
-#            # @todo Point to perminent Godot executable.
-#            godot.editor.windows.dev.x86_64
-#
-#          }
-#
+      - name: Run tests
+        run: |
+          #$env:AppData = [System.Environment]::GetFolderPath('ApplicationData')
+
+          $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
+          foreach ($file in $vrsFiles) {
+            $replayPath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + "-replay.vrs")
+            $jsonContent = @{
+              session_capture = @{
+                delay_start_ms = 5000
+                exec_state = "replay"
+                quit_buffer_ms = 5000
+                quit_when_complete = true
+                record_path = $file.FullName
+                replay_path = $replayPath
+              }
+            } | ConvertTo-Json
+
+            $jsonPath = "$env:AppData\Roaming\MetaXR\MetaXrSimulator\persistent_data.json"
+            New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
+            Set-Content -Path $jsonPath -Value $jsonContent
+
+            $env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+
+            # @todo Point to permanent Godot executable.
+            godot.editor.windows.dev.x86_64 --path demo
+          }
