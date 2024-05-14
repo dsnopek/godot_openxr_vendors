@@ -91,7 +91,7 @@ jobs:
           #New-LocalUser "testuser" -Password $securePassword
           #Add-LocalGroupMember -Group "Users" -Member "testuser"
 
-          $jsonPath = "$env:AppData\Roaming\MetaXR\MetaXrSimulator\persistent_data.json"
+          $jsonPath = "$env:AppData\MetaXR\MetaXrSimulator\persistent_data.json"
           echo "$jsonPath"
 
           $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
@@ -110,6 +110,7 @@ jobs:
 
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
+            dir "$env:AppData\Roaming\MetaXR\MetaXrSimulator"
 
             # Run as non-elevated process so the XR_RUNTIME_JSON will get picked up.
             $workingDirectory = "${{ github.workspace }}"
