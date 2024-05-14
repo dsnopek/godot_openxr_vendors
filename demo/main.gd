@@ -52,6 +52,7 @@ func _ready():
 	xr_interface = XRServer.find_interface("OpenXR")
 	if xr_interface and xr_interface.is_initialized():
 		xr_interface.session_begun.connect(self.load_spatial_anchors_from_file)
+		xr_interface.session_stopping.connect(self._on_session_stopping)
 		var vp: Viewport = get_viewport()
 		vp.use_xr = true
 
@@ -64,6 +65,12 @@ func _ready():
 	meta_color_lut2 = OpenXRMetaPassthroughColorLut.create_from_image(color_lut2, OpenXRMetaPassthroughColorLut.COLOR_LUT_CHANNELS_RGB)
 
 	randomize()
+
+
+func _on_session_stopping() -> void:
+	# When we're running tests via the XR Simulator, it will end the OpenXR
+	# session automatically, and in that case, we want to quit.
+	get_tree().quit()
 
 
 func load_spatial_anchors_from_file() -> void:
