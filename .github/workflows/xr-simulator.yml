@@ -109,5 +109,6 @@ jobs:
             $workingDirectory = "${{ github.workspace }}"
             # @todo Point to permanent Godot executable.
             $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
-            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
+            #Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
+            Start-Process -FilePath "cmd.exe" -ArgumentList "/c $godot --path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
           }
