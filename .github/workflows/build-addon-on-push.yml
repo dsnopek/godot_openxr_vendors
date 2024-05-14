@@ -243,7 +243,6 @@ jobs:
 
       - name: Copy Windows build of the addon into the demo project
         run: |
-          dir
           mkdir -p demo/addons/godotopenxrvendors/.bin/windows/
           cp -r build-files-windows/* demo/addons/godotopenxrvendors/.bin/windows/
 
