@@ -102,13 +102,14 @@ jobs:
 
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
+            echo "$jsonContent"
 
             # @todo Point to permanent Godot executable.
             $godot = "godot.windows.editor.dev.x86_64.exe"
             $timeout = 120
             $waitTime = 0
 
-            $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile" -NoNewWindow -PassThru
+            $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile --verbose" -NoNewWindow -PassThru
 
             while ($process.HasExited -eq $false -and $waitTime -lt $timeout) {
                 Start-Sleep -Seconds 1
