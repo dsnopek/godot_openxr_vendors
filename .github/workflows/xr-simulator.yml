@@ -75,8 +75,6 @@ jobs:
 
       - name: Run tests
         run: |
-          #$env:AppData = [System.Environment]::GetFolderPath('ApplicationData')
-
           dir "C:\Meta\package\MetaXRSimulator\"
 
           #$env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
@@ -93,6 +91,9 @@ jobs:
           #New-LocalUser "testuser" -Password $securePassword
           #Add-LocalGroupMember -Group "Users" -Member "testuser"
 
+          $jsonPath = "$env:AppData\Roaming\MetaXR\MetaXrSimulator\persistent_data.json"
+          echo "$jsonPath"
+
           $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
           foreach ($file in $vrsFiles) {
             $replayPath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + "-replay.vrs")
@@ -107,7 +108,6 @@ jobs:
               }
             } | ConvertTo-Json
 
-            $jsonPath = "$env:AppData\Roaming\MetaXR\MetaXrSimulator\persistent_data.json"
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
 
