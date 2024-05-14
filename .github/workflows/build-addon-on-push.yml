@@ -239,9 +239,11 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: build-files-windows
+          path: build-files-windows
 
-      - name: Copy Windows build into demo project
+      - name: Copy Windows build of the addon into the demo project
         run: |
+          dir
           mkdir -p demo/addons/godotopenxrvendors/.bin/windows/
           cp -r build-files-windows/* demo/addons/godotopenxrvendors/.bin/windows/
 
