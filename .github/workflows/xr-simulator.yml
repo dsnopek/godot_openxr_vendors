@@ -106,8 +106,6 @@ jobs:
 
             $workingDirectory = "${{ github.workspace }}"
             # @todo Point to permanent Godot executable.
-            #$godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
-            $godot = ".\godot.windows.editor.dev.x86_64.exe"
-            $godot --path demo
-            #Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow
+            $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -WorkingDirectory "$workingDirectory" -Wait
           }
