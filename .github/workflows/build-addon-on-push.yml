@@ -183,7 +183,6 @@ jobs:
 
   run_xr_simulator:
    name: "Run XR Simulator"
-   #runs-on: windows-2019
    runs-on: windows-latest
    needs: build
 
@@ -203,6 +202,7 @@ jobs:
 
       - name: Download Godot
         run: |
+          # @todo Download an actual Godot build!
           Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qyklduqyv9m1yqmdn2jdy/godot.windows.editor.dev.x86_64.exe.zip?rlkey=5eatkzb1n73258yo36izrfj59&st=2y23hgqs&dl=1" -OutFile "godot.zip"
         shell: pwsh
 
