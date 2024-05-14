@@ -97,7 +97,9 @@ jobs:
 
             $env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
 
-            # @todo Point to permanent Godot executable.
             # Run as non-elevated process so the XR_RUNTIME_JSON will get picked up.
-            Start-Process -FilePath ".\godot.windows.editor.dev.x86_64.exe --path demo" -NoNewWindow
+            $workingDirectory = "${{ github.workspace }}"
+            # @todo Point to permanent Godot executable.
+            $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow
           }
