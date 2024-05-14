@@ -12,30 +12,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Download pyvrs
-        run: |
-          git clone https://github.com/facebookresearch/pyvrs.git
-          cd pyvrs
-          git submodule sync --recursive
-          git submodule update --init --recursive
+#      - name: Download pyvrs
+#        run: |
+#          git clone https://github.com/facebookresearch/pyvrs.git
+#          cd pyvrs
+#          git submodule sync --recursive
+#          git submodule update --init --recursive
+#
+#      - name: Download Godot
+#        run: |
+#          $fileId = "1CvY7nqkqMbASpUrywtMvVfjXj9zyEj4H"
+#          $fileName = "godot.zip"
+#          $cookiePath = "$env:TEMP\cookies.txt"
+#
+#          # Step 1: Get the confirmation token
+#          $initialUrl = "https://docs.google.com/uc?export=download&id=$fileId"
+#          $response = Invoke-WebRequest -Uri $initialUrl -SessionVariable session -UseBasicParsing
+#          $confirmToken = ($response.Content -split "`n" | Where-Object { $_ -match 'confirm=' }).Split("=")[1].Split("&")[0]
+#
+#          # Step 2: Use the token to download the file
+#          $downloadUrl = "https://docs.google.com/uc?export=download&confirm=$confirmToken&id=$fileId"
+#          Invoke-WebRequest -Uri $downloadUrl -WebSession $session -OutFile $fileName -UseBasicParsing
+#
+#          # Clean up
+#          Remove-Item $cookiePath -ErrorAction Ignore
+#        shell: pwsh
 
       - name: Download Godot
         run: |
-          $fileId = "1CvY7nqkqMbASpUrywtMvVfjXj9zyEj4H"
-          $fileName = "godot.zip"
-          $cookiePath = "$env:TEMP\cookies.txt"
-
-          # Step 1: Get the confirmation token
-          $initialUrl = "https://docs.google.com/uc?export=download&id=$fileId"
-          $response = Invoke-WebRequest -Uri $initialUrl -SessionVariable session -UseBasicParsing
-          $confirmToken = ($response.Content -split "`n" | Where-Object { $_ -match 'confirm=' }).Split("=")[1].Split("&")[0]
-
-          # Step 2: Use the token to download the file
-          $downloadUrl = "https://docs.google.com/uc?export=download&confirm=$confirmToken&id=$fileId"
-          Invoke-WebRequest -Uri $downloadUrl -WebSession $session -OutFile $fileName -UseBasicParsing
-
-          # Clean up
-          Remove-Item $cookiePath -ErrorAction Ignore
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qyklduqyv9m1yqmdn2jdy/godot.windows.editor.dev.x86_64.exe.zip?rlkey=5eatkzb1n73258yo36izrfj59&st=2y23hgqs&dl=1" -OutFile "download.zip"
         shell: pwsh
 
       - name: Extract Godot
