@@ -1,40 +1,40 @@
 # Workflow to automatically create the godot openxr loaders addon
 name: Build on push
 
-#on: [push, pull_request]
-#
-#jobs:
-#  build:
-#    name: Building for ${{ matrix.name }} (${{ matrix.os }})
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: true
-#      matrix:
-#        include:
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: Building for ${{ matrix.name }} (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
 #          - name: Linux (x86_64)
 #            os: ubuntu-20.04
 #            platform: linux
 #            flags: arch=x86_64
 #            artifact_name: build-files-linux-x86_64
 #            artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
-#          # Not sure how to cross compile these
-#          # - name: Linux (arm64)
-#          #   os: ubuntu-20.04
-#          #   platform: linux
-#          #   flags: arch=arm64
-#          #  artifact_name: build-files-linux-arm64
-#          #   artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
-#          # - name: Linux (rv64)
-#          #  os: ubuntu-20.04
-#          #  platform: linux
-#          #  flags: arch=rv64
-#          #  artifact_name: build-files-linux-rv64
-#          #  artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
-#          - name: Windows
-#            os: windows-latest
-#            platform: windows
-#            artifact_name: build-files-windows
-#            artifact_path: aar/demo/addons/godotopenxrvendors/.bin/windows/*/*/*.dll
+          # Not sure how to cross compile these
+          # - name: Linux (arm64)
+          #   os: ubuntu-20.04
+          #   platform: linux
+          #   flags: arch=arm64
+          #  artifact_name: build-files-linux-arm64
+          #   artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
+          # - name: Linux (rv64)
+          #  os: ubuntu-20.04
+          #  platform: linux
+          #  flags: arch=rv64
+          #  artifact_name: build-files-linux-rv64
+          #  artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
+          - name: Windows
+            os: windows-latest
+            platform: windows
+            artifact_name: build-files-windows
+            artifact_path: aar/demo/addons/godotopenxrvendors/.bin/windows/*/*/*.dll
 #          - name: MacOS
 #            os: macos-11
 #            platform: macos
@@ -53,131 +53,247 @@ name: Build on push
 #            flags: arch=arm64
 #            artifact_name: build-files-android-so
 #            artifact_path: aar/demo/addons/godotopenxrvendors/.bin/android/*/*/*.so
-#
-#    # Note, to satisfy the asset library we need to make sure our zip files have a root folder
-#    # this is why we checkout into aar and build into asset
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#        with:
-#          path: aar
-#          submodules: recursive
-#      - name: Set up Python (for SCons)
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: "3.x"
-#      - name: Android dependencies
-#        uses: nttld/setup-ndk@v1
-#        with:
-#          ndk-version: r23c
-#          link-to-sdk: true
-#      - name: Install scons
-#        run: |
-#          python -m pip install scons==4.0.0
-#      - name: Create extension library
-#        run: |
-#          cd aar
-#          scons platform=${{ matrix.platform }} target=template_debug ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json
-#          scons platform=${{ matrix.platform }} target=template_release ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json
-#          cd ..
-#
-#      # On Android we build our loaders and build our extension with gradlew
-#      - name: Setup java
-#        uses: actions/setup-java@v3
-#        with:
-#          java-version: 17
-#          distribution: "adopt"
-#        if: matrix.platform == 'android'
-#      - name: Validate Gradle wrapper
-#        uses: gradle/wrapper-validation-action@v1
-#        if: matrix.platform == 'android'
-#      - name: Create Godot-CPP library
-#        run: |
-#          cd aar/thirdparty/godot-cpp
-#          scons platform=${{ matrix.platform }} target=template_debug arch=arm64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
-#          scons platform=${{ matrix.platform }} target=template_release arch=arm64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
-#          scons platform=${{ matrix.platform }} target=template_debug arch=x86_64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
-#          scons platform=${{ matrix.platform }} target=template_release arch=x86_64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
-#          cd ../../..
-#        if: matrix.platform == 'android'
-#      - name: Create Godot OpenXR Vendors AARs
-#        run: |
-#          cd aar
-#          ./gradlew build
-#          cd ..
-#        if: matrix.platform == 'android'
-#
-#      - name: Upload build files (artifacts)
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: ${{ matrix.artifact_name }}
-#          path: |
-#            ${{ matrix.artifact_path }}
-#
-#  # GODOT 4.2 ADDON GENERATION SECTION
-#  asset:
-#    name: Assembling the asset
-#    runs-on: ubuntu-20.04
-#    needs: build
-#
-#    # Steps represent a sequence of tasks that will be executed as part of the job
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v3
-#        with:
-#          path: aar
-#      - name: Download all workflow run artifacts
-#        uses: actions/download-artifact@v3
-#      - name: Create Godot OpenXR Vendors Addon
-#        run: |
-#          mkdir asset
-#          cp -r aar/demo/addons asset
-#          cp aar/CHANGES.md asset/addons/godotopenxrvendors/GodotOpenXRVendors_CHANGES.md
-#      - name: Adding vendor licences
-#        run: |
-#          mkdir -p asset/addons/godotopenxrvendors/meta/
-#          cp aar/thirdparty/ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/
-#
-#          mkdir -p asset/addons/godotopenxrvendors/pico/
-#          cp aar/thirdparty/pico_openxr_sdk/README.md asset/addons/godotopenxrvendors/pico/LICENSE.md
-#
-#          mkdir -p asset/addons/godotopenxrvendors/khronos/
-#          cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/khronos/LICENSE
-#
-#      - name: Copying artifacts
-#        run: |
-#          mkdir -p asset/addons/godotopenxrvendors/.bin/android/
-#          cp -r build-files-android-aar/* asset/addons/godotopenxrvendors/.bin/android/
-#          cp -r build-files-android-so/* asset/addons/godotopenxrvendors/.bin/android/
-#
-#          mkdir -p asset/addons/godotopenxrvendors/.bin/linux/
-#          cp -r build-files-linux-x86_64/* asset/addons/godotopenxrvendors/.bin/linux/
-#
-#          mkdir -p asset/addons/godotopenxrvendors/.bin/windows/
-#          cp -r build-files-windows/* asset/addons/godotopenxrvendors/.bin/windows/
-#
-#          mkdir -p asset/addons/godotopenxrvendors/.bin/macos/
-#          cp -r build-files-macos/* asset/addons/godotopenxrvendors/.bin/macos/
-#
-#      - name: Create Godot OpenXR Vendor addon artifact
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: GodotOpenXRVendorsAddon
-#          path: |
-#            asset
-#      - name: Zip addon
-#        run: |
-#          zip -qq -r godotopenxrvendorsaddon.zip asset
-#        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-#      - name: Create and upload asset
-#        uses: ncipollo/release-action@v1
-#        with:
-#          allowUpdates: true
-#          artifacts: "godotopenxrvendorsaddon.zip"
-#          omitNameDuringUpdate: true
-#          omitBodyDuringUpdate: true
-#          omitDraftDuringUpdate: true
-#          omitPrereleaseDuringUpdate: true
-#          token: ${{ secrets.GITHUB_TOKEN }}
-#        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-#
+
+    # Note, to satisfy the asset library we need to make sure our zip files have a root folder
+    # this is why we checkout into aar and build into asset
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: aar
+          submodules: recursive
+      - name: Set up Python (for SCons)
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      - name: Android dependencies
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r23c
+          link-to-sdk: true
+      - name: Install scons
+        run: |
+          python -m pip install scons==4.0.0
+      - name: Create extension library
+        run: |
+          cd aar
+          scons platform=${{ matrix.platform }} target=template_debug ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json
+          scons platform=${{ matrix.platform }} target=template_release ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json
+          cd ..
+
+      # On Android we build our loaders and build our extension with gradlew
+      - name: Setup java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: "adopt"
+        if: matrix.platform == 'android'
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+        if: matrix.platform == 'android'
+      - name: Create Godot-CPP library
+        run: |
+          cd aar/thirdparty/godot-cpp
+          scons platform=${{ matrix.platform }} target=template_debug arch=arm64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
+          scons platform=${{ matrix.platform }} target=template_release arch=arm64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
+          scons platform=${{ matrix.platform }} target=template_debug arch=x86_64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
+          scons platform=${{ matrix.platform }} target=template_release arch=x86_64 custom_api_file=../godot_cpp_gdextension_api/extension_api.json
+          cd ../../..
+        if: matrix.platform == 'android'
+      - name: Create Godot OpenXR Vendors AARs
+        run: |
+          cd aar
+          ./gradlew build
+          cd ..
+        if: matrix.platform == 'android'
+
+      - name: Upload build files (artifacts)
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.artifact_path }}
+
+  # GODOT 4.2 ADDON GENERATION SECTION
+  asset:
+    name: Assembling the asset
+    runs-on: ubuntu-20.04
+    needs: build
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          path: aar
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v3
+      - name: Create Godot OpenXR Vendors Addon
+        run: |
+          mkdir asset
+          cp -r aar/demo/addons asset
+          cp aar/CHANGES.md asset/addons/godotopenxrvendors/GodotOpenXRVendors_CHANGES.md
+      - name: Adding vendor licences
+        run: |
+          mkdir -p asset/addons/godotopenxrvendors/meta/
+          cp aar/thirdparty/ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/
+
+          mkdir -p asset/addons/godotopenxrvendors/pico/
+          cp aar/thirdparty/pico_openxr_sdk/README.md asset/addons/godotopenxrvendors/pico/LICENSE.md
+
+          mkdir -p asset/addons/godotopenxrvendors/khronos/
+          cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/khronos/LICENSE
+
+      - name: Copying artifacts
+        run: |
+          mkdir -p asset/addons/godotopenxrvendors/.bin/android/
+          cp -r build-files-android-aar/* asset/addons/godotopenxrvendors/.bin/android/
+          cp -r build-files-android-so/* asset/addons/godotopenxrvendors/.bin/android/
+
+          mkdir -p asset/addons/godotopenxrvendors/.bin/linux/
+          cp -r build-files-linux-x86_64/* asset/addons/godotopenxrvendors/.bin/linux/
+
+          mkdir -p asset/addons/godotopenxrvendors/.bin/windows/
+          cp -r build-files-windows/* asset/addons/godotopenxrvendors/.bin/windows/
+
+          mkdir -p asset/addons/godotopenxrvendors/.bin/macos/
+          cp -r build-files-macos/* asset/addons/godotopenxrvendors/.bin/macos/
+
+      - name: Create Godot OpenXR Vendor addon artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: GodotOpenXRVendorsAddon
+          path: |
+            asset
+      - name: Zip addon
+        run: |
+          zip -qq -r godotopenxrvendorsaddon.zip asset
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+      - name: Create and upload asset
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          artifacts: "godotopenxrvendorsaddon.zip"
+          omitNameDuringUpdate: true
+          omitBodyDuringUpdate: true
+          omitDraftDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+
+  run_xr_simulator:
+   name: "Run XR Simulator"
+   #runs-on: windows-2019
+   runs-on: windows-latest
+   needs: build
+
+   steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+        shell: pwsh
+
+      - name: Install 7zip
+        run: |
+          choco install 7zip -y
+        shell: pwsh
+
+      - name: Download Godot
+        run: |
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/qyklduqyv9m1yqmdn2jdy/godot.windows.editor.dev.x86_64.exe.zip?rlkey=5eatkzb1n73258yo36izrfj59&st=2y23hgqs&dl=1" -OutFile "godot.zip"
+        shell: pwsh
+
+      - name: Extract Godot
+        run: |
+          Expand-Archive -Path "godot.zip" -DestinationPath .
+
+      - name: Download Meta XR Simulator
+        run: |
+          Invoke-WebRequest -Uri "https://securecdn.oculus.com/binaries/download/?id=7377333452380808&access_token=OCASsWfPgbJaWh6YZAJNHSebmBalnkZCtjwQJdZAu7vjdwoHZCAY8MDuTuLDpRZAV1O92ovkZAKYeHc8DK0goz41N1SOlzPkYpv5F6pLjv9fzQZDZD" -OutFile "download.zip"
+        shell: pwsh
+
+      - name: Extract Meta XR Simulator
+        run: |
+          # Unzip.
+          Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\"
+
+          # Gunzip.
+          $tgzFile = Get-ChildItem -Path "C:\Meta" -Filter *.tgz
+          7z x $tgzFile.FullName -oC:\Meta
+
+          # Untar.
+          $tarFile = Get-ChildItem -Path "C:\Meta" -Filter *.tar
+          7z x $tarFile.FullName -oC:\Meta
+        shell: pwsh
+
+      - name: Configure the Meta XR Simulator as the active OpenXR runtime
+        run: |
+          New-Item -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Force
+          Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+        shell: pwsh
+
+      - name: Download Windows build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-files-windows
+
+      - name: Copy Windows build into demo project
+        run: |
+          mkdir -p demo/addons/godotopenxrvendors/.bin/windows/
+          cp -r build-files-windows/* demo/addons/godotopenxrvendors/.bin/windows/
+
+      - name: Import the demo project
+        run: |
+            $godot = "godot.windows.editor.dev.x86_64.exe"
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo --import --headless" -NoNewWindow -Wait
+        shell: pwsh
+
+      - name: Run tests
+        run: |
+          $jsonPath = "$env:AppData\MetaXR\MetaXrSimulator\persistent_data.json"
+
+          $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
+          foreach ($file in $vrsFiles) {
+            $replayPath = Join-Path -Path $file.DirectoryName -ChildPath ($file.BaseName + "-replay.vrs")
+            $jsonContent = @{
+              session_capture = @{
+                delay_start_ms = 5000
+                exec_state = "replay"
+                quit_buffer_ms = 5000
+                quit_when_complete = $true
+                record_path = $file.FullName
+                replay_path = $replayPath
+              }
+            } | ConvertTo-Json
+
+            New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
+            Set-Content -Path $jsonPath -Value $jsonContent
+            echo "$jsonContent"
+
+            $godot = "godot.windows.editor.dev.x86_64.exe"
+            $timeout = 120
+            $waitTime = 0
+
+            $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile --verbose" -NoNewWindow -PassThru
+
+            while ($process.HasExited -eq $false -and $waitTime -lt $timeout) {
+                Start-Sleep -Seconds 1
+                $waitTime++
+            }
+
+            if ($process.HasExited -eq $false) {
+                Write-Output "Process is still running after $timeout seconds. Stopping the process."
+                $process.Kill()
+                Exit 1
+            } else {
+                Write-Output "Process completed within $waitTime seconds."
+            }
+
+            if (-Not (Test-Path $replayPath)) {
+              Write-Error "Replay file not found: $filepath"
+              Exit 1
+            }
+          }
