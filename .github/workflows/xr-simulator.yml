@@ -103,12 +103,15 @@ jobs:
             New-Item -ItemType Directory -Force -Path (Split-Path $jsonPath)
             Set-Content -Path $jsonPath -Value $jsonContent
 
-            $env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+            #$env:XR_RUNTIME_JSON = "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+            Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1\ApiLayers" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
+
 
             # Run as non-elevated process so the XR_RUNTIME_JSON will get picked up.
             $workingDirectory = "${{ github.workspace }}"
             # @todo Point to permanent Godot executable.
             $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow
             #Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
-            Start-Process -FilePath "cmd.exe" -ArgumentList "/c $godot --path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
+            #Start-Process -FilePath "cmd.exe" -ArgumentList "/c $godot --path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
           }
