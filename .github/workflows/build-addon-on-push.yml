@@ -248,9 +248,13 @@ jobs:
 
       - name: Import the demo project
         run: |
-            $godot = "godot.windows.editor.dev.x86_64.exe"
-            Start-Process -FilePath "$godot" -ArgumentList "--path demo --import --headless" -NoNewWindow -Wait
+          $godot = "godot.windows.editor.dev.x86_64.exe"
+          Start-Process -FilePath "$godot" -ArgumentList "--path demo --import --headless" -NoNewWindow -Wait
         shell: pwsh
+
+      - name: Launch a synthetic environment
+        run: |
+          Start-Process -FilePath "C:\Meta\package\MetaXRSimulator\.synth_env_server\synth_env_server.exe" -ArgumentList "Bedroom" -PassThru
 
       - name: Run tests
         run: |
@@ -298,6 +302,10 @@ jobs:
               Exit 1
             }
           }
+
+      - name: Stop synthetic environment
+        run: |
+          Get-Process -Name "synth_env_server" | Stop-Process
 
       - name: Copy vrs_pixmatch.py from Meta XR Simulator
         run: |
