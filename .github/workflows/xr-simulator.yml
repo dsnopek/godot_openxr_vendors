@@ -100,7 +100,7 @@ jobs:
                 delay_start_ms = 5000
                 exec_state = "replay"
                 quit_buffer_ms = 5000
-                quit_when_complete = true
+                quit_when_complete = $true
                 record_path = $file.FullName
                 replay_path = $replayPath
               }
