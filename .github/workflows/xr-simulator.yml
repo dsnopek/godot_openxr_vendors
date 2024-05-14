@@ -77,8 +77,12 @@ jobs:
         run: |
           #$env:AppData = [System.Environment]::GetFolderPath('ApplicationData')
 
-          $password = ConvertTo-SecureString "testpassword" -AsPlainText -Force
-          New-LocalUser "testuser" -Password $password
+          # Generate a random password
+          $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
+          $password = -join ((33..126) | Get-Random -Count 16 | ForEach-Object {[char]$_})
+          $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+
+          New-LocalUser "testuser" -Password $securePassword
           Add-LocalGroupMember -Group "Users" -Member "testuser"
 
           $vrsFiles = Get-ChildItem -Path tests/vrs -Filter *.vrs
@@ -105,5 +109,5 @@ jobs:
             $workingDirectory = "${{ github.workspace }}"
             # @todo Point to permanent Godot executable.
             $godot = "$workingDirectory/godot.windows.editor.dev.x86_64.exe"
-            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $password))
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo" -NoNewWindow -Credential (New-Object System.Management.Automation.PSCredential("testuser", $securePassword))
           }
