@@ -82,6 +82,12 @@ jobs:
           Set-ItemProperty -Path "HKLM:\SOFTWARE\Khronos\OpenXR\1" -Name "ActiveRuntime" -Value "C:\Meta\package\MetaXRSimulator\meta_openxr_simulator.json"
         shell: pwsh
 
+      - name: Import the demo project
+        run: |
+            $godot = "godot.windows.editor.dev.x86_64.exe"
+            Start-Process -FilePath "$godot" -ArgumentList "--path demo --import --headless" -NoNewWindow -Wait
+        shell: pwsh
+
       - name: Run tests
         run: |
           $jsonPath = "$env:AppData\MetaXR\MetaXrSimulator\persistent_data.json"
@@ -104,7 +110,6 @@ jobs:
             Set-Content -Path $jsonPath -Value $jsonContent
             echo "$jsonContent"
 
-            # @todo Point to permanent Godot executable.
             $godot = "godot.windows.editor.dev.x86_64.exe"
             $timeout = 120
             $waitTime = 0
