@@ -56,7 +56,6 @@ jobs:
       - name: Extract Godot
         run: |
           Expand-Archive -Path "godot.zip" -DestinationPath .
-          dir
 
       - name: Download Meta XR Simulator
         run: |
@@ -106,5 +105,26 @@ jobs:
 
             # @todo Point to permanent Godot executable.
             $godot = "godot.windows.editor.dev.x86_64.exe"
-            Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile" -NoNewWindow -Wait
+            $timeout = 120
+            $waitTime = 0
+
+            $process = Start-Process -FilePath "$godot" -ArgumentList "--path demo --rendering-method mobile" -NoNewWindow -PassThru
+
+            while ($process.HasExited -eq $false -and $waitTime -lt $timeout) {
+                Start-Sleep -Seconds 1
+                $waitTime++
+            }
+
+            if ($process.HasExited -eq $false) {
+                Write-Output "Process is still running after $timeout seconds. Stopping the process."
+                $process.Kill()
+                Exit 1
+            } else {
+                Write-Output "Process completed within $waitTime seconds."
+            }
+
+            if (-Not (Test-Path $replayPath)) {
+              Write-Error "Replay file not found: $filepath"
+              Exit 1
+            }
           }
