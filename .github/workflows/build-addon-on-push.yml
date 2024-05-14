@@ -324,8 +324,8 @@ jobs:
     needs: run_xr_simulator
 
     steps:
-      #- name: Checkout code
-      #  uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Download VRS artifacts
         uses: actions/download-artifact@v3
@@ -345,10 +345,14 @@ jobs:
       - name: Compare VRS replay with expected recordings
         run: |
           cd tests/vrs/
+
+          # Fix bugs in vrs_pixmatch.py script.
+          patch -p0 < ../../.github/scripts/vrs_pixmatch.patch
+
           mkdir diffs
           for replay in *-replay.vrs; do
             expected=$(echo $replay | sed -e 's/-replay.vrs$/.vrs/')
-            python vrs_pixmatch.py "$replay" "$expected" --threshold 0.4 --best_match_pixels_diff_threshold 40000 --diffs_output_path diffs/
+            python vrs_pixmatch.py "$replay" "$expected" --threshold 0.4 --best_match_pixels_diff_threshold 40000 --diffs_output_path diffs
           done
 
       - name: Upload VRS diff artifacts
