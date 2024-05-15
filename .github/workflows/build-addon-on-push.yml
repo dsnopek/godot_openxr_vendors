@@ -342,6 +342,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: ReplayVRS
+          path: tests/vrs
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -350,7 +351,9 @@ jobs:
 
       - name: Install dependencies
         run: |
+          echo "Top-level:"
           ls
+          echo "tests/vrs/:"
           ls tests/vrs/
 
           python -m pip install --upgrade pip
