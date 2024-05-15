@@ -315,7 +315,8 @@ jobs:
       - name: Copy vrs_pixmatch.py from Meta XR Simulator
         run: |
           $scriptPath = "$env:AppData\MetaXR\MetaXrSimulator\scripts"
-          cp "$scriptsPath\requirements.txt" "$scriptsPath\vrs_pixmatch.py" tests/vrs/
+          cp "$scriptsPath\requirements.txt" tests\vrs\
+          cp "$scriptsPath\vrs_pixmatch.py" tests\vrs\
 
       - name: Upload VRS artifacts
         uses: actions/upload-artifact@v3
