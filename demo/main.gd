@@ -50,7 +50,7 @@ const COLORS = [
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	xr_interface = XRServer.find_interface("OpenXR")
-	if xr_interface and xr_interface.is_initialized():
+	if xr_interface and xr_interface.initialize():
 		xr_interface.session_begun.connect(self.load_spatial_anchors_from_file)
 		xr_interface.session_stopping.connect(self._on_session_stopping)
 		var vp: Viewport = get_viewport()
