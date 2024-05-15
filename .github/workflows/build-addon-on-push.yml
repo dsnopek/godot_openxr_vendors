@@ -351,11 +351,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          echo "Top-level:"
-          ls
-          echo "tests/vrs/:"
-          ls tests/vrs/
-
           python -m pip install --upgrade pip
           pip install -r tests/vrs/requirements.txt
 
@@ -364,7 +359,7 @@ jobs:
           cd tests/vrs/
 
           # Fix bugs in vrs_pixmatch.py script.
-          patch -p0 < ../../.github/scripts/vrs_pixmatch.patch
+          patch -p0 < ../../.github/workflows/scripts/vrs_pixmatch.patch
 
           mkdir diffs
           for replay in *-replay.vrs; do
