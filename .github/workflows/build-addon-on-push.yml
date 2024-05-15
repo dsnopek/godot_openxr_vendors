@@ -183,7 +183,7 @@ jobs:
 
   run_xr_simulator:
    name: "Run XR Simulator"
-   runs-on: windows-latest
+   runs-on: [Windows, self-hosted, gpu]
    needs: build
 
    steps:
