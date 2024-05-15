@@ -40,11 +40,11 @@ jobs:
 
           # Gunzip.
           $tgzFile = Get-ChildItem -Path "C:\Meta" -Filter *.tgz
-          7z x $tgzFile.FullName -oC:\Meta
+          7z x $tgzFile.FullName -oC:\Meta -aoa
 
           # Untar.
           $tarFile = Get-ChildItem -Path "C:\Meta" -Filter *.tar
-          7z x $tarFile.FullName -oC:\Meta
+          7z x $tarFile.FullName -oC:\Meta -aoa
 
       - name: Configure the Meta XR Simulator as the active OpenXR runtime
         run: |
@@ -70,6 +70,7 @@ jobs:
 
       - name: Launch a synthetic environment
         run: |
+          Get-Process -Name "synth_env_server" | Stop-Process
           Start-Process -FilePath "C:\Meta\package\MetaXRSimulator\.synth_env_server\synth_env_server.exe" -ArgumentList "Bedroom" -PassThru
 
       - name: Run tests
