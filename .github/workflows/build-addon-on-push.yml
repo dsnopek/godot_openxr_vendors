@@ -252,7 +252,13 @@ jobs:
 
       - name: Launch a synthetic environment
         run: |
-          # @todo Ensure a synthetic environment isn't already running
+          # Ensure a synthetic environment isn't already running.
+          try {
+            Get-Process -Name "synth_env_server" | Stop-Process
+          } catch {
+            # Do nothing if there is no existing process.
+          }
+
           Start-Process -FilePath "C:\Meta\package\MetaXRSimulator\.synth_env_server\synth_env_server.exe" -ArgumentList "Bedroom" -PassThru
 
       - name: Run tests
