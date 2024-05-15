@@ -70,7 +70,6 @@ jobs:
 
       - name: Launch a synthetic environment
         run: |
-          Get-Process -Name "synth_env_server" | Stop-Process
           Start-Process -FilePath "C:\Meta\package\MetaXRSimulator\.synth_env_server\synth_env_server.exe" -ArgumentList "Bedroom" -PassThru
 
       - name: Run tests
