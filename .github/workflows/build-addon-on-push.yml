@@ -183,7 +183,8 @@ jobs:
 
   run_xr_simulator:
    name: "Run XR Simulator"
-   runs-on: [Windows, self-hosted, gpu]
+   #runs-on: [Windows, self-hosted, gpu]
+   runs-on: windows-latest
    needs: build
 
    steps:
@@ -209,6 +210,10 @@ jobs:
       - name: Extract Godot
         run: |
           Expand-Archive -Path "godot.zip" -DestinationPath .
+
+      - name: Download SwiftShader vulkan-1.dll
+        run: |
+          Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/r6radx6b125555xkxue20/vulkan-1.dll?rlkey=ffv3cgvqbytivm1zy119hss7n&st=frcettrf&dl=1" -OutFile "vulkan-1.dll"
 
       - name: Download Meta XR Simulator
         run: |
