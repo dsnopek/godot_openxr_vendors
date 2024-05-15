@@ -36,7 +36,7 @@ jobs:
       - name: Extract Meta XR Simulator
         run: |
           # Unzip.
-          Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\"
+          Expand-Archive -Path "download.zip" -DestinationPath "C:\Meta\" -Force
 
           # Gunzip.
           $tgzFile = Get-ChildItem -Path "C:\Meta" -Filter *.tgz
