@@ -51,20 +51,15 @@ jobs:
             artifact_name: build-files-macos
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/macos/*/*.framework
             cache-name: macos-universal
-          - name: Android AAR
+          - name: Android
             os: ubuntu-20.04
             platform: android
             flags: arch=arm64
-            artifact_name: build-files-android-aar
-            artifact_path: aar/demo/addons/godotopenxrvendors/.bin/android/*/*.aar
-            cache-name: android-aar
-          - name: Android SO
-            os: ubuntu-20.04
-            platform: android
-            flags: arch=arm64
-            artifact_name: build-files-android-so
-            artifact_path: aar/demo/addons/godotopenxrvendors/.bin/android/*/*/*.so
-            cache-name: android-so
+            artifact_name: build-files-android
+            artifact_path: |
+              aar/demo/addons/godotopenxrvendors/.bin/android/*/*.aar
+              aar/demo/addons/godotopenxrvendors/.bin/android/*/*/*.so
+            cache-name: android
 
     # Note, to satisfy the asset library we need to make sure our zip files have a root folder
     # this is why we checkout into aar and build into asset
@@ -164,8 +159,7 @@ jobs:
       - name: Copying artifacts
         run: |
           mkdir -p asset/addons/godotopenxrvendors/.bin/android/
-          cp -r build-files-android-aar/* asset/addons/godotopenxrvendors/.bin/android/
-          cp -r build-files-android-so/* asset/addons/godotopenxrvendors/.bin/android/
+          cp -r build-files-android/* asset/addons/godotopenxrvendors/.bin/android/
 
           mkdir -p asset/addons/godotopenxrvendors/.bin/linux/
           cp -r build-files-linux-x86_64/* asset/addons/godotopenxrvendors/.bin/linux/
