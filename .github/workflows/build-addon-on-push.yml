@@ -118,10 +118,10 @@ jobs:
           cd ../../..
         if: matrix.platform == 'android'
       - name: Create Godot OpenXR Vendors AARs
-        run: |
-          cd aar
-          ./gradlew build
-          cd ..
+        uses: burrunan/gradle-cache-action@v1
+        with:
+          build-root-directory: aar
+          arguments: build
         if: matrix.platform == 'android'
 
       - name: Upload build files (artifacts)
