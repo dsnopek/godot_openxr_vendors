@@ -57,7 +57,11 @@ android {
 
     sourceSets {
         main {
-            debug.jniLibs.srcDirs = ['plugin/src/libs']
+            debug.jniLibs.srcDirs = ['src/libs']
+            java.srcDirs = ['src/main/java']
+        }
+        meta {
+            java.srcDirs = ['src/meta/java']
         }
     }
 
@@ -103,18 +107,10 @@ android {
 
     buildFeatures {
         prefab true
-        prefabPublishing true
-    }
-
-    prefab {
-        godotopenxrvendors {
-            headers "src/main/cpp/include"
-        }
     }
 }
 
 dependencies {
-    /*
     compileOnly libraries.godotAndroidLib
 
     // Khronos dependencies
@@ -125,7 +121,6 @@ dependencies {
 
     // Pico dependencies
     picoImplementation "org.khronos.openxr:openxr_loader_for_android:$versions.openxrVersion"
-    */
 }
 
 task cleanAssets(type: Delete) {
