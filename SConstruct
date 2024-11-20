@@ -47,6 +47,9 @@ if env["platform"] == "macos":
         ),
         source=sources,
     )
+# TODO: Build these into plugin/src/libs/{debug|release}/arm64-v8a/libgodotopenxrvendors.so
+#elif env["platfrom"] == "android":
+#    pass
 else:
     library = env.SharedLibrary(
         "{}/{}/{}/{}/lib{}{}".format(
