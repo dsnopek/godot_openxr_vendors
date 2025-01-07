@@ -58,7 +58,8 @@ OpenXRMetaEnvironmentDepthExtensionWrapper::~OpenXRMetaEnvironmentDepthExtension
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_bind_methods() {
-	// @todo
+	ClassDB::bind_method(D_METHOD("is_environment_depth_supported"), &OpenXRMetaEnvironmentDepthExtensionWrapper::is_environment_depth_supported);
+	ClassDB::bind_method(D_METHOD("is_hand_removal_supported"), &OpenXRMetaEnvironmentDepthExtensionWrapper::is_hand_removal_supported);
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::cleanup() {
@@ -86,6 +87,11 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_instance_created(uint64_t i
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_instance_destroyed() {
 	cleanup();
+}
+
+uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
+	system_depth_properties.next = p_next_pointer;
+	return reinterpret_cast<uint64_t>(&system_depth_properties);
 }
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::initialize_meta_environment_depth_extension(const XrInstance &p_instance) {

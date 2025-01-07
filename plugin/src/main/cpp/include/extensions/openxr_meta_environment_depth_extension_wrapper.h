@@ -44,11 +44,17 @@ class OpenXRMetaEnvironmentDepthExtensionWrapper : public OpenXRExtensionWrapper
 public:
 	Dictionary _get_requested_extensions() override;
 
-	void _on_instance_created(uint64_t instance) override;
-	void _on_instance_destroyed() override;
+	virtual void _on_instance_created(uint64_t instance) override;
+	virtual void _on_instance_destroyed() override;
+
+	virtual uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
 
 	bool is_environment_depth_supported() {
-		return meta_environment_depth_ext;
+		return meta_environment_depth_ext && system_depth_properties.supportsEnvironmentDepth;
+	}
+
+	bool is_hand_removal_supported() {
+		return meta_environment_depth_ext && system_depth_properties.supportsHandRemoval;
 	}
 
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *get_singleton();
@@ -102,12 +108,18 @@ private:
 			(const XrEnvironmentDepthHandRemovalSetInfoMETA *), setInfo);
 
 	bool initialize_meta_environment_depth_extension(const XrInstance &instance);
-
-	HashMap<String, bool *> request_extensions;
-
 	void cleanup();
 
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *singleton;
 
+	HashMap<String, bool *> request_extensions;
 	bool meta_environment_depth_ext = false;
+
+	XrSystemEnvironmentDepthPropertiesMETA system_depth_properties = {
+		XR_TYPE_SYSTEM_ENVIRONMENT_DEPTH_PROPERTIES_META, // type
+		nullptr, // next
+		XR_FALSE, // supportsEnvironmentDepth
+		XR_FALSE, // supportsHandRemoval
+	};
+
 };

@@ -38,6 +38,11 @@ func _on_openxr_session_begun() -> void:
 	load_spatial_anchors_from_file()
 	enable_passthrough(true)
 
+	var environment_depth = Engine.get_singleton("OpenXRMetaEnvironmentDepthExtensionWrapper")
+	if environment_depth:
+		print("Supports environment depth: ", environment_depth.is_environment_depth_supported())
+		print("Supports hand removal: ", environment_depth.is_hand_removal_supported())
+
 
 func load_spatial_anchors_from_file() -> void:
 	var file := FileAccess.open(SPATIAL_ANCHORS_FILE, FileAccess.READ)
