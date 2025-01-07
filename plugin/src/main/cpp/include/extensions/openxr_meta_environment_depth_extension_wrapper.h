@@ -60,6 +60,13 @@ public:
 		return meta_environment_depth_ext && system_depth_properties.supportsHandRemoval;
 	}
 
+	void start_environment_depth();
+	void stop_environment_depth();
+	bool is_environment_depth_started();
+
+	void set_hand_removal_enabled(bool p_enable);
+	bool get_hand_removal_enabled() const;
+
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *get_singleton();
 
 	OpenXRMetaEnvironmentDepthExtensionWrapper();
@@ -126,5 +133,6 @@ private:
 	};
 
 	XrEnvironmentDepthProviderMETA depth_provider = XR_NULL_HANDLE;
-
+	bool depth_provider_started = false;
+	bool hand_removal_enabled = false;
 };

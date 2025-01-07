@@ -43,6 +43,9 @@ func _on_openxr_session_begun() -> void:
 		print("Supports environment depth: ", environment_depth.is_environment_depth_supported())
 		print("Supports hand removal: ", environment_depth.is_hand_removal_supported())
 
+		environment_depth.start_environment_depth();
+		print("Environment depth started: ", environment_depth.is_environment_depth_started())
+
 
 func load_spatial_anchors_from_file() -> void:
 	var file := FileAccess.open(SPATIAL_ANCHORS_FILE, FileAccess.READ)

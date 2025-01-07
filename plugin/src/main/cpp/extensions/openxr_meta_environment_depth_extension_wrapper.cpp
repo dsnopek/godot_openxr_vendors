@@ -60,6 +60,13 @@ OpenXRMetaEnvironmentDepthExtensionWrapper::~OpenXRMetaEnvironmentDepthExtension
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_environment_depth_supported"), &OpenXRMetaEnvironmentDepthExtensionWrapper::is_environment_depth_supported);
 	ClassDB::bind_method(D_METHOD("is_hand_removal_supported"), &OpenXRMetaEnvironmentDepthExtensionWrapper::is_hand_removal_supported);
+
+	ClassDB::bind_method(D_METHOD("start_environment_depth"), &OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth);
+	ClassDB::bind_method(D_METHOD("stop_environment_depth"), &OpenXRMetaEnvironmentDepthExtensionWrapper::stop_environment_depth);
+	ClassDB::bind_method(D_METHOD("is_environment_depth_started"), &OpenXRMetaEnvironmentDepthExtensionWrapper::is_environment_depth_started);
+
+	ClassDB::bind_method(D_METHOD("set_hand_removal_enabled", "enable"), &OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled);
+	ClassDB::bind_method(D_METHOD("get_hand_removal_enabled"), &OpenXRMetaEnvironmentDepthExtensionWrapper::get_hand_removal_enabled);
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::cleanup() {
@@ -110,12 +117,63 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_session_destroyed() {
 			UtilityFunctions::print_verbose("Failed to destroy environment depth provider: ", get_openxr_api()->get_error_string(result));
 		}
 		depth_provider = XR_NULL_HANDLE;
+		hand_removal_enabled = false;
 	}
 }
 
 uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
 	system_depth_properties.next = p_next_pointer;
 	return reinterpret_cast<uint64_t>(&system_depth_properties);
+}
+
+void OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth() {
+	ERR_FAIL_NULL(depth_provider);
+
+	XrResult result = xrStartEnvironmentDepthProviderMETA(depth_provider);
+	if (XR_FAILED(result)) {
+		UtilityFunctions::print_verbose("Unable to start environment depth provider: ", get_openxr_api()->get_error_string(result));
+		return;
+	}
+
+	depth_provider_started = true;
+}
+
+void OpenXRMetaEnvironmentDepthExtensionWrapper::stop_environment_depth() {
+	ERR_FAIL_NULL(depth_provider);
+
+	XrResult result = xrStopEnvironmentDepthProviderMETA(depth_provider);
+	if (XR_FAILED(result)) {
+		UtilityFunctions::print_verbose("Unable to stop environment depth provider: ", get_openxr_api()->get_error_string(result));
+		return;
+	}
+
+	depth_provider_started = false;
+}
+
+bool OpenXRMetaEnvironmentDepthExtensionWrapper::is_environment_depth_started() {
+	return depth_provider_started;
+}
+
+void OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled(bool p_enable) {
+	ERR_FAIL_NULL(depth_provider);
+
+	XrEnvironmentDepthHandRemovalSetInfoMETA info = {
+		XR_TYPE_ENVIRONMENT_DEPTH_HAND_REMOVAL_SET_INFO_META, // type
+		nullptr, // next
+		p_enable,
+	};
+
+	XrResult result = xrSetEnvironmentDepthHandRemovalMETA(depth_provider, &info);
+	if (XR_FAILED(result)) {
+		UtilityFunctions::print_verbose("Unable to set hand removal enabled: ", get_openxr_api()->get_error_string(result));
+		return;
+	}
+
+	hand_removal_enabled = p_enable;
+}
+
+bool OpenXRMetaEnvironmentDepthExtensionWrapper::get_hand_removal_enabled() const {
+	return hand_removal_enabled;
 }
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::initialize_meta_environment_depth_extension(const XrInstance &p_instance) {
