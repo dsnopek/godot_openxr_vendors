@@ -89,6 +89,30 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_instance_destroyed() {
 	cleanup();
 }
 
+void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_session_created(uint64_t p_session) {
+	XrEnvironmentDepthProviderCreateInfoMETA create_info = {
+		XR_TYPE_ENVIRONMENT_DEPTH_PROVIDER_CREATE_INFO_META, // type
+		nullptr, // next
+		0, // createFlags
+	};
+
+	XrResult result = xrCreateEnvironmentDepthProviderMETA(SESSION, &create_info, &depth_provider);
+	if (XR_FAILED(result)) {
+		UtilityFunctions::print_verbose("Failed to create environment depth provider: ", get_openxr_api()->get_error_string(result));
+		return;
+	}
+}
+
+void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_session_destroyed() {
+	if (depth_provider != XR_NULL_HANDLE) {
+		XrResult result = xrDestroyEnvironmentDepthProviderMETA(depth_provider);
+		if (XR_FAILED(result)) {
+			UtilityFunctions::print_verbose("Failed to destroy environment depth provider: ", get_openxr_api()->get_error_string(result));
+		}
+		depth_provider = XR_NULL_HANDLE;
+	}
+}
+
 uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
 	system_depth_properties.next = p_next_pointer;
 	return reinterpret_cast<uint64_t>(&system_depth_properties);

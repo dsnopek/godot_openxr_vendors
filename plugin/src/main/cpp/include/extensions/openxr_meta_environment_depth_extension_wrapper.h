@@ -47,6 +47,9 @@ public:
 	virtual void _on_instance_created(uint64_t instance) override;
 	virtual void _on_instance_destroyed() override;
 
+	virtual void _on_session_created(uint64_t p_session) override;
+	virtual void _on_session_destroyed() override;
+
 	virtual uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
 
 	bool is_environment_depth_supported() {
@@ -121,5 +124,7 @@ private:
 		XR_FALSE, // supportsEnvironmentDepth
 		XR_FALSE, // supportsHandRemoval
 	};
+
+	XrEnvironmentDepthProviderMETA depth_provider = XR_NULL_HANDLE;
 
 };
