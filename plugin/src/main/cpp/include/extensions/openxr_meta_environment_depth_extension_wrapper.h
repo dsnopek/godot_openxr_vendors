@@ -32,6 +32,7 @@
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/open_xr_extension_wrapper_extension.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/local_vector.hpp>
 
 #include "util.h"
 
@@ -50,14 +51,17 @@ public:
 	virtual void _on_session_created(uint64_t p_session) override;
 	virtual void _on_session_destroyed() override;
 
+	virtual void _on_pre_render();
+	virtual void _on_pre_draw_viewport(const RID &p_viewport) override;
+
 	virtual uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
 
 	bool is_environment_depth_supported() {
-		return meta_environment_depth_ext && system_depth_properties.supportsEnvironmentDepth;
+		return meta_environment_depth_ext && graphics_api != GRAPHICS_API_UNSUPPORTED && system_depth_properties.supportsEnvironmentDepth;
 	}
 
 	bool is_hand_removal_supported() {
-		return meta_environment_depth_ext && system_depth_properties.supportsHandRemoval;
+		return meta_environment_depth_ext && graphics_api != GRAPHICS_API_UNSUPPORTED && system_depth_properties.supportsHandRemoval;
 	}
 
 	void start_environment_depth();
@@ -133,6 +137,20 @@ private:
 	};
 
 	XrEnvironmentDepthProviderMETA depth_provider = XR_NULL_HANDLE;
+	XrEnvironmentDepthSwapchainMETA depth_swapchain = XR_NULL_HANDLE;
 	bool depth_provider_started = false;
 	bool hand_removal_enabled = false;
+
+	enum GraphicsAPI {
+		GRAPHICS_API_UNKNOWN,
+		GRAPHICS_API_OPENGL,
+		GRAPHICS_API_VULKAN,
+		GRAPHICS_API_UNSUPPORTED,
+	};
+
+	GraphicsAPI graphics_api = GRAPHICS_API_UNKNOWN;
+	LocalVector<RID> depth_swapchain_textures;
+
+	bool setup_depth_swapchain();
+
 };
