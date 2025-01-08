@@ -173,8 +173,12 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 }
 
 uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
-	system_depth_properties.next = p_next_pointer;
-	return reinterpret_cast<uint64_t>(&system_depth_properties);
+	if (meta_environment_depth_ext) {
+		system_depth_properties.next = p_next_pointer;
+		return reinterpret_cast<uint64_t>(&system_depth_properties);
+	}
+
+	return reinterpret_cast<uint64_t>(p_next_pointer);
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth() {
