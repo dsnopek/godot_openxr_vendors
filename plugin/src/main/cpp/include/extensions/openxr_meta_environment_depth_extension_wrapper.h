@@ -51,7 +51,6 @@ public:
 	virtual void _on_session_created(uint64_t p_session) override;
 	virtual void _on_session_destroyed() override;
 
-	virtual void _on_process() override;
 	virtual void _on_pre_render() override;
 	virtual void _on_pre_draw_viewport(const RID &p_viewport) override;
 
@@ -153,7 +152,7 @@ private:
 	LocalVector<RID> depth_swapchain_textures;
 	bool first_frame = true;
 
-	bool setup_depth_swapchain();
+	bool create_depth_provider();
 	void destroy_depth_provider();
 
 };

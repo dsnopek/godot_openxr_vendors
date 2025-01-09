@@ -112,21 +112,6 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_session_destroyed() {
 	destroy_depth_provider();
 }
 
-void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_process() {
-	/*
-	if (depth_provider != XR_NULL_HANDLE && depth_swapchain == XR_NULL_HANDLE) {
-		// Don't attempt to setup the swapchain until after the first frame.
-		if (first_frame) {
-			first_frame = false;
-			return;
-		}
-		if (!setup_depth_swapchain()) {
-			return;
-		}
-	}
-	*/
-}
-
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	if (unlikely(graphics_api == GRAPHICS_API_UNKNOWN)) {
 		String rendering_driver = RenderingServer::get_singleton()->get_current_rendering_driver_name();
@@ -141,27 +126,9 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID &p_viewport) {
-	if (depth_provider == XR_NULL_HANDLE || graphics_api == GRAPHICS_API_UNSUPPORTED) {
+	if (depth_provider == XR_NULL_HANDLE || !depth_provider_started) {
 		return;
 	}
-
-	/*
-	if (depth_swapchain == XR_NULL_HANDLE) {
-		// Don't attempt to setup the swapchain until after the first frame.
-		if (first_frame) {
-			first_frame = false;
-			return;
-		}
-		if (!setup_depth_swapchain()) {
-			return;
-		}
-	}
-	*/
-
-	if (!depth_provider_started) {
-		return;
-	}
-
 
 	// @todo Acquire the swapchain image.
 }
@@ -177,14 +144,14 @@ uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth() {
 	if (depth_provider == XR_NULL_HANDLE) {
-		if (!setup_depth_swapchain()) {
+		if (!create_depth_provider()) {
 			return;
 		}
 	}
 
 	XrResult result = xrStartEnvironmentDepthProviderMETA(depth_provider);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to start environment depth provider: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to start environment depth provider: ", get_openxr_api()->get_error_string(result));
 		return;
 	}
 
@@ -196,7 +163,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::stop_environment_depth() {
 
 	XrResult result = xrStopEnvironmentDepthProviderMETA(depth_provider);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to stop environment depth provider: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to stop environment depth provider: ", get_openxr_api()->get_error_string(result));
 		return;
 	}
 
@@ -209,7 +176,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::is_environment_depth_started() 
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled(bool p_enable) {
 	if (depth_provider == XR_NULL_HANDLE) {
-		if (!setup_depth_swapchain()) {
+		if (!create_depth_provider()) {
 			return;
 		}
 	}
@@ -222,7 +189,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled(bool p
 
 	XrResult result = xrSetEnvironmentDepthHandRemovalMETA(depth_provider, &info);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to set hand removal enabled: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to set hand removal enabled: ", get_openxr_api()->get_error_string(result));
 		return;
 	}
 
@@ -238,8 +205,8 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::initialize_meta_environment_dep
 	GDEXTENSION_INIT_XR_FUNC_V(xrDestroyEnvironmentDepthProviderMETA);
 	GDEXTENSION_INIT_XR_FUNC_V(xrStartEnvironmentDepthProviderMETA);
 	GDEXTENSION_INIT_XR_FUNC_V(xrStopEnvironmentDepthProviderMETA);
-	GDEXTENSION_INIT_XR_FUNC_V(xrCreateEnvironmentDepthProviderMETA);
-	GDEXTENSION_INIT_XR_FUNC_V(xrDestroyEnvironmentDepthProviderMETA);
+	GDEXTENSION_INIT_XR_FUNC_V(xrCreateEnvironmentDepthSwapchainMETA);
+	GDEXTENSION_INIT_XR_FUNC_V(xrDestroyEnvironmentDepthSwapchainMETA);
 	GDEXTENSION_INIT_XR_FUNC_V(xrEnumerateEnvironmentDepthSwapchainImagesMETA);
 	GDEXTENSION_INIT_XR_FUNC_V(xrGetEnvironmentDepthSwapchainStateMETA);
 	GDEXTENSION_INIT_XR_FUNC_V(xrAcquireEnvironmentDepthImageMETA);
@@ -252,7 +219,12 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::cleanup() {
 	meta_environment_depth_ext = false;
 }
 
-bool OpenXRMetaEnvironmentDepthExtensionWrapper::setup_depth_swapchain() {
+bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
+	if (!meta_environment_depth_ext) {
+		UtilityFunctions::printerr("Environment depth not supported");
+		return false;
+	}
+
 	RenderingServer *rs = RenderingServer::get_singleton();
 	ERR_FAIL_NULL_V(rs, false);
 
@@ -266,7 +238,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::setup_depth_swapchain() {
 
 	result = xrCreateEnvironmentDepthProviderMETA(SESSION, &provider_create_info, &depth_provider);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to create environment depth provider: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to create environment depth provider: ", get_openxr_api()->get_error_string(result));
 		return false;
 	}
 
@@ -278,7 +250,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::setup_depth_swapchain() {
 
 	result = xrCreateEnvironmentDepthSwapchainMETA(depth_provider, &swapchain_create_info, &depth_swapchain);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to create environment depth swapchain: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to create environment depth swapchain: ", get_openxr_api()->get_error_string(result));
 		destroy_depth_provider();
 		return false;
 	}
@@ -292,7 +264,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::setup_depth_swapchain() {
 
 	result = xrGetEnvironmentDepthSwapchainStateMETA(depth_swapchain, &swapchain_state);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to get environment depth swapchain state: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to get environment depth swapchain state: ", get_openxr_api()->get_error_string(result));
 		destroy_depth_provider();
 		return false;
 	}
@@ -301,7 +273,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::setup_depth_swapchain() {
 
 	result = xrEnumerateEnvironmentDepthSwapchainImagesMETA(depth_swapchain, swapchain_length, &swapchain_length, nullptr);
 	if (XR_FAILED(result)) {
-		UtilityFunctions::print_verbose("Failed to get environment depth swapchain image count: ", get_openxr_api()->get_error_string(result));
+		UtilityFunctions::printerr("Failed to get environment depth swapchain image count: ", get_openxr_api()->get_error_string(result));
 		destroy_depth_provider();
 		return false;
 	}
@@ -326,7 +298,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::setup_depth_swapchain() {
 
 		result = xrEnumerateEnvironmentDepthSwapchainImagesMETA(depth_swapchain, swapchain_length, &swapchain_length, (XrSwapchainImageBaseHeader *)swapchain_images.ptr());
 		if (XR_FAILED(result)) {
-			UtilityFunctions::print_verbose("Failed to get environment depth swapchain images: ", get_openxr_api()->get_error_string(result));
+			UtilityFunctions::printerr("Failed to get environment depth swapchain images: ", get_openxr_api()->get_error_string(result));
 			destroy_depth_provider();
 			return false;
 		}
@@ -355,7 +327,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::destroy_depth_provider() {
 	if (depth_swapchain != XR_NULL_HANDLE) {
 		XrResult result = xrDestroyEnvironmentDepthSwapchainMETA(depth_swapchain);
 		if (XR_FAILED(result)) {
-			UtilityFunctions::print_verbose("Failed to destroy environment depth swapchain: ", get_openxr_api()->get_error_string(result));
+			UtilityFunctions::printerr("Failed to destroy environment depth swapchain: ", get_openxr_api()->get_error_string(result));
 		}
 		depth_swapchain = XR_NULL_HANDLE;
 	}
@@ -365,7 +337,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::destroy_depth_provider() {
 	if (depth_provider != XR_NULL_HANDLE) {
 		XrResult result = xrDestroyEnvironmentDepthProviderMETA(depth_provider);
 		if (XR_FAILED(result)) {
-			UtilityFunctions::print_verbose("Failed to destroy environment depth provider: ", get_openxr_api()->get_error_string(result));
+			UtilityFunctions::printerr("Failed to destroy environment depth provider: ", get_openxr_api()->get_error_string(result));
 		}
 		depth_provider = XR_NULL_HANDLE;
 		hand_removal_enabled = false;
