@@ -51,7 +51,8 @@ public:
 	virtual void _on_session_created(uint64_t p_session) override;
 	virtual void _on_session_destroyed() override;
 
-	virtual void _on_pre_render();
+	virtual void _on_process() override;
+	virtual void _on_pre_render() override;
 	virtual void _on_pre_draw_viewport(const RID &p_viewport) override;
 
 	virtual uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
@@ -150,7 +151,9 @@ private:
 
 	GraphicsAPI graphics_api = GRAPHICS_API_UNKNOWN;
 	LocalVector<RID> depth_swapchain_textures;
+	bool first_frame = true;
 
 	bool setup_depth_swapchain();
+	void destroy_depth_provider();
 
 };

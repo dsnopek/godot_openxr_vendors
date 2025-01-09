@@ -43,7 +43,8 @@ func _on_openxr_session_begun() -> void:
 		print("Supports environment depth: ", environment_depth.is_environment_depth_supported())
 		print("Supports hand removal: ", environment_depth.is_hand_removal_supported())
 
-		environment_depth.start_environment_depth();
+		await get_tree().create_timer(2.0).timeout
+		environment_depth.start_environment_depth()
 		print("Environment depth started: ", environment_depth.is_environment_depth_started())
 
 
