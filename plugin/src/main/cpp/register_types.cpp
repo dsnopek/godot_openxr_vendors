@@ -225,6 +225,8 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<MagicleapEditorExportPlugin>();
 			ClassDB::register_class<MagicleapEditorPlugin>();
 			EditorPlugins::add_by_type<MagicleapEditorPlugin>();
+
+			OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton()->setup_global_uniforms();
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_MAX:

@@ -71,6 +71,8 @@ public:
 	void set_hand_removal_enabled(bool p_enable);
 	bool get_hand_removal_enabled() const;
 
+	static void setup_global_uniforms();
+
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *get_singleton();
 
 	OpenXRMetaEnvironmentDepthExtensionWrapper();

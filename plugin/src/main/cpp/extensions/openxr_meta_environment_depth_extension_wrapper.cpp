@@ -49,6 +49,12 @@
 
 using namespace godot;
 
+static const char *META_ENVIRONMENT_DEPTH_TEXTURE_NAME = "META_ENVIRONMENT_DEPTH_TEXTURE";
+static const char *META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME = "META_ENVIRONMENT_DEPTH_VIEW_LEFT";
+static const char *META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_VIEW_RIGHT";
+static const char *META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_LEFT";
+static const char *META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT";
+
 OpenXRMetaEnvironmentDepthExtensionWrapper *OpenXRMetaEnvironmentDepthExtensionWrapper::singleton = nullptr;
 
 OpenXRMetaEnvironmentDepthExtensionWrapper *OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton() {
@@ -130,7 +136,33 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 		return;
 	}
 
-	// @todo Acquire the swapchain image.
+	Ref<OpenXRAPIExtension> openxr_api = get_openxr_api();
+	ERR_FAIL_COND(openxr_api.is_null());
+
+	RenderingServer *rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL(rs);
+
+	XrEnvironmentDepthImageAcquireInfoMETA acquire_info = {
+		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_ACQUIRE_INFO_META, // type
+		nullptr, // next
+		(XrSpace)openxr_api->get_play_space(),
+		openxr_api->get_predicted_display_time(),
+	};
+
+	XrEnvironmentDepthImageMETA depth_image = {
+		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_META,
+		nullptr, // next
+	};
+
+	XrResult result = xrAcquireEnvironmentDepthImageMETA(depth_provider, &acquire_info, &depth_image);
+	if (XR_FAILED(result)) {
+		UtilityFunctions::printerr("Failed to acquire environment depth image: ", get_openxr_api()->get_error_string(result));
+		return;
+	}
+
+	// @todo Stash the data on the global uniforms
+
+	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
 }
 
 uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
@@ -198,6 +230,29 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled(bool p
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::get_hand_removal_enabled() const {
 	return hand_removal_enabled;
+}
+
+void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
+	RenderingServer *rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL(rs);
+
+	TypedArray<StringName> existing_uniforms = rs->global_shader_parameter_get_list();
+
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TEXTURE_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY, Variant());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_LEFT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_RIGHT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
 }
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::initialize_meta_environment_depth_extension(const XrInstance &p_instance) {
