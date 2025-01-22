@@ -150,8 +150,22 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 	};
 
 	XrEnvironmentDepthImageMETA depth_image = {
-		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_META,
+		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_META, // type
 		nullptr, // next
+		0, // swapchainIndex
+		0.0, // nearZ
+		0.0, // farZ
+		{
+			// views
+			{
+				XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_VIEW_META, // type
+				nullptr, // next
+			},
+			{
+				XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_VIEW_META, // type
+				nullptr, // next
+			},
+		}
 	};
 
 	XrResult result = xrAcquireEnvironmentDepthImageMETA(depth_provider, &acquire_info, &depth_image);
@@ -161,6 +175,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 	}
 
 	// @todo Stash the data on the global uniforms
+
 
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
 }
