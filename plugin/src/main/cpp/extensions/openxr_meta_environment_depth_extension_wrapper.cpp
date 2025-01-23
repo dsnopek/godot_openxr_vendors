@@ -29,7 +29,7 @@
 
 #include "extensions/openxr_meta_environment_depth_extension_wrapper.h"
 
-#ifdef ANDROID
+#ifdef ANDROID_ENABLED
 #define XR_USE_PLATFORM_ANDROID
 #define XR_USE_GRAPHICS_API_OPENGL_ES
 #include <jni.h>
@@ -349,7 +349,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 	}
 
 	if (graphics_api == GRAPHICS_API_OPENGL) {
-#ifdef ANDROID
+#ifdef ANDROID_ENABLED
 		LocalVector<XrSwapchainImageOpenGLESKHR> swapchain_images;
 #else
 		LocalVector<XrSwapchainImageOpenGLKHR> swapchain_images;
@@ -357,7 +357,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 
 		swapchain_images.resize(swapchain_length);
 		for (auto &image : swapchain_images) {
-#ifdef ANDROID
+#ifdef ANDROID_ENABLED
 			image.type = XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_ES_KHR;
 #else
 			image.type = XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_KHR;
