@@ -40,6 +40,8 @@
 #endif
 
 #include <openxr/openxr_platform.h>
+// @todo Replace with Godot equivalent math!
+#include <openxr/internal/xr_linear.h>
 
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
@@ -52,8 +54,8 @@ using namespace godot;
 static const char *META_ENVIRONMENT_DEPTH_TEXTURE_NAME = "META_ENVIRONMENT_DEPTH_TEXTURE";
 static const char *META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME = "META_ENVIRONMENT_DEPTH_VIEW_LEFT";
 static const char *META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_VIEW_RIGHT";
-static const char *META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_LEFT";
-static const char *META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT";
+static const char *META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_LEFT";
+static const char *META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT";
 
 OpenXRMetaEnvironmentDepthExtensionWrapper *OpenXRMetaEnvironmentDepthExtensionWrapper::singleton = nullptr;
 
@@ -131,6 +133,15 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	}
 }
 
+// @todo Get rid of this when we can do all the Math in Godot types
+static void xrMatrix4x4f_to_projection(XrMatrix4x4f *m, Projection &p) {
+	for (int j = 0; j < 4; j++) {
+		for (int i = 0; i < 4; i++) {
+			p.columns[j][i] = m->m[j * 4 + i];
+		}
+	}
+}
+
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID &p_viewport) {
 	if (depth_provider == XR_NULL_HANDLE || !depth_provider_started) {
 		return;
@@ -174,10 +185,36 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 		return;
 	}
 
-	// @todo Stash the data on the global uniforms
-
-
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
+
+	for (int i = 0; i < 2; i++) {
+		// @todo Replace these utilities with Godot equivalents!
+
+		XrPosef local_from_depth_eye = depth_image.views[i].pose;
+		XrPosef depth_eye_from_local;
+		XrPosef_Invert(&depth_eye_from_local, &local_from_depth_eye);
+
+		XrMatrix4x4f view_mat;
+		XrMatrix4x4f_CreateFromRigidTransform(&view_mat, &depth_eye_from_local);
+
+		XrMatrix4x4f projection_mat;
+		XrMatrix4x4f_CreateProjectionFov(
+				&projection_mat,
+				// @todo Will this work for Vulkan?
+				GRAPHICS_OPENGL,
+				depth_image.views[i].fov,
+				depth_image.nearZ,
+				std::isfinite(depth_image.farZ) ? depth_image.farZ : 0);
+
+		// Copy into Godot projections.
+		Projection godot_view_mat;
+		xrMatrix4x4f_to_projection(&view_mat, godot_view_mat);
+		Projection godot_projection_mat;
+		xrMatrix4x4f_to_projection(&projection_mat, godot_projection_mat);
+
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME : META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME, godot_view_mat);
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, godot_projection_mat);
+	}
 }
 
 uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
@@ -201,6 +238,8 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth() {
 		UtilityFunctions::printerr("Failed to start environment depth provider: ", get_openxr_api()->get_error_string(result));
 		return;
 	}
+
+	setup_global_uniforms();
 
 	depth_provider_started = true;
 }
@@ -262,11 +301,11 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
 	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME)) {
 		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
 	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
 	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
 	}
 }
 
@@ -384,7 +423,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 					swapchain_state.height,
 					1,
 					2,
-				RenderingServer::TextureLayeredType::TEXTURE_LAYERED_2D_ARRAY);
+					RenderingServer::TextureLayeredType::TEXTURE_LAYERED_2D_ARRAY);
 
 			depth_swapchain_textures.push_back(texture);
 		}

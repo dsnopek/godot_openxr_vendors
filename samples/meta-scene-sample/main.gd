@@ -17,6 +17,8 @@ var selected_spatial_anchor_node: Node3D = null
 
 const SPATIAL_ANCHORS_FILE = "user://openxr_fb_spatial_anchors.json"
 
+var _setup := false
+
 const COLORS = [
 	"#FF0000", # Red
 	"#00FF00", # Green
@@ -35,6 +37,10 @@ func _ready():
 
 
 func _on_openxr_session_begun() -> void:
+	if _setup:
+		return
+	_setup = true
+
 	load_spatial_anchors_from_file()
 	enable_passthrough(true)
 
@@ -197,4 +203,5 @@ func _on_scene_manager_scene_capture_completed(success: bool) -> void:
 
 
 func _on_scene_manager_scene_data_missing() -> void:
-	scene_manager.request_scene_capture()
+	#scene_manager.request_scene_capture()
+	pass
