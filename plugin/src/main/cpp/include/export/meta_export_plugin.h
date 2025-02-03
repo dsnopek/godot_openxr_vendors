@@ -35,40 +35,38 @@
 
 using namespace godot;
 
-namespace {
-static const int EYE_TRACKING_NONE_VALUE = 0;
-static const int EYE_TRACKING_OPTIONAL_VALUE = 1;
-static const int EYE_TRACKING_REQUIRED_VALUE = 2;
-
-static const int FACE_TRACKING_NONE_VALUE = 0;
-static const int FACE_TRACKING_OPTIONAL_VALUE = 1;
-static const int FACE_TRACKING_REQUIRED_VALUE = 2;
-
-static const int BODY_TRACKING_NONE_VALUE = 0;
-static const int BODY_TRACKING_OPTIONAL_VALUE = 1;
-static const int BODY_TRACKING_REQUIRED_VALUE = 2;
-
-static const int PASSTHROUGH_NONE_VALUE = 0;
-static const int PASSTHROUGH_OPTIONAL_VALUE = 1;
-static const int PASSTHROUGH_REQUIRED_VALUE = 2;
-
-static const int RENDER_MODEL_NONE_VALUE = 0;
-static const int RENDER_MODEL_OPTIONAL_VALUE = 1;
-static const int RENDER_MODEL_REQUIRED_VALUE = 2;
-
-static const int HAND_TRACKING_NONE_VALUE = 0;
-static const int HAND_TRACKING_OPTIONAL_VALUE = 1;
-static const int HAND_TRACKING_REQUIRED_VALUE = 2;
-
-static const int HAND_TRACKING_FREQUENCY_LOW_VALUE = 0;
-static const int HAND_TRACKING_FREQUENCY_HIGH_VALUE = 1;
-
-static const int BOUNDARY_ENABLED_VALUE = 0;
-static const int BOUNDARY_DISABLED_VALUE = 1;
-} // namespace
-
 class MetaEditorExportPlugin : public OpenXREditorExportPlugin {
 	GDCLASS(MetaEditorExportPlugin, OpenXREditorExportPlugin)
+
+	static const int EYE_TRACKING_NONE_VALUE = 0;
+	static const int EYE_TRACKING_OPTIONAL_VALUE = 1;
+	static const int EYE_TRACKING_REQUIRED_VALUE = 2;
+
+	static const int FACE_TRACKING_NONE_VALUE = 0;
+	static const int FACE_TRACKING_OPTIONAL_VALUE = 1;
+	static const int FACE_TRACKING_REQUIRED_VALUE = 2;
+
+	static const int BODY_TRACKING_NONE_VALUE = 0;
+	static const int BODY_TRACKING_OPTIONAL_VALUE = 1;
+	static const int BODY_TRACKING_REQUIRED_VALUE = 2;
+
+	static const int PASSTHROUGH_NONE_VALUE = 0;
+	static const int PASSTHROUGH_OPTIONAL_VALUE = 1;
+	static const int PASSTHROUGH_REQUIRED_VALUE = 2;
+
+	static const int RENDER_MODEL_NONE_VALUE = 0;
+	static const int RENDER_MODEL_OPTIONAL_VALUE = 1;
+	static const int RENDER_MODEL_REQUIRED_VALUE = 2;
+
+	static const int HAND_TRACKING_NONE_VALUE = 0;
+	static const int HAND_TRACKING_OPTIONAL_VALUE = 1;
+	static const int HAND_TRACKING_REQUIRED_VALUE = 2;
+
+	static const int HAND_TRACKING_FREQUENCY_LOW_VALUE = 0;
+	static const int HAND_TRACKING_FREQUENCY_HIGH_VALUE = 1;
+
+	static const int BOUNDARY_ENABLED_VALUE = 0;
+	static const int BOUNDARY_DISABLED_VALUE = 1;
 
 public:
 	MetaEditorExportPlugin();
@@ -82,6 +80,8 @@ public:
 	String _get_android_manifest_activity_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
 	String _get_android_manifest_application_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
 	String _get_android_manifest_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
+
+	virtual void _export_begin(const PackedStringArray &p_features, bool p_is_debug, const String &p_path, uint32_t p_flags) override;
 
 protected:
 	static void _bind_methods();
@@ -104,6 +104,7 @@ private:
 	Dictionary _use_overlay_keyboard_option;
 	Dictionary _use_experimental_features_option;
 	Dictionary _boundary_mode_option;
+	Dictionary _instant_splash_screen_option;
 	Dictionary _support_quest_1_option;
 	Dictionary _support_quest_2_option;
 	Dictionary _support_quest_3_option;

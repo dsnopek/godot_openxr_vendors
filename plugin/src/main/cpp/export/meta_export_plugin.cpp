@@ -169,6 +169,15 @@ MetaEditorExportPlugin::MetaEditorExportPlugin() {
 			PROPERTY_USAGE_DEFAULT,
 			BOUNDARY_ENABLED_VALUE,
 			false);
+	_instant_splash_screen_option = _generate_export_option(
+			"meta_xr_features/instant_splash_screen",
+			"",
+			Variant::Type::BOOL,
+			PROPERTY_HINT_NONE,
+			"",
+			PROPERTY_USAGE_DEFAULT,
+			false,
+			false);
 	_support_quest_1_option = _generate_export_option(
 			"meta_xr_features/quest_1_support",
 			"",
@@ -229,6 +238,7 @@ TypedArray<Dictionary> MetaEditorExportPlugin::_get_export_options(const Ref<Edi
 	export_options.append(_use_overlay_keyboard_option);
 	export_options.append(_use_experimental_features_option);
 	export_options.append(_boundary_mode_option);
+	export_options.append(_instant_splash_screen_option);
 	export_options.append(_support_quest_1_option);
 	export_options.append(_support_quest_2_option);
 	export_options.append(_support_quest_3_option);
@@ -339,6 +349,10 @@ String MetaEditorExportPlugin::_get_export_option_warning(const Ref<EditorExport
 	} else if (option == "meta_xr_features/boundary_mode") {
 		if (!openxr_enabled && _get_int_option(option, BOUNDARY_ENABLED_VALUE) > BOUNDARY_ENABLED_VALUE) {
 			return "Boundary mode changes require \"XR Mode\" to be \"OpenXR\".\n";
+		}
+	} else if (option == "meta_xr_features/instant_splash_screen") {
+		if (!openxr_enabled && _get_bool_option(option)) {
+			return "\"Instant splash screen\" is only valid when \"XR Mode\" is \"OpenXR\".\n";
 		}
 	}
 
@@ -458,6 +472,21 @@ String MetaEditorExportPlugin::_get_android_manifest_element_contents(const Ref<
 	return contents;
 }
 
+void MetaEditorExportPlugin::_export_begin(const PackedStringArray &p_features, bool p_is_debug, const String &p_path, uint32_t p_flags) {
+	bool instant_splash_screen = _get_bool_option("meta_xr_features/instant_splash_screen");
+	if (!instant_splash_screen) {
+		return;
+	}
+
+	String boot_splash_path = ProjectSettings::get_singleton()->get_setting_with_override("application/boot_splash/image");
+	if (!FileAccess::file_exists(boot_splash_path)) {
+		return;
+	}
+
+	PackedByteArray boot_splash_file = FileAccess::get_file_as_bytes(boot_splash_path);
+	add_file("res://vr_splash.png", boot_splash_file, true);
+}
+
 String MetaEditorExportPlugin::_get_android_manifest_application_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const {
 	String contents;
 	if (!_supports_platform(platform) || !_is_vendor_plugin_enabled()) {
@@ -475,6 +504,11 @@ String MetaEditorExportPlugin::_get_android_manifest_application_element_content
 		contents += "        <meta-data tools:node=\"replace\" android:name=\"com.oculus.handtracking.version\" android:value=\"V2.0\" />\n";
 	}
 
+	bool instant_splash_screen = _get_bool_option("meta_xr_features/instant_splash_screen");
+	if (instant_splash_screen) {
+		contents += "        <meta-data android:name=\"com.oculus.ossplash\" android:value=\"true\"/>\n";
+	}
+
 	if ((int)ProjectSettings::get_singleton()->get_setting_with_override("xr/openxr/environment_blend_mode") != XRInterface::XR_ENV_BLEND_MODE_OPAQUE) {
 		// Show the splash screen in passthrough, if the user launches it from passthrough.
 		contents += "        <meta-data android:name=\"com.oculus.ossplash.background\" android:value=\"passthrough-contextual\" />\n";
@@ -482,22 +516,7 @@ String MetaEditorExportPlugin::_get_android_manifest_application_element_content
 
 	HybridType hybrid_type = _get_hybrid_app_setting_value();
 	if (hybrid_type != HYBRID_TYPE_DISABLED) {
-		ProjectSettings *project_settings = ProjectSettings::get_singleton();
-
-		contents += vformat(
-				"        <activity android:name=\"org.godotengine.openxr.vendors.GodotPanelApp\" "
-				"android:process=\":GodotPanelApp\" "
-				"android:theme=\"@style/GodotPanelAppSplashTheme\" "
-				"android:launchMode=\"singleInstancePerTask\" "
-				"android:exported=\"true\" "
-				"android:excludeFromRecents=\"%s\" "
-				"android:screenOrientation=\"%s\" "
-				"android:resizeableActivity=\"%s\" "
-				"android:configChanges=\"orientation|keyboardHidden|screenSize|smallestScreenSize|density|keyboard|navigation|screenLayout|uiMode\" "
-				"tools:ignore=\"UnusedAttribute\">\n",
-				_bool_to_string(_get_bool_option("package/exclude_from_recents")),
-				_get_android_orientation_label((DisplayServer::ScreenOrientation)(int)project_settings->get_setting_with_override("display/window/handheld/orientation")),
-				_bool_to_string(project_settings->get_setting_with_override("display/window/size/resizable")));
+		contents += _get_opening_activity_tag_for_panel_app();
 
 		contents +=
 				"          <intent-filter>\n"
