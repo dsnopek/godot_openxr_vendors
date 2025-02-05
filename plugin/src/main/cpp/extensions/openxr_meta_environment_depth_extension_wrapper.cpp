@@ -185,6 +185,8 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 		return;
 	}
 
+	print_line(vformat("X-X-X: Setting RID %s", depth_swapchain_textures[depth_image.swapchainIndex].get_id()));
+
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
 
 	for (int i = 0; i < 2; i++) {
@@ -424,6 +426,8 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 					1,
 					2,
 					RenderingServer::TextureLayeredType::TEXTURE_LAYERED_2D_ARRAY);
+
+			print_line(vformat("DRS: RID %s = %s", texture.get_id(), image.image));
 
 			depth_swapchain_textures.push_back(texture);
 		}
