@@ -39,6 +39,9 @@
 #define XR_USE_GRAPHICS_API_OPENGL
 #endif
 
+#define XR_USE_GRAPHICS_API_VULKAN
+#include <vulkan/vulkan.h>
+
 #include <openxr/openxr_platform.h>
 // @todo Replace with Godot equivalent math!
 #include <openxr/internal/xr_linear.h>
@@ -46,6 +49,7 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/rendering_device.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -125,9 +129,9 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 		String rendering_driver = RenderingServer::get_singleton()->get_current_rendering_driver_name();
 		if (rendering_driver.contains("opengl")) {
 			graphics_api = GRAPHICS_API_OPENGL;
-		} /*else if (rendering_driver == "vulkan") {
+		} else if (rendering_driver == "vulkan") {
 			graphics_api = GRAPHICS_API_VULKAN;
-		} */else {
+		} else {
 			graphics_api = GRAPHICS_API_UNSUPPORTED;
 		}
 	}
@@ -335,6 +339,13 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 		UtilityFunctions::printerr("Environment depth not supported");
 		return false;
 	}
+	if (graphics_api == GRAPHICS_API_UNKNOWN) {
+		_on_pre_render();
+	}
+	if (graphics_api == GRAPHICS_API_UNSUPPORTED) {
+		UtilityFunctions::printerr("Environment depth is not supported with the current graphics API");
+		return false;
+	}
 
 	RenderingServer *rs = RenderingServer::get_singleton();
 	ERR_FAIL_NULL_V(rs, false);
@@ -428,6 +439,41 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 					RenderingServer::TextureLayeredType::TEXTURE_LAYERED_2D_ARRAY);
 
 			print_line(vformat("DRS: RID %s = %s", texture.get_id(), image.image));
+
+			depth_swapchain_textures.push_back(texture);
+		}
+	} else if (graphics_api == GRAPHICS_API_VULKAN) {
+		LocalVector<XrSwapchainImageVulkanKHR> swapchain_images;
+
+		swapchain_images.resize(swapchain_length);
+		for (auto &image : swapchain_images) {
+			image.type = XR_TYPE_SWAPCHAIN_IMAGE_VULKAN_KHR;
+			image.next = nullptr;
+			image.image = 0;
+		}
+
+		result = xrEnumerateEnvironmentDepthSwapchainImagesMETA(depth_swapchain, swapchain_length, &swapchain_length, (XrSwapchainImageBaseHeader *)swapchain_images.ptr());
+		if (XR_FAILED(result)) {
+			UtilityFunctions::printerr("Failed to get environment depth swapchain images: ", get_openxr_api()->get_error_string(result));
+			destroy_depth_provider();
+			return false;
+		}
+
+		depth_swapchain_textures.reserve(swapchain_length);
+
+		RenderingDevice *rendering_device = RenderingServer::get_singleton()->get_rendering_device();
+
+		for (const auto &image : swapchain_images) {
+			RID texture = rendering_device->texture_create_from_extension(
+					RenderingDevice::TEXTURE_TYPE_2D_ARRAY,
+					RenderingDevice::DATA_FORMAT_D16_UNORM,
+					RenderingDevice::TEXTURE_SAMPLES_1,
+					RenderingDevice::TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice::TEXTURE_USAGE_COLOR_ATTACHMENT_BIT,
+					reinterpret_cast<uint64_t>(image.image),
+					swapchain_state.width,
+					swapchain_state.height,
+					1,
+					2);
 
 			depth_swapchain_textures.push_back(texture);
 		}
