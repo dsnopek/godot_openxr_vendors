@@ -475,6 +475,8 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 					1,
 					2);
 
+			print_line(vformat("DRS: RID %s = %s", texture.get_id(), (uint64_t)image.image));
+
 			depth_swapchain_textures.push_back(texture);
 		}
 	}
