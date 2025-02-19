@@ -61,8 +61,31 @@ class GodotPanelApp : GodotActivity() {
 	}
 
 	override fun getCommandLine(): MutableList<String> {
-		// Force XR to be turned off.
-		return mutableListOf("--xr_mode_regular", "--xr-mode", "off")
+		val oldCmdline = super.getCommandLine()
+
+		// Remove any existing command-line arguments setting the XR mode.
+		val newCmdline = mutableListOf<String>()
+		var skipNext = false
+		for (arg in oldCmdline) {
+			if (skipNext) {
+				skipNext = false
+				continue
+			}
+
+			when (arg) {
+				"--xr_mode_regular", "--xr_mode_openxr" -> continue
+				"--xr-mode" -> {
+					skipNext = true
+					continue
+				}
+				else -> newCmdline.add(arg)
+			}
+		}
+
+		// Add new arguments to force XR to be turned off.
+		newCmdline.addAll(listOf("--xr_mode_regular", "--xr-mode", "off"))
+
+		return newCmdline
 	}
 
 	override fun supportsFeature(featureTag: String): Boolean {
