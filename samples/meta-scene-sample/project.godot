@@ -27,6 +27,29 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
 
+[shader_globals]
+
+META_ENVIRONMENT_DEPTH_TEXTURE={
+"type": "sampler2DArray",
+"value": ""
+}
+META_ENVIRONMENT_DEPTH_VIEW_LEFT={
+"type": "mat4",
+"value": Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+}
+META_ENVIRONMENT_DEPTH_VIEW_RIGHT={
+"type": "mat4",
+"value": Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+}
+META_ENVIRONMENT_DEPTH_PROJECTION_LEFT={
+"type": "mat4",
+"value": Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+}
+META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT={
+"type": "mat4",
+"value": Projection(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+}
+
 [xr]
 
 openxr/enabled=true
@@ -37,3 +60,4 @@ openxr/extensions/meta/passthrough=true
 openxr/extensions/meta/render_model=true
 openxr/extensions/meta/anchor_api=true
 openxr/extensions/meta/scene_api=true
+openxr/extensions/meta/environment_depth=true

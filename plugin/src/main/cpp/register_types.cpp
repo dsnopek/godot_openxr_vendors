@@ -69,6 +69,7 @@
 #include "extensions/openxr_fb_spatial_entity_user_extension_wrapper.h"
 #include "extensions/openxr_htc_facial_tracking_extension_wrapper.h"
 #include "extensions/openxr_htc_passthrough_extension_wrapper.h"
+#include "extensions/openxr_meta_environment_depth_extension_wrapper.h"
 #include "extensions/openxr_meta_recommended_layer_resolution_extension_wrapper.h"
 #include "extensions/openxr_meta_spatial_entity_mesh_extension_wrapper.h"
 
@@ -141,6 +142,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRMetaRecommendedLayerResolutionExtensionWrapper>();
 			ClassDB::register_class<OpenXRMetaSpatialEntityMeshExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbSceneExtensionWrapper>();
+			ClassDB::register_class<OpenXRMetaEnvironmentDepthExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbFaceTrackingExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbBodyTrackingExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbHandTrackingMeshExtensionWrapper>();
@@ -185,6 +187,10 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 					_register_extension_with_openxr(OpenXRFbSpatialEntitySharingExtensionWrapper::get_singleton());
 					_register_extension_with_openxr(OpenXRFbSpatialEntityUserExtensionWrapper::get_singleton());
 				}
+			}
+
+			if (_get_bool_project_setting("xr/openxr/extensions/meta/environment_depth")) {
+				_register_extension_with_openxr(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton());
 			}
 
 			if (_get_bool_project_setting("xr/openxr/extensions/meta/dynamic_resolution")) {
@@ -245,6 +251,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			_register_extension_as_singleton(OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbSpatialEntityContainerExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbSceneExtensionWrapper::get_singleton());
+			_register_extension_as_singleton(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbHandTrackingAimExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbHandTrackingCapsulesExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRHtcFacialTrackingExtensionWrapper::get_singleton());
@@ -286,6 +293,8 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<MagicleapEditorExportPlugin>();
 			ClassDB::register_class<MagicleapEditorPlugin>();
 			EditorPlugins::add_by_type<MagicleapEditorPlugin>();
+
+			OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton()->setup_global_uniforms();
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_MAX:
@@ -376,6 +385,7 @@ void add_plugin_project_settings() {
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/anchor_api", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/anchor_sharing", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/scene_api", false);
+	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/environment_depth", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/composition_layer_settings", true);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/dynamic_resolution", true);
 
