@@ -189,8 +189,6 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 		return;
 	}
 
-	print_line(vformat("X-X-X: Setting RID %s", depth_swapchain_textures[depth_image.swapchainIndex].get_id()));
-
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
 
 	for (int i = 0; i < 2; i++) {

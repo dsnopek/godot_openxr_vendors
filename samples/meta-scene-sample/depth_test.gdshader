@@ -6,9 +6,7 @@ global uniform highp mat4 META_ENVIRONMENT_DEPTH_VIEW_RIGHT;
 global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_LEFT;
 global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;
 
-//global uniform sampler2D TEST_TEXTURE;
-
-//uniform vec3 albedo : source_color = vec3(1.0, 0.0, 0.0);
+uniform vec3 albedo : source_color;
 
 varying vec4 cube_world_position;
 
@@ -17,7 +15,6 @@ void vertex() {
 }
 
 void fragment() {
-	/*
 	highp vec4 cube_depth_camera_position;
 	if (uint(VIEW_INDEX) == uint(0)) {
 		cube_depth_camera_position = META_ENVIRONMENT_DEPTH_PROJECTION_LEFT * META_ENVIRONMENT_DEPTH_VIEW_LEFT * cube_world_position;
@@ -33,27 +30,14 @@ void fragment() {
 
 	highp float cube_depth = cube_depth_camera_position.z / cube_depth_camera_position.w;
 	cube_depth = cube_depth * 0.5f + 0.5f;
-	*/
-
-	ALBEDO = vec3(texture(META_ENVIRONMENT_DEPTH_TEXTURE, vec3(UV, 0.0)).r);
-	//ALBEDO = texture(TEST_TEXTURE, UV).rgb;
-
-	// @todo Does this account for reverse z?
-	/*
-	if (cube_depth > depth_view_eye_z) {
-		//ALBEDO = albedo;
-		//ALPHA = 1.0;
+	
+	DEPTH = cube_depth;
+	
+	if (cube_depth < depth_view_eye_z) {
+		ALBEDO = albedo;
+		ALPHA = 1.0;
 	} else {
-		ALBEDO = vec3(0.0, 1.0, 0.0);
-		//ALBEDO = vec3(0.0, 0.0, 0.0);
-		//ALPHA = 0.0;
+		ALBEDO = vec3(0.0, 0.0, 0.0);
+		ALPHA = 0.0;
 	}
-	*/
-
-	// TEST:
-	//ALBEDO = vec3(0.0, 0.0, cube_depth);
-	//ALBEDO = vec3(0.0, 0.0, depth_view_eye_z);
-
-	// @todo Does this account for reverse z?
-	//DEPTH = cube_depth;
 }
