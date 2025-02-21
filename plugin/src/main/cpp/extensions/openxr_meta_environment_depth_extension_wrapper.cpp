@@ -458,6 +458,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 		RenderingDevice *rendering_device = RenderingServer::get_singleton()->get_rendering_device();
 
 		for (const auto &image : swapchain_images) {
+			/*
 			RID texture = rendering_device->texture_create_from_extension(
 					RenderingDevice::TEXTURE_TYPE_2D_ARRAY,
 					RenderingDevice::DATA_FORMAT_D16_UNORM,
@@ -468,8 +469,19 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 					swapchain_state.height,
 					1,
 					2);
+			*/
 
-			print_line(vformat("DRS: RID %s = %s", texture.get_id(), (uint64_t)image.image));
+			RID texture = rs->texture_create_from_native_handle(
+					RenderingServer::TextureType::TEXTURE_TYPE_LAYERED,
+					Image::Format::FORMAT_RH, // VK_FORMAT_D16_UNORM
+					reinterpret_cast<uint64_t>(image.image),
+					swapchain_state.width,
+					swapchain_state.height,
+					1,
+					2,
+					RenderingServer::TextureLayeredType::TEXTURE_LAYERED_2D_ARRAY);
+
+			print_line(vformat("DRS: (RS) RID %s = %s", texture.get_id(), (uint64_t)image.image));
 
 			depth_swapchain_textures.push_back(texture);
 		}
