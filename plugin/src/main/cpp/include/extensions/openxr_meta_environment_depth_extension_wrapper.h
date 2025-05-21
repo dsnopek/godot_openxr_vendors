@@ -71,8 +71,6 @@ public:
 	void set_hand_removal_enabled(bool p_enable);
 	bool get_hand_removal_enabled() const;
 
-	static void setup_global_uniforms();
-
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *get_singleton();
 
 	OpenXRMetaEnvironmentDepthExtensionWrapper();
@@ -152,8 +150,11 @@ private:
 
 	GraphicsAPI graphics_api = GRAPHICS_API_UNKNOWN;
 	LocalVector<RID> depth_swapchain_textures;
+	Size2i depth_map_size;
 	bool first_frame = true;
 
 	bool create_depth_provider();
 	void destroy_depth_provider();
+
+	bool update_depth_map();
 };

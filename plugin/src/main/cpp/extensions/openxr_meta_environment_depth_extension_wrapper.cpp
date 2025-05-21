@@ -150,77 +150,11 @@ static void xrMatrix4x4f_to_projection(XrMatrix4x4f *m, Projection &p) {
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID &p_viewport) {
-	if (depth_provider == XR_NULL_HANDLE || !depth_provider_started) {
-		return;
-	}
-
 	Ref<OpenXRAPIExtension> openxr_api = get_openxr_api();
 	ERR_FAIL_COND(openxr_api.is_null());
 
-	RenderingServer *rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL(rs);
-
-	XrEnvironmentDepthImageAcquireInfoMETA acquire_info = {
-		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_ACQUIRE_INFO_META, // type
-		nullptr, // next
-		(XrSpace)openxr_api->get_play_space(),
-		openxr_api->get_predicted_display_time(),
-	};
-
-	XrEnvironmentDepthImageMETA depth_image = {
-		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_META, // type
-		nullptr, // next
-		0, // swapchainIndex
-		0.0, // nearZ
-		0.0, // farZ
-		{
-				// views
-				{
-						XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_VIEW_META, // type
-						nullptr, // next
-				},
-				{
-						XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_VIEW_META, // type
-						nullptr, // next
-				},
-		}
-	};
-
-	XrResult result = xrAcquireEnvironmentDepthImageMETA(depth_provider, &acquire_info, &depth_image);
-	if (XR_FAILED(result)) {
-		UtilityFunctions::printerr("Failed to acquire environment depth image: ", get_openxr_api()->get_error_string(result));
-		return;
-	}
-
-	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
-
-	for (int i = 0; i < 2; i++) {
-		// @todo Replace these utilities with Godot equivalents!
-
-		XrPosef local_from_depth_eye = depth_image.views[i].pose;
-		XrPosef depth_eye_from_local;
-		XrPosef_Invert(&depth_eye_from_local, &local_from_depth_eye);
-
-		XrMatrix4x4f view_mat;
-		XrMatrix4x4f_CreateFromRigidTransform(&view_mat, &depth_eye_from_local);
-
-		XrMatrix4x4f projection_mat;
-		XrMatrix4x4f_CreateProjectionFov(
-				&projection_mat,
-				// @todo Will this work for Vulkan?
-				GRAPHICS_OPENGL,
-				depth_image.views[i].fov,
-				depth_image.nearZ,
-				std::isfinite(depth_image.farZ) ? depth_image.farZ : 0);
-
-		// Copy into Godot projections.
-		Projection godot_view_mat;
-		xrMatrix4x4f_to_projection(&view_mat, godot_view_mat);
-		Projection godot_projection_mat;
-		xrMatrix4x4f_to_projection(&projection_mat, godot_projection_mat);
-
-		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME : META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME, godot_view_mat);
-		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, godot_projection_mat);
+	if (!update_depth_map()) {
+		openxr_api->set_environment_depth_usage(XRInterface::XR_ENV_DEPTH_USAGE_NONE);
 	}
 }
 
@@ -245,8 +179,6 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth() {
 		UtilityFunctions::printerr("Failed to start environment depth provider: ", get_openxr_api()->get_error_string(result));
 		return;
 	}
-
-	setup_global_uniforms();
 
 	depth_provider_started = true;
 }
@@ -291,29 +223,6 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled(bool p
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::get_hand_removal_enabled() const {
 	return hand_removal_enabled;
-}
-
-void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
-	RenderingServer *rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL(rs);
-
-	TypedArray<StringName> existing_uniforms = rs->global_shader_parameter_get_list();
-
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TEXTURE_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY, Variant());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
 }
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::initialize_meta_environment_depth_extension(const XrInstance &p_instance) {
@@ -401,6 +310,8 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 		destroy_depth_provider();
 		return false;
 	}
+
+	depth_map_size = Size2i(swapchain_state.width, swapchain_state.height);
 
 	if (graphics_api == GRAPHICS_API_OPENGL) {
 		LocalVector<XrSwapchainImageOpenGLESKHR> swapchain_images;
@@ -498,4 +409,82 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::destroy_depth_provider() {
 		depth_provider = XR_NULL_HANDLE;
 		hand_removal_enabled = false;
 	}
+}
+
+bool OpenXRMetaEnvironmentDepthExtensionWrapper::update_depth_map() {
+	Ref<OpenXRAPIExtension> openxr_api = get_openxr_api();
+
+	if (depth_provider == XR_NULL_HANDLE || !depth_provider_started) {
+		return false;
+	}
+
+	XrEnvironmentDepthImageAcquireInfoMETA acquire_info = {
+		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_ACQUIRE_INFO_META, // type
+		nullptr, // next
+		(XrSpace)openxr_api->get_play_space(),
+		openxr_api->get_predicted_display_time(),
+	};
+
+	XrEnvironmentDepthImageMETA depth_image = {
+		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_META, // type
+		nullptr, // next
+		0, // swapchainIndex
+		0.0, // nearZ
+		0.0, // farZ
+		{
+				// views
+				{
+						XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_VIEW_META, // type
+						nullptr, // next
+				},
+				{
+						XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_VIEW_META, // type
+						nullptr, // next
+				},
+		}
+	};
+
+	XrResult result = xrAcquireEnvironmentDepthImageMETA(depth_provider, &acquire_info, &depth_image);
+	if (XR_FAILED(result)) {
+		UtilityFunctions::printerr("Failed to acquire environment depth image: ", get_openxr_api()->get_error_string(result));
+		return false;
+	}
+
+	RID depth_texture = depth_swapchain_textures[depth_image.swapchainIndex];
+
+	openxr_api->set_environment_depth_usage(XRInterface::XR_ENV_DEPTH_USAGE_GPU);
+	openxr_api->set_environment_depth_format(XRInterface::XR_ENV_DEPTH_FORMAT_UNSIGNED_SHORT);
+	openxr_api->set_environment_depth_map_size(depth_map_size);
+	openxr_api->set_environment_depth_multiplier(1.0);
+
+	for (int i = 0; i < 2; i++) {
+		// @todo Replace these utilities with Godot equivalents!
+
+		XrPosef local_from_depth_eye = depth_image.views[i].pose;
+		XrPosef depth_eye_from_local;
+		XrPosef_Invert(&depth_eye_from_local, &local_from_depth_eye);
+
+		XrMatrix4x4f view_mat;
+		XrMatrix4x4f_CreateFromRigidTransform(&view_mat, &depth_eye_from_local);
+
+		XrMatrix4x4f projection_mat;
+		XrMatrix4x4f_CreateProjectionFov(
+				&projection_mat,
+				// @todo Will this work for Vulkan?
+				GRAPHICS_OPENGL,
+				depth_image.views[i].fov,
+				depth_image.nearZ,
+				std::isfinite(depth_image.farZ) ? depth_image.farZ : 0);
+
+		// Copy into Godot projections.
+		Projection godot_view_mat;
+		xrMatrix4x4f_to_projection(&view_mat, godot_view_mat);
+		Projection godot_projection_mat;
+		xrMatrix4x4f_to_projection(&projection_mat, godot_projection_mat);
+
+		openxr_api->set_environment_depth_projection(i, godot_projection_mat * godot_view_mat);
+		openxr_api->set_environment_depth_gpu_data(i, depth_texture);
+	}
+
+	return true;
 }
