@@ -52,7 +52,6 @@ public:
 	virtual void _on_session_destroyed() override;
 
 	virtual void _on_pre_render() override;
-	virtual void _on_pre_draw_viewport(const RID &p_viewport) override;
 
 	virtual uint64_t _set_system_properties_and_get_next_pointer(void *p_next_pointer) override;
 

@@ -54,9 +54,8 @@
 
 using namespace godot;
 
+static const char *META_ENVIRONMENT_DEPTH_AVAILABLE_NAME = "META_ENVIRONMENT_DEPTH_AVAILABLE";
 static const char *META_ENVIRONMENT_DEPTH_TEXTURE_NAME = "META_ENVIRONMENT_DEPTH_TEXTURE";
-static const char *META_ENVIRONMENT_DEPTH_VIEW_LEFT_NAME = "META_ENVIRONMENT_DEPTH_VIEW_LEFT";
-static const char *META_ENVIRONMENT_DEPTH_VIEW_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_VIEW_RIGHT";
 static const char *META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_LEFT";
 static const char *META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT";
 
@@ -75,6 +74,10 @@ OpenXRMetaEnvironmentDepthExtensionWrapper::OpenXRMetaEnvironmentDepthExtensionW
 
 	request_extensions[XR_META_ENVIRONMENT_DEPTH_EXTENSION_NAME] = &meta_environment_depth_ext;
 	singleton = this;
+
+#ifndef ANDROID_ENABLED
+	graphics_api = GRAPHICS_API_UNSUPPORTED;
+#endif
 }
 
 OpenXRMetaEnvironmentDepthExtensionWrapper::~OpenXRMetaEnvironmentDepthExtensionWrapper() {
@@ -123,8 +126,19 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_session_destroyed() {
 	destroy_depth_provider();
 }
 
+static void xrMatrix4x4f_to_godot_projection(XrMatrix4x4f *m, Projection &p) {
+	for (int j = 0; j < 4; j++) {
+		for (int i = 0; i < 4; i++) {
+			p.columns[j][i] = m->m[j * 4 + i];
+		}
+	}
+}
+
 void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 #ifdef ANDROID_ENABLED
+	RenderingServer *rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL(rs);
+
 	if (unlikely(graphics_api == GRAPHICS_API_UNKNOWN)) {
 		String rendering_driver = RenderingServer::get_singleton()->get_current_rendering_driver_name();
 		if (rendering_driver.contains("opengl")) {
@@ -135,29 +149,16 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 			graphics_api = GRAPHICS_API_UNSUPPORTED;
 		}
 	}
-#else
-	graphics_api = GRAPHICS_API_UNSUPPORTED;
-#endif
-}
 
-static void xrMatrix4x4f_to_godot_projection(XrMatrix4x4f *m, Projection &p) {
-	for (int j = 0; j < 4; j++) {
-		for (int i = 0; i < 4; i++) {
-			p.columns[j][i] = m->m[j * 4 + i];
-		}
-	}
-}
+	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, false);
+	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RID());
 
-void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID &p_viewport) {
 	if (depth_provider == XR_NULL_HANDLE || !depth_provider_started) {
 		return;
 	}
 
 	Ref<OpenXRAPIExtension> openxr_api = get_openxr_api();
 	ERR_FAIL_COND(openxr_api.is_null());
-
-	RenderingServer *rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL(rs);
 
 	XrEnvironmentDepthImageAcquireInfoMETA acquire_info = {
 		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_ACQUIRE_INFO_META, // type
@@ -191,6 +192,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 		return;
 	}
 
+	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, true);
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
 
 	for (int i = 0; i < 2; i++) {
@@ -217,6 +219,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_draw_viewport(const RID
 
 		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, godot_projection_mat * godot_view_mat);
 	}
+#endif
 }
 
 uint64_t OpenXRMetaEnvironmentDepthExtensionWrapper::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
@@ -294,6 +297,9 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
 
 	TypedArray<StringName> existing_uniforms = rs->global_shader_parameter_get_list();
 
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, RenderingServer::GLOBAL_VAR_TYPE_BOOL, false);
+	}
 	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TEXTURE_NAME)) {
 		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY, Variant());
 	}
