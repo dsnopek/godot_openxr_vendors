@@ -83,6 +83,7 @@
 #include "classes/openxr_fb_spatial_entity_query.h"
 #include "classes/openxr_fb_spatial_entity_user.h"
 #include "classes/openxr_hybrid_app.h"
+#include "classes/openxr_meta_environment_depth.h"
 #include "classes/openxr_meta_passthrough_color_lut.h"
 
 using namespace godot;
@@ -266,6 +267,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
 			ClassDB::register_class<OpenXRFbSpatialEntityUser>();
 			ClassDB::register_class<OpenXRFbPassthroughGeometry>();
+			ClassDB::register_class<OpenXRMetaEnvironmentDepth>();
 			ClassDB::register_class<OpenXRMetaPassthroughColorLut>();
 
 			ClassDB::register_class<OpenXRHybridApp>();

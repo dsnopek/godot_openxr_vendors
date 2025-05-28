@@ -70,6 +70,8 @@ public:
 	void set_hand_removal_enabled(bool p_enable);
 	bool get_hand_removal_enabled() const;
 
+	RID get_reprojection_mesh();
+
 	static void setup_global_uniforms();
 
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *get_singleton();
@@ -151,7 +153,10 @@ private:
 
 	GraphicsAPI graphics_api = GRAPHICS_API_UNKNOWN;
 	LocalVector<RID> depth_swapchain_textures;
-	bool first_frame = true;
+
+	RID reprojection_shader;
+	RID reprojection_material;
+	RID reprojection_mesh;
 
 	bool create_depth_provider();
 	void destroy_depth_provider();

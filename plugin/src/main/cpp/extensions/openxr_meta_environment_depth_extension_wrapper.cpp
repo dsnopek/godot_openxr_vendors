@@ -42,7 +42,6 @@
 #include <openxr/openxr_platform.h>
 #endif
 
-// @todo Replace with Godot equivalent math!
 #include <openxr/internal/xr_linear.h>
 
 #include <godot_cpp/classes/object.hpp>
@@ -58,6 +57,43 @@ static const char *META_ENVIRONMENT_DEPTH_AVAILABLE_NAME = "META_ENVIRONMENT_DEP
 static const char *META_ENVIRONMENT_DEPTH_TEXTURE_NAME = "META_ENVIRONMENT_DEPTH_TEXTURE";
 static const char *META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_LEFT";
 static const char *META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT";
+static const char *META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT";
+static const char *META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT";
+
+static const char *META_ENVIRONMENT_DEPTH_REPROJECTION_SHADER_CODE =
+		"shader_type spatial;\n"
+		"render_mode unshaded, shadows_disabled, cull_disabled, depth_test_disabled, depth_draw_always;\n"
+		"global uniform bool META_ENVIRONMENT_DEPTH_AVAILABLE;\n"
+		"global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest;\n"
+		"global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_LEFT;\n"
+		"global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;\n"
+		"global uniform highp mat4 META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT;\n"
+		"global uniform highp mat4 META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;\n"
+		"varying vec2 uv_interp;\n"
+		"void vertex() {\n"
+		"\tuv_interp = VERTEX.xy * 0.5 + 0.5;\n"
+		"\tPOSITION = vec4(VERTEX.xyz, 1.0);\n"
+		"}\n"
+		"void fragment() {\n"
+		"\thighp mat4 depth_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;\n"
+		"\thighp mat4 depth_inv_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;\n"
+		"\thighp vec4 clip = vec4(uv_interp * 2.0 - 1.0, 1.0, 1.0);\n"
+		"\thighp vec4 world_pos = INV_PROJECTION_MATRIX * INV_VIEW_MATRIX * clip;\n"
+		"\tworld_pos /= world_pos.w;\n"
+		"\thighp vec4 reprojected = depth_proj * world_pos;\n"
+		"\treprojected /= reprojected.w;\n"
+		"\thighp vec2 reprojected_uv = reprojected.xy * 0.5 + 0.5;\n"
+		"\thighp float depth = texture(META_ENVIRONMENT_DEPTH_TEXTURE, vec3(reprojected_uv, VIEW_INDEX));\n"
+		"\tif (depth == 0.0) {\n"
+		"\tdiscard;\n"
+		"\t}\n"
+		"\thighp vec4 clip_back = vec4(reprojected.xy, depth * 2.0 - 1.0, 1.0);\n"
+		"\thighp vec4 world_back = depth_inv_proj * clip_back;\n"
+		"\tworld_back /= world_back.w;\n"
+		"\thighp cur_clip = PROJECTION_MATRIX * VIEW_MATRIX * world_back;\n"
+		"\thighp float cur_ndc_z = cur_clip.z / cur_clip.w;\n"
+		"\tDEPTH = 1.0 - (cur_ndc_z * 0.5 + 0.5);\n"
+		"}\n";
 
 OpenXRMetaEnvironmentDepthExtensionWrapper *OpenXRMetaEnvironmentDepthExtensionWrapper::singleton = nullptr;
 
@@ -217,7 +253,9 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 		Projection godot_projection_mat;
 		xrMatrix4x4f_to_godot_projection(&projection_mat, godot_projection_mat);
 
-		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, godot_projection_mat * godot_view_mat);
+		Projection godot_combined_mat = godot_projection_mat * godot_view_mat;
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, godot_combined_mat);
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, godot_combined_mat.inverse());
 	}
 #endif
 }
@@ -291,6 +329,36 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::get_hand_removal_enabled() cons
 	return hand_removal_enabled;
 }
 
+RID OpenXRMetaEnvironmentDepthExtensionWrapper::get_reprojection_mesh() {
+	if (!reprojection_mesh.is_valid()) {
+		RenderingServer *rs = RenderingServer::get_singleton();
+		ERR_FAIL_NULL_V(rs, RID());
+
+		reprojection_shader = rs->shader_create();
+		rs->shader_set_code(reprojection_shader, META_ENVIRONMENT_DEPTH_REPROJECTION_SHADER_CODE);
+
+		reprojection_material = rs->material_create();
+		rs->material_set_shader(reprojection_material, reprojection_shader);
+		rs->material_set_render_priority(reprojection_material, 99);
+
+		PackedVector3Array vertices;
+		vertices.resize(3);
+		vertices[0] = Vector3(-1.0f, -1.0f, 1.0f);
+		vertices[1] = Vector3(3.0f, -1.0f, 1.0f);
+		vertices[2] = Vector3(-1.0f, 3.0f, 1.0f);
+
+		Array arr;
+		arr.resize(RenderingServer::ARRAY_MAX);
+		arr[RenderingServer::ARRAY_VERTEX] = vertices;
+
+		reprojection_mesh = rs->mesh_create();
+		rs->mesh_add_surface_from_arrays(reprojection_mesh, RenderingServer::PRIMITIVE_TRIANGLES, arr);
+		rs->mesh_surface_set_material(reprojection_mesh, 0, reprojection_material);
+	}
+
+	return reprojection_mesh;
+}
+
 void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
 	RenderingServer *rs = RenderingServer::get_singleton();
 	ERR_FAIL_NULL(rs);
@@ -308,6 +376,12 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
 	}
 	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME)) {
 		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
 	}
 }
 
