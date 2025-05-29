@@ -1,7 +1,9 @@
-[gd_scene load_steps=13 format=3 uid="uid://cqsodpswgup8w"]
+[gd_scene load_steps=16 format=3 uid="uid://cqsodpswgup8w"]
 
 [ext_resource type="Script" uid="uid://cfxf4wpwr3y2p" path="res://main.gd" id="1_fsva1"]
+[ext_resource type="Shader" uid="uid://clxvni5e6kbey" path="res://reprojection_test.gdshader" id="2_7mycd"]
 [ext_resource type="Shader" uid="uid://g0pbukh0wi3i" path="res://environment_depth.gdshader" id="2_lquwl"]
+[ext_resource type="ArrayMesh" uid="uid://bt8yc8hdj12p2" path="res://fullscreen_triangle.tres" id="3_272bh"]
 [ext_resource type="PackedScene" uid="uid://bcjp8kcgde4cs" path="res://scene_anchor.tscn" id="4_3u3ah"]
 [ext_resource type="PackedScene" uid="uid://bwo5nq0clfe3c" path="res://scene_global_mesh.tscn" id="5_7ikgf"]
 [ext_resource type="PackedScene" uid="uid://dsfd7xrm6o50p" path="res://spatial_anchor.tscn" id="5_g7mio"]
@@ -17,6 +19,10 @@ sky_material = SubResource("ProceduralSkyMaterial_0x6cv")
 background_mode = 1
 background_color = Color(0.3, 0.3, 0.3, 1)
 sky = SubResource("Sky_dqyx0")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5vw27"]
+render_priority = -100
+shader = ExtResource("2_7mycd")
 
 [sub_resource type="BoxMesh" id="BoxMesh_7mycd"]
 size = Vector3(0.1, 0.1, 0.1)
@@ -47,8 +53,12 @@ transform = Transform3D(0.677077, -0.692092, 0.25015, 0.264251, 0.545897, 0.7950
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.352791, 0)
 
-[node name="OpenXRMetaEnvironmentDepth" type="OpenXRMetaEnvironmentDepth" parent="XROrigin3D/XRCamera3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.352791, 0)
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/XRCamera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4551915e-11, 1.4551915e-11, -100)
+material_override = SubResource("ShaderMaterial_5vw27")
+cast_shadow = 0
+custom_aabb = AABB(-1000, -1000, -1000, 2000, 2000, 2000)
+mesh = ExtResource("3_272bh")
 
 [node name="LeftHand" type="XRController3D" parent="XROrigin3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.460909, 0.388594, -0.241118)
