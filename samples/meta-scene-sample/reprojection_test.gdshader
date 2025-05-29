@@ -45,11 +45,11 @@ void fragment() {
 		vec4(0.0, 0.0, 1.0, -EYE_OFFSET.z),
 		vec4(0.0, 0.0, 0.0, 1.0));
 
-	highp vec4 clip = vec4(uv_interp * 2.0 - 1.0, 1.0, 1.0);
-	highp vec4 world_pos = INV_VIEW_MATRIX * eye_inv_transform * INV_PROJECTION_MATRIX * clip;
-	world_pos /= world_pos.w;
+	highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * eye_inv_transform * INV_PROJECTION_MATRIX);
+	highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * eye_transform * VIEW_MATRIX) * depth_inv_proj;
 
-	highp vec4 reprojected = depth_proj * world_pos;
+	highp vec4 clip = vec4(uv_interp * 2.0 - 1.0, 1.0, 1.0);
+	highp vec4 reprojected = camera_to_depth_proj * clip;
 	reprojected /= reprojected.w;
 	highp vec2 reprojected_uv = reprojected.xy * 0.5 + 0.5;
 
@@ -62,11 +62,8 @@ void fragment() {
 	}
 
 	highp vec4 clip_back = vec4(reprojected.xy, depth * 2.0 - 1.0, 1.0);
-	highp vec4 world_back = depth_inv_proj * clip_back;
-	world_back /= world_back.w;
-
-	highp vec4 camera_clip = PROJECTION_MATRIX * eye_transform * VIEW_MATRIX * world_back;
-	highp float camera_ndc_z = camera_clip.z / camera_clip.w;
+	clip_back = depth_to_camera_proj * clip_back;
+	highp float camera_ndc_z = clip_back.z / clip_back.w;
 	highp float camera_depth = camera_ndc_z * 0.5 + 0.5;
 
 	ALBEDO = vec3(camera_depth);
