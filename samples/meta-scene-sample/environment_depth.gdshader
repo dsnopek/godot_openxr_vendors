@@ -1,6 +1,6 @@
 shader_type spatial;
 
-global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest;
+global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest, repeat_disable, hint_default_black;
 global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_LEFT;
 global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;
 
