@@ -29,6 +29,7 @@
 
 #include "classes/openxr_meta_environment_depth.h"
 
+#include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/xr_interface.hpp>
 #include <godot_cpp/classes/xr_server.hpp>
 
@@ -60,6 +61,16 @@ PackedStringArray OpenXRMetaEnvironmentDepth::_get_configuration_warnings() cons
 	return warnings;
 }
 
+AABB OpenXRMetaEnvironmentDepth::_get_aabb() const {
+	AABB ret;
+
+	// Make sure it's always visible.
+	ret.position = Vector3(-1000.0, -1000.0, -1000.0);
+	ret.size = Vector3(2000.0, 2000.0, 2000.0);
+
+	return ret;
+}
+
 OpenXRMetaEnvironmentDepth::OpenXRMetaEnvironmentDepth() {
 	XRServer *xr_server = XRServer::get_singleton();
 	if (xr_server) {
@@ -68,6 +79,11 @@ OpenXRMetaEnvironmentDepth::OpenXRMetaEnvironmentDepth() {
 			openxr_interface->connect("session_begun", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_openxr_session_begun));
 			openxr_interface->connect("session_stopping", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_openxr_session_stopping));
 		}
+	}
+
+	RenderingServer *rs = RenderingServer::get_singleton();
+	if (rs) {
+		rs->instance_geometry_set_cast_shadows_setting(get_instance(), RenderingServer::SHADOW_CASTING_SETTING_OFF);
 	}
 }
 

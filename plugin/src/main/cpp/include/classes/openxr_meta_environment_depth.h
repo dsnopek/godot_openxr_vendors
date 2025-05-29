@@ -47,6 +47,8 @@ protected:
 public:
 	PackedStringArray _get_configuration_warnings() const override;
 
+	AABB _get_aabb() const override;
+
 	OpenXRMetaEnvironmentDepth();
 	~OpenXRMetaEnvironmentDepth();
 };

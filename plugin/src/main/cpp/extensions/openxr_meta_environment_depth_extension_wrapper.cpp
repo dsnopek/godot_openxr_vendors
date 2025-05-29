@@ -62,6 +62,8 @@ static const char *META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME = "META_ENVI
 
 static const char *META_ENVIRONMENT_DEPTH_REPROJECTION_SHADER_CODE =
 		"shader_type spatial;\n"
+		//"render_mode unshaded, shadows_disabled, cull_disabled, depth_test_disabled, depth_draw_always;\n"
+		//"render_mode shadow_to_opacity, shadows_disabled, cull_disabled, depth_test_disabled, depth_draw_always;\n"
 		"render_mode unshaded, shadows_disabled, cull_disabled, depth_test_disabled, depth_draw_always;\n"
 		"global uniform bool META_ENVIRONMENT_DEPTH_AVAILABLE;\n"
 		"global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest;\n"
@@ -78,21 +80,28 @@ static const char *META_ENVIRONMENT_DEPTH_REPROJECTION_SHADER_CODE =
 		"\thighp mat4 depth_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;\n"
 		"\thighp mat4 depth_inv_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;\n"
 		"\thighp vec4 clip = vec4(uv_interp * 2.0 - 1.0, 1.0, 1.0);\n"
-		"\thighp vec4 world_pos = INV_PROJECTION_MATRIX * INV_VIEW_MATRIX * clip;\n"
+		//"\thighp vec4 world_pos = INV_PROJECTION_MATRIX * INV_VIEW_MATRIX * clip;\n"
+		//"\thighp vec4 world_pos = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * clip;\n"
+		"\thighp vec4 world_pos = INV_VIEW_MATRIX * INV_PROJECTION_MATRIX * clip;\n"
 		"\tworld_pos /= world_pos.w;\n"
 		"\thighp vec4 reprojected = depth_proj * world_pos;\n"
 		"\treprojected /= reprojected.w;\n"
 		"\thighp vec2 reprojected_uv = reprojected.xy * 0.5 + 0.5;\n"
-		"\thighp float depth = texture(META_ENVIRONMENT_DEPTH_TEXTURE, vec3(reprojected_uv, VIEW_INDEX));\n"
+		"\thighp float depth = texture(META_ENVIRONMENT_DEPTH_TEXTURE, vec3(reprojected_uv, float(VIEW_INDEX))).r;\n"
 		"\tif (depth == 0.0) {\n"
 		"\tdiscard;\n"
 		"\t}\n"
 		"\thighp vec4 clip_back = vec4(reprojected.xy, depth * 2.0 - 1.0, 1.0);\n"
 		"\thighp vec4 world_back = depth_inv_proj * clip_back;\n"
 		"\tworld_back /= world_back.w;\n"
-		"\thighp cur_clip = PROJECTION_MATRIX * VIEW_MATRIX * world_back;\n"
+		"\thighp vec4 cur_clip = PROJECTION_MATRIX * VIEW_MATRIX * world_back;\n"
 		"\thighp float cur_ndc_z = cur_clip.z / cur_clip.w;\n"
-		"\tDEPTH = 1.0 - (cur_ndc_z * 0.5 + 0.5);\n"
+		// Test:
+		//"\tALBEDO = vec3(depth);\n"
+		"\tALBEDO = vec3(cur_ndc_z * 0.5 + 0.5);\n"
+		//"\tALBEDO = vec3(0.0);\n"
+		//"\tDEPTH = 1.0 - (cur_ndc_z * 0.5 + 0.5);\n"
+		"\tDEPTH = (cur_ndc_z * 0.5 + 0.5);\n"
 		"}\n";
 
 OpenXRMetaEnvironmentDepthExtensionWrapper *OpenXRMetaEnvironmentDepthExtensionWrapper::singleton = nullptr;
@@ -184,6 +193,8 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 		} else {
 			graphics_api = GRAPHICS_API_UNSUPPORTED;
 		}
+
+		setup_global_uniforms();
 	}
 
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, false);
@@ -339,7 +350,7 @@ RID OpenXRMetaEnvironmentDepthExtensionWrapper::get_reprojection_mesh() {
 
 		reprojection_material = rs->material_create();
 		rs->material_set_shader(reprojection_material, reprojection_shader);
-		rs->material_set_render_priority(reprojection_material, 99);
+		rs->material_set_render_priority(reprojection_material, -1);
 
 		PackedVector3Array vertices;
 		vertices.resize(3);
