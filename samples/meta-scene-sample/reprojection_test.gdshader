@@ -1,6 +1,6 @@
 shader_type spatial;
-render_mode unshaded, shadows_disabled, cull_disabled, depth_draw_always;
-//render_mode shadow_to_opacity, shadows_disabled, cull_disabled, depth_draw_always;
+//render_mode unshaded, shadows_disabled, cull_disabled, depth_draw_always;
+render_mode shadow_to_opacity, shadows_disabled, cull_disabled, depth_draw_always;
 
 global uniform bool META_ENVIRONMENT_DEPTH_AVAILABLE;
 global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest, repeat_disable, hint_default_black;
@@ -20,20 +20,6 @@ void fragment() {
 	highp mat4 depth_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;
 	highp mat4 depth_inv_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;
 
-	highp mat4 eye_transform = mat4(
-		vec4(1.0, 0.0, 0.0, 0.0),
-		vec4(0.0, 1.0, 0.0, 0.0),
-		vec4(0.0, 0.0, 1.0, 0.0),
-		vec4(EYE_OFFSET.x, EYE_OFFSET.y, EYE_OFFSET.z, 1.0));
-
-	highp mat4 eye_inv_transform = mat4(
-		vec4(1.0, 0.0, 0.0, 0.0),
-		vec4(0.0, 1.0, 0.0, 0.0),
-		vec4(0.0, 0.0, 1.0, 0.0),
-		vec4(-EYE_OFFSET.x, -EYE_OFFSET.y, -EYE_OFFSET.z, 1.0));
-
-	//highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * eye_inv_transform * INV_PROJECTION_MATRIX);
-	//highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * eye_transform * VIEW_MATRIX) * depth_inv_proj;
 	highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * INV_PROJECTION_MATRIX);
 	highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * VIEW_MATRIX) * depth_inv_proj;
 
@@ -55,7 +41,7 @@ void fragment() {
 	highp float camera_ndc_z = clip_back.z / clip_back.w;
 	highp float camera_depth = CLIP_SPACE_FAR < 0.0 ? (camera_ndc_z * 0.5 + 0.5) : camera_ndc_z;
 
-	ALBEDO = vec3(camera_depth);
-	//ALBEDO = vec3(0.0, 0.0, 0.0);
+	//ALBEDO = vec3(camera_depth);
+	ALBEDO = vec3(0.0, 0.0, 0.0);
 	DEPTH = camera_depth;
 }
