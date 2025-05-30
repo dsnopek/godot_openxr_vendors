@@ -20,7 +20,6 @@ void fragment() {
 	highp mat4 depth_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;
 	highp mat4 depth_inv_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;
 
-	/*
 	highp mat4 eye_transform = mat4(
 		vec4(1.0, 0.0, 0.0, 0.0),
 		vec4(0.0, 1.0, 0.0, 0.0),
@@ -32,21 +31,11 @@ void fragment() {
 		vec4(0.0, 1.0, 0.0, 0.0),
 		vec4(0.0, 0.0, 1.0, 0.0),
 		vec4(-EYE_OFFSET.x, -EYE_OFFSET.y, -EYE_OFFSET.z, 1.0));
-	*/
-	highp mat4 eye_transform = mat4(
-		vec4(1.0, 0.0, 0.0, EYE_OFFSET.x),
-		vec4(0.0, 1.0, 0.0, EYE_OFFSET.y),
-		vec4(0.0, 0.0, 1.0, EYE_OFFSET.z),
-		vec4(0.0, 0.0, 0.0, 1.0));
 
-	highp mat4 eye_inv_transform = mat4(
-		vec4(1.0, 0.0, 0.0, -EYE_OFFSET.x),
-		vec4(0.0, 1.0, 0.0, -EYE_OFFSET.y),
-		vec4(0.0, 0.0, 1.0, -EYE_OFFSET.z),
-		vec4(0.0, 0.0, 0.0, 1.0));
-
-	highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * eye_inv_transform * INV_PROJECTION_MATRIX);
-	highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * eye_transform * VIEW_MATRIX) * depth_inv_proj;
+	//highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * eye_inv_transform * INV_PROJECTION_MATRIX);
+	//highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * eye_transform * VIEW_MATRIX) * depth_inv_proj;
+	highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * INV_PROJECTION_MATRIX);
+	highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * VIEW_MATRIX) * depth_inv_proj;
 
 	highp vec4 clip = vec4(uv_interp * 2.0 - 1.0, 1.0, 1.0);
 	highp vec4 reprojected = camera_to_depth_proj * clip;
