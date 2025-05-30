@@ -53,7 +53,7 @@ void fragment() {
 	highp vec4 clip_back = vec4(reprojected.xy, depth * 2.0 - 1.0, 1.0);
 	clip_back = depth_to_camera_proj * clip_back;
 	highp float camera_ndc_z = clip_back.z / clip_back.w;
-	highp float camera_depth = camera_ndc_z * 0.5 + 0.5;
+	highp float camera_depth = CLIP_SPACE_FAR < 0.0 ? camera_ndc_z * 0.5 + 0.5 : camera_ndc_z;
 
 	ALBEDO = vec3(camera_depth);
 	//ALBEDO = vec3(0.0, 0.0, 0.0);
