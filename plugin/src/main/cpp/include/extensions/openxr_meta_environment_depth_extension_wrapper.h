@@ -158,6 +158,8 @@ private:
 	RID reprojection_material;
 	RID reprojection_mesh;
 
+	void check_graphics_api();
+
 	bool create_depth_provider();
 	void destroy_depth_provider();
 };

@@ -185,15 +185,8 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	ERR_FAIL_NULL(rs);
 
 	if (unlikely(graphics_api == GRAPHICS_API_UNKNOWN)) {
-		String rendering_driver = RenderingServer::get_singleton()->get_current_rendering_driver_name();
-		if (rendering_driver.contains("opengl")) {
-			graphics_api = GRAPHICS_API_OPENGL;
-		} else if (rendering_driver == "vulkan") {
-			graphics_api = GRAPHICS_API_VULKAN;
-		} else {
-			graphics_api = GRAPHICS_API_UNSUPPORTED;
-		}
-
+		check_graphics_api();
+		// @todo We shouldn't do this at runtime - or at least should do it better?
 		setup_global_uniforms();
 	}
 
@@ -422,7 +415,7 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 		return false;
 	}
 	if (graphics_api == GRAPHICS_API_UNKNOWN) {
-		_on_pre_render();
+		check_graphics_api();
 	}
 	if (graphics_api == GRAPHICS_API_UNSUPPORTED) {
 		UtilityFunctions::printerr("Environment depth is not supported with the current graphics API");
@@ -557,6 +550,20 @@ bool OpenXRMetaEnvironmentDepthExtensionWrapper::create_depth_provider() {
 #else
 	return false;
 #endif
+}
+
+void OpenXRMetaEnvironmentDepthExtensionWrapper::check_graphics_api() {
+	RenderingServer *rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL(rs);
+
+	String rendering_driver = RenderingServer::get_singleton()->get_current_rendering_driver_name();
+	if (rendering_driver.contains("opengl")) {
+		graphics_api = GRAPHICS_API_OPENGL;
+	} else if (rendering_driver == "vulkan") {
+		graphics_api = GRAPHICS_API_VULKAN;
+	} else {
+		graphics_api = GRAPHICS_API_UNSUPPORTED;
+	}
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::destroy_depth_provider() {
