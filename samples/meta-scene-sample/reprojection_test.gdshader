@@ -4,26 +4,21 @@ render_mode shadow_to_opacity, shadows_disabled, cull_disabled, depth_draw_alway
 
 global uniform bool META_ENVIRONMENT_DEPTH_AVAILABLE;
 global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest, repeat_disable, hint_default_black;
-global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_LEFT;
-global uniform highp mat4 META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;
-global uniform highp mat4 META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT;
-global uniform highp mat4 META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;
-
-varying vec2 uv_interp;
+global uniform highp mat4 META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT;
+global uniform highp mat4 META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT;
+global uniform highp mat4 META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT;
+global uniform highp mat4 META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT;
 
 void vertex() {
-	uv_interp = VERTEX.xy * 0.5 + 0.5;
+	UV = VERTEX.xy * 0.5 + 0.5;
 	POSITION = vec4(VERTEX.xyz, 1.0);
 }
 
 void fragment() {
-	highp mat4 depth_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT;
-	highp mat4 depth_inv_proj = uint(VIEW_INDEX) == uint(0) ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT;
+	highp mat4 camera_to_depth_proj = (VIEW_INDEX == VIEW_MONO_LEFT) ? META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT;
+	highp mat4 depth_to_camera_proj = (VIEW_INDEX == VIEW_MONO_LEFT) ? META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT : META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT;
 
-	highp mat4 camera_to_depth_proj = depth_proj * (INV_VIEW_MATRIX * INV_PROJECTION_MATRIX);
-	highp mat4 depth_to_camera_proj = (PROJECTION_MATRIX * VIEW_MATRIX) * depth_inv_proj;
-
-	highp vec4 clip = vec4(uv_interp * 2.0 - 1.0, 1.0, 1.0);
+	highp vec4 clip = vec4(UV * 2.0 - 1.0, 1.0, 1.0);
 	highp vec4 reprojected = camera_to_depth_proj * clip;
 	reprojected /= reprojected.w;
 	highp vec2 reprojected_uv = reprojected.xy * 0.5 + 0.5;
@@ -41,7 +36,7 @@ void fragment() {
 	highp float camera_ndc_z = clip_back.z / clip_back.w;
 	highp float camera_depth = CLIP_SPACE_FAR < 0.0 ? (camera_ndc_z * 0.5 + 0.5) : camera_ndc_z;
 
-	//ALBEDO = vec3(camera_depth);
+	//ALBEDO = vec3(1.0 - camera_depth);
 	ALBEDO = vec3(0.0, 0.0, 0.0);
-	DEPTH = camera_depth;
+	DEPTH = 1.0 - camera_depth;
 }

@@ -48,6 +48,8 @@
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
 #include <godot_cpp/classes/rendering_device.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/xr_interface.hpp>
+#include <godot_cpp/classes/xr_server.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -59,6 +61,11 @@ static const char *META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME = "META_ENVIRONME
 static const char *META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT";
 static const char *META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT";
 static const char *META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT";
+static const char *META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT";
+static const char *META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT";
+static const char *META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME = "META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT";
+static const char *META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME = "META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT";
+
 
 static const char *META_ENVIRONMENT_DEPTH_REPROJECTION_SHADER_CODE =
 		"shader_type spatial;\n"
@@ -200,6 +207,12 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	Ref<OpenXRAPIExtension> openxr_api = get_openxr_api();
 	ERR_FAIL_COND(openxr_api.is_null());
 
+	XRServer *xr_server = XRServer::get_singleton();
+	ERR_FAIL_NULL(xr_server);
+
+	Ref<XRInterface> openxr_interface = xr_server->find_interface("OpenXR");
+	ERR_FAIL_COND(openxr_interface.is_null());
+
 	XrEnvironmentDepthImageAcquireInfoMETA acquire_info = {
 		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_ACQUIRE_INFO_META, // type
 		nullptr, // next
@@ -235,6 +248,10 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, true);
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, depth_swapchain_textures[depth_image.swapchainIndex]);
 
+	Transform3D world_origin = xr_server->get_world_origin();
+	Vector2 viewport_size = openxr_interface->get_render_target_size();
+	float aspect = viewport_size.width / viewport_size.height;
+
 	for (int i = 0; i < 2; i++) {
 		XrPosef local_from_depth_eye = depth_image.views[i].pose;
 		XrPosef depth_eye_from_local;
@@ -257,9 +274,15 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 		Projection godot_projection_mat;
 		xrMatrix4x4f_to_godot_projection(&projection_mat, godot_projection_mat);
 
-		Projection godot_combined_mat = godot_projection_mat * godot_view_mat;
-		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, godot_combined_mat);
-		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, godot_combined_mat.inverse());
+		Projection depth_proj = godot_projection_mat * godot_view_mat;
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, depth_proj);
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, depth_proj.inverse());
+
+		// @todo Don't hardcode the z-near and z-far
+		Projection camera_proj = openxr_interface->get_projection_for_view(i, aspect, 0.05, 4000.0) * openxr_interface->get_transform_for_view(i, world_origin).affine_inverse();
+
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, depth_proj * camera_proj.inverse());
+		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, camera_proj * depth_proj.inverse());
 	}
 #endif
 }
@@ -386,6 +409,18 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
 	}
 	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME)) {
 		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
+	}
+	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME)) {
+		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
 	}
 }
 
