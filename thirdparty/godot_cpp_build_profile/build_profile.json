@@ -52,6 +52,7 @@
         "VisualInstance3D",
         "XRAnchor3D",
         "XRBodyTracker",
+        "XRCamera3D",
         "XRFaceTracker",
         "XRHandModifier3D",
         "XRHandTracker",

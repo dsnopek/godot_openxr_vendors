@@ -36,8 +36,13 @@ namespace godot {
 class OpenXRMetaEnvironmentDepth : public VisualInstance3D {
 	GDCLASS(OpenXRMetaEnvironmentDepth, VisualInstance3D);
 
+	void _update_visibility();
+
 	void _on_openxr_session_begun();
 	void _on_openxr_session_stopping();
+	void _on_environment_depth_started();
+	void _on_environment_depth_stopped();
+
 
 protected:
 	void _notification(int p_what);
@@ -46,8 +51,6 @@ protected:
 
 public:
 	PackedStringArray _get_configuration_warnings() const override;
-
-	AABB _get_aabb() const override;
 
 	OpenXRMetaEnvironmentDepth();
 	~OpenXRMetaEnvironmentDepth();

@@ -30,6 +30,8 @@
 #include "classes/openxr_meta_environment_depth.h"
 
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/open_xrapi_extension.hpp>
+#include <godot_cpp/classes/xr_camera3d.hpp>
 #include <godot_cpp/classes/xr_interface.hpp>
 #include <godot_cpp/classes/xr_server.hpp>
 
@@ -41,34 +43,57 @@ void OpenXRMetaEnvironmentDepth::_bind_methods() {
 }
 
 void OpenXRMetaEnvironmentDepth::_notification(int p_what) {
-}
-
-void OpenXRMetaEnvironmentDepth::_on_openxr_session_begun() {
-	// @todo Need to be more selective about if this is shown or not!
-	OpenXRMetaEnvironmentDepthExtensionWrapper *env_depth_ext = OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton();
-	if (env_depth_ext) {
-		set_base(env_depth_ext->get_reprojection_mesh());
+	switch (p_what) {
+		case NOTIFICATION_ENTER_TREE:
+		case NOTIFICATION_EXIT_TREE:
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			_update_visibility();
+		} break;
 	}
 }
 
+void OpenXRMetaEnvironmentDepth::_update_visibility() {
+	bool is_visible = false;
+	OpenXRMetaEnvironmentDepthExtensionWrapper *env_depth_ext = OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton();
+	if (env_depth_ext) {
+		Ref<OpenXRAPIExtension> openxr_api = env_depth_ext->get_openxr_api();
+		is_visible = is_visible_in_tree() && openxr_api->is_running() && env_depth_ext->is_environment_depth_started();
+	}
+
+	if (is_visible) {
+		set_base(env_depth_ext->get_reprojection_mesh());
+	} else {
+		set_base(RID());
+	}
+}
+
+void OpenXRMetaEnvironmentDepth::_on_openxr_session_begun() {
+	_update_visibility();
+}
+
 void OpenXRMetaEnvironmentDepth::_on_openxr_session_stopping() {
-	// @todo Need to be more selective about if this is shown or not!
-	set_base(RID());
+	_update_visibility();
+}
+
+void OpenXRMetaEnvironmentDepth::_on_environment_depth_started() {
+	_update_visibility();
+}
+
+void OpenXRMetaEnvironmentDepth::_on_environment_depth_stopped() {
+	_update_visibility();
 }
 
 PackedStringArray OpenXRMetaEnvironmentDepth::_get_configuration_warnings() const {
 	PackedStringArray warnings = Node::_get_configuration_warnings();
+
+	if (is_visible() && is_inside_tree()) {
+		XRCamera3D *camera = Object::cast_to<XRCamera3D>(get_parent());
+		if (camera == nullptr) {
+			warnings.push_back("OpenXRMetaEnvironmentDepth must be a child of an XRCamera3D node.");
+		}
+	}
+
 	return warnings;
-}
-
-AABB OpenXRMetaEnvironmentDepth::_get_aabb() const {
-	AABB ret;
-
-	// Make sure it's always visible.
-	ret.position = Vector3(-1000.0, -1000.0, -1000.0);
-	ret.size = Vector3(2000.0, 2000.0, 2000.0);
-
-	return ret;
 }
 
 OpenXRMetaEnvironmentDepth::OpenXRMetaEnvironmentDepth() {
@@ -79,6 +104,12 @@ OpenXRMetaEnvironmentDepth::OpenXRMetaEnvironmentDepth() {
 			openxr_interface->connect("session_begun", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_openxr_session_begun));
 			openxr_interface->connect("session_stopping", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_openxr_session_stopping));
 		}
+	}
+
+	OpenXRMetaEnvironmentDepthExtensionWrapper *env_depth_ext = OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton();
+	if (env_depth_ext) {
+		env_depth_ext->connect("openxr_meta_environment_depth_started", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_environment_depth_started));
+		env_depth_ext->connect("openxr_meta_environment_depth_stopped", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_environment_depth_stopped));
 	}
 
 	RenderingServer *rs = RenderingServer::get_singleton();
@@ -95,5 +126,11 @@ OpenXRMetaEnvironmentDepth::~OpenXRMetaEnvironmentDepth() {
 			openxr_interface->disconnect("session_begun", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_openxr_session_begun));
 			openxr_interface->disconnect("session_stopping", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_openxr_session_stopping));
 		}
+	}
+
+	OpenXRMetaEnvironmentDepthExtensionWrapper *env_depth_ext = OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton();
+	if (env_depth_ext) {
+		env_depth_ext->disconnect("openxr_meta_environment_depth_started", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_environment_depth_started));
+		env_depth_ext->disconnect("openxr_meta_environment_depth_stopped", callable_mp(this, &OpenXRMetaEnvironmentDepth::_on_environment_depth_stopped));
 	}
 }

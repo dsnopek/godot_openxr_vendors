@@ -138,6 +138,9 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_hand_removal_enabled", "enable"), &OpenXRMetaEnvironmentDepthExtensionWrapper::set_hand_removal_enabled);
 	ClassDB::bind_method(D_METHOD("get_hand_removal_enabled"), &OpenXRMetaEnvironmentDepthExtensionWrapper::get_hand_removal_enabled);
+
+	ADD_SIGNAL(MethodInfo("openxr_meta_environment_depth_started"));
+	ADD_SIGNAL(MethodInfo("openxr_meta_environment_depth_stopped"));
 }
 
 Dictionary OpenXRMetaEnvironmentDepthExtensionWrapper::_get_requested_extensions() {
@@ -304,6 +307,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::start_environment_depth() {
 	setup_global_uniforms();
 
 	depth_provider_started = true;
+	emit_signal("openxr_meta_environment_depth_started");
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::stop_environment_depth() {
@@ -316,6 +320,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::stop_environment_depth() {
 	}
 
 	depth_provider_started = false;
+	emit_signal("openxr_meta_environment_depth_stopped");
 }
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::is_environment_depth_started() {
@@ -373,6 +378,7 @@ RID OpenXRMetaEnvironmentDepthExtensionWrapper::get_reprojection_mesh() {
 		reprojection_mesh = rs->mesh_create();
 		rs->mesh_add_surface_from_arrays(reprojection_mesh, RenderingServer::PRIMITIVE_TRIANGLES, arr);
 		rs->mesh_surface_set_material(reprojection_mesh, 0, reprojection_material);
+		rs->mesh_set_custom_aabb(reprojection_mesh, AABB(Vector3(-1000, -1000, -1000), Vector3(2000, 2000, 2000)));
 	}
 
 	return reprojection_mesh;
@@ -594,6 +600,10 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::check_graphics_api() {
 }
 
 void OpenXRMetaEnvironmentDepthExtensionWrapper::destroy_depth_provider() {
+	if (depth_provider_started) {
+		stop_environment_depth();
+	}
+
 	if (depth_swapchain != XR_NULL_HANDLE) {
 		XrResult result = xrDestroyEnvironmentDepthSwapchainMETA(depth_swapchain);
 		if (XR_FAILED(result)) {
