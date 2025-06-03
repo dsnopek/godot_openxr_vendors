@@ -72,7 +72,7 @@ public:
 
 	RID get_reprojection_mesh();
 
-	static void setup_global_uniforms();
+	void setup_global_uniforms();
 
 	static OpenXRMetaEnvironmentDepthExtensionWrapper *get_singleton();
 
@@ -131,6 +131,7 @@ private:
 
 	HashMap<String, bool *> request_extensions;
 	bool meta_environment_depth_ext = false;
+	bool already_setup_global_uniforms = false;
 
 	XrSystemEnvironmentDepthPropertiesMETA system_depth_properties = {
 		XR_TYPE_SYSTEM_ENVIRONMENT_DEPTH_PROPERTIES_META, // type

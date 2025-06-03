@@ -47,6 +47,7 @@
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rendering_device.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -190,8 +191,6 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 
 	if (unlikely(graphics_api == GRAPHICS_API_UNKNOWN)) {
 		check_graphics_api();
-		// @todo We shouldn't do this at runtime - or at least should do it better?
-		setup_global_uniforms();
 	}
 
 	rs->global_shader_parameter_set(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, false);
@@ -209,6 +208,9 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 
 	Ref<XRInterface> openxr_interface = xr_server->find_interface("OpenXR");
 	ERR_FAIL_COND(openxr_interface.is_null());
+
+	SceneTree *scene_tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+	ERR_FAIL_NULL(scene_tree);
 
 	XrEnvironmentDepthImageAcquireInfoMETA acquire_info = {
 		XR_TYPE_ENVIRONMENT_DEPTH_IMAGE_ACQUIRE_INFO_META, // type
@@ -249,10 +251,7 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	Vector2 viewport_size = openxr_interface->get_render_target_size();
 	float aspect = viewport_size.width / viewport_size.height;
 
-	SceneTree *scene_tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-	Viewport *vp = scene_tree->get_root();
-	Camera3D *camera = vp->get_camera_3d();
-
+	Camera3D *camera = scene_tree->get_root()->get_camera_3d();
 	float z_near = camera->get_near();
 	float z_far = camera->get_far();
 
@@ -399,42 +398,48 @@ RID OpenXRMetaEnvironmentDepthExtensionWrapper::get_reprojection_mesh() {
 	return reprojection_mesh;
 }
 
+static void inline create_shader_global_uniform(const String &p_name, RenderingServer::GlobalShaderParameterType p_type, const String &p_type_name, Variant p_value, RenderingServer *p_rendering_server, ProjectSettings *p_project_settings, bool p_is_editor) {
+	String setting_name = "shader_globals/" + p_name;
+	if (!p_project_settings->has_setting(setting_name)) {
+		p_rendering_server->global_shader_parameter_add(p_name, p_type, p_value);
+		if (p_is_editor) {
+			Dictionary d;
+			d["type"] = p_type_name;
+			d["value"] = p_value;
+			p_project_settings->set(setting_name, d);
+		}
+	}
+}
+
 void OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms() {
+	if (already_setup_global_uniforms) {
+		return;
+	}
+
 	RenderingServer *rs = RenderingServer::get_singleton();
 	ERR_FAIL_NULL(rs);
 
-	TypedArray<StringName> existing_uniforms = rs->global_shader_parameter_get_list();
+	ProjectSettings *project_settings = ProjectSettings::get_singleton();
+	ERR_FAIL_NULL(project_settings);
 
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, RenderingServer::GLOBAL_VAR_TYPE_BOOL, false);
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TEXTURE_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY, Variant());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
-	if (!existing_uniforms.has(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME)) {
-		rs->global_shader_parameter_add(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection());
-	}
+	Engine *engine = Engine::get_singleton();
+	ERR_FAIL_NULL(engine);
+
+	bool is_editor = engine->is_editor_hint();
+
+	// Set this right away, to prevent getting in a loop of project settings changes.
+	already_setup_global_uniforms = true;
+
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, RenderingServer::GLOBAL_VAR_TYPE_BOOL, "bool", false, rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY, "sampler2DArray", Variant(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, "mat4", Projection(), rs, project_settings, is_editor);
 }
 
 bool OpenXRMetaEnvironmentDepthExtensionWrapper::initialize_meta_environment_depth_extension(const XrInstance &p_instance) {

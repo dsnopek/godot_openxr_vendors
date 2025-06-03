@@ -143,7 +143,6 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRMetaRecommendedLayerResolutionExtensionWrapper>();
 			ClassDB::register_class<OpenXRMetaSpatialEntityMeshExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbSceneExtensionWrapper>();
-			ClassDB::register_class<OpenXRMetaEnvironmentDepthExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbFaceTrackingExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbBodyTrackingExtensionWrapper>();
 			ClassDB::register_class<OpenXRFbHandTrackingMeshExtensionWrapper>();
@@ -190,10 +189,6 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 				}
 			}
 
-			if (_get_bool_project_setting("xr/openxr/extensions/meta/environment_depth")) {
-				_register_extension_with_openxr(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton());
-			}
-
 			if (_get_bool_project_setting("xr/openxr/extensions/meta/dynamic_resolution")) {
 				_register_extension_with_openxr(OpenXRMetaRecommendedLayerResolutionExtensionWrapper::get_singleton());
 			}
@@ -238,6 +233,14 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 				_register_extension_with_openxr(OpenXRHtcPassthroughExtensionWrapper::get_singleton());
 			}
 
+			// Only works with Godot 4.5 or later.
+			if (godot::internal::godot_version.minor >= 5) {
+				ClassDB::register_class<OpenXRMetaEnvironmentDepthExtensionWrapper>();
+				if (_get_bool_project_setting("xr/openxr/extensions/meta/environment_depth")) {
+					_register_extension_with_openxr(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton());
+				}
+			}
+
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_SERVERS:
@@ -252,7 +255,6 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			_register_extension_as_singleton(OpenXRFbSpatialEntityQueryExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbSpatialEntityContainerExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbSceneExtensionWrapper::get_singleton());
-			_register_extension_as_singleton(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbHandTrackingAimExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRFbHandTrackingCapsulesExtensionWrapper::get_singleton());
 			_register_extension_as_singleton(OpenXRHtcFacialTrackingExtensionWrapper::get_singleton());
@@ -267,11 +269,16 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<OpenXRFbSpatialEntityQuery>();
 			ClassDB::register_class<OpenXRFbSpatialEntityUser>();
 			ClassDB::register_class<OpenXRFbPassthroughGeometry>();
-			ClassDB::register_class<OpenXRMetaEnvironmentDepth>();
 			ClassDB::register_class<OpenXRMetaPassthroughColorLut>();
 
 			ClassDB::register_class<OpenXRHybridApp>();
 			Engine::get_singleton()->register_singleton("OpenXRHybridApp", OpenXRHybridApp::get_singleton());
+
+			// Only works with Godot 4.5 or later.
+			if (godot::internal::godot_version.minor >= 5) {
+				ClassDB::register_class<OpenXRMetaEnvironmentDepth>();
+				_register_extension_as_singleton(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton());
+			}
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_EDITOR: {
@@ -296,7 +303,10 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<MagicleapEditorPlugin>();
 			EditorPlugins::add_by_type<MagicleapEditorPlugin>();
 
-			OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton()->setup_global_uniforms();
+			// Only works with Godot 4.5 or later.
+			if (godot::internal::godot_version.minor >= 5) {
+				callable_mp(OpenXRMetaEnvironmentDepthExtensionWrapper::get_singleton(), &OpenXRMetaEnvironmentDepthExtensionWrapper::setup_global_uniforms).call_deferred();
+			}
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_MAX:
