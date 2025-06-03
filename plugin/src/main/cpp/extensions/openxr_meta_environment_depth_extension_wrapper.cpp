@@ -44,10 +44,13 @@
 
 #include <openxr/internal/xr_linear.h>
 
-#include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/camera3d.hpp>
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
 #include <godot_cpp/classes/rendering_device.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/xr_interface.hpp>
 #include <godot_cpp/classes/xr_server.hpp>
 #include <godot_cpp/templates/vector.hpp>
@@ -70,7 +73,6 @@ static const char *META_ENVIRONMENT_DEPTH_REPROJECTION_SHADER_CODE =
 		"shader_type spatial;\n"
 		//"render_mode unshaded, shadows_disabled, cull_disabled, depth_draw_always;\n"
 		"render_mode shadow_to_opacity, shadows_disabled, cull_disabled, depth_draw_always;\n"
-		"global uniform bool META_ENVIRONMENT_DEPTH_AVAILABLE;\n"
 		"global uniform highp sampler2DArray META_ENVIRONMENT_DEPTH_TEXTURE : filter_nearest, repeat_disable, hint_default_black;\n"
 		"global uniform highp mat4 META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT;\n"
 		"global uniform highp mat4 META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT;\n"
@@ -247,6 +249,13 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 	Vector2 viewport_size = openxr_interface->get_render_target_size();
 	float aspect = viewport_size.width / viewport_size.height;
 
+	SceneTree *scene_tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+	Viewport *vp = scene_tree->get_root();
+	Camera3D *camera = vp->get_camera_3d();
+
+	float z_near = camera->get_near();
+	float z_far = camera->get_far();
+
 	for (int i = 0; i < 2; i++) {
 		XrPosef local_from_depth_eye = depth_image.views[i].pose;
 		XrPosef depth_eye_from_local;
@@ -273,8 +282,14 @@ void OpenXRMetaEnvironmentDepthExtensionWrapper::_on_pre_render() {
 		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT_NAME, depth_proj);
 		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_INV_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_INV_PROJECTION_RIGHT_NAME, depth_proj.inverse());
 
-		// @todo Don't hardcode the z-near and z-far
-		Projection camera_proj = openxr_interface->get_projection_for_view(i, aspect, 0.05, 4000.0) * openxr_interface->get_transform_for_view(i, world_origin).affine_inverse();
+		Projection camera_proj = openxr_interface->get_projection_for_view(i, aspect, z_near, z_far) * openxr_interface->get_transform_for_view(i, world_origin).affine_inverse();
+
+		if (graphics_api == GRAPHICS_API_VULKAN) {
+			Projection correction;
+			// @todo Does this handle reverse z?
+			correction.set_depth_correction(true);
+			camera_proj = correction * camera_proj;
+		}
 
 		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, depth_proj * camera_proj.inverse());
 		rs->global_shader_parameter_set(i == 0 ? META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME : META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, camera_proj * depth_proj.inverse());

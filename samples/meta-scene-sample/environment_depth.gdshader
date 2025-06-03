@@ -14,7 +14,7 @@ void vertex() {
 
 bool is_occluded_by_environment(vec4 wp, int view_index) {
 	highp vec4 depth_camera_position;
-	if (view_index == VIEW_MONO_LEFT) {
+	if (view_index == int(0)) {
 		depth_camera_position = META_ENVIRONMENT_DEPTH_PROJECTION_LEFT * wp;
 	} else {
 		depth_camera_position = META_ENVIRONMENT_DEPTH_PROJECTION_RIGHT * wp;
@@ -34,5 +34,5 @@ bool is_occluded_by_environment(vec4 wp, int view_index) {
 
 void fragment() {
 	ALBEDO = albedo;
-	ALPHA = is_occluded_by_environment(world_position, VIEW_INDEX) ? 0.0 : 1.0;
+	ALPHA = is_occluded_by_environment(world_position, int(VIEW_INDEX)) ? 0.0 : 1.0;
 }

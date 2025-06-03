@@ -50,6 +50,7 @@
         "SurfaceTool",
         "Viewport",
         "VisualInstance3D",
+        "Window",
         "XRAnchor3D",
         "XRBodyTracker",
         "XRCamera3D",
