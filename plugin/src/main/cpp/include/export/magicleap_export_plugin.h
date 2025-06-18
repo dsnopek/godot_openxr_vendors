@@ -35,8 +35,8 @@
 
 using namespace godot;
 
-class MagicleapEditorExportPlugin : public OpenXREditorExportPlugin {
-	GDCLASS(MagicleapEditorExportPlugin, OpenXREditorExportPlugin)
+class MagicleapEditorExportPlugin : public OpenXRVendorsEditorExportPlugin {
+	GDCLASS(MagicleapEditorExportPlugin, OpenXRVendorsEditorExportPlugin)
 
 public:
 	MagicleapEditorExportPlugin();
@@ -47,18 +47,4 @@ public:
 
 protected:
 	static void _bind_methods();
-};
-
-class MagicleapEditorPlugin : public EditorPlugin {
-	GDCLASS(MagicleapEditorPlugin, EditorPlugin)
-
-public:
-	void _enter_tree() override;
-	void _exit_tree() override;
-
-protected:
-	static void _bind_methods();
-
-private:
-	Ref<MagicleapEditorExportPlugin> magicleap_export_plugin;
 };
