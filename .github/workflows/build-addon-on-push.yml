@@ -7,6 +7,8 @@ env:
   # Only used for the cache key. Increment version to force clean build.
   GODOT_BASE_BRANCH: master
   SCONS_CACHE: ${{ github.workspace }}/.scons-cache/
+  # This is ovr_openxr_mobile_sdk v77.
+  META_OPENXR_HEADERS_URL: 'https://securecdn-ord5-3.oculus.com/binaries/download/?id=23875289988749597'
 
 jobs:
   build:
@@ -92,6 +94,12 @@ jobs:
           ndk-version: r23c
           link-to-sdk: true
         if: matrix.platform == 'android'
+      - name: Download Meta OpenXR Preview headers
+        run: |
+          # PowerShell (ick!) works on all GitHub platforms. I don't like it, but it works.
+          Invoke-WebRequest -Uri "${{ env.META_OPENXR_HEADERS_URL }}" -OutFile "ovr_openxr_mobile_sdk.zip"
+          Expand-Archive -Path "ovr_openxr_mobile_sdk.zip" -DestinationPath "ovr_openxr_mobile_sdk"
+        shell: pwsh
       - name: Install scons
         run: |
           python -m pip install scons==4.0.0
@@ -106,8 +114,8 @@ jobs:
       - name: Create extension library
         run: |
           cd aar
-          scons platform=${{ matrix.platform }} target=template_debug ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
-          scons platform=${{ matrix.platform }} target=template_release ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
+          scons platform=${{ matrix.platform }} target=template_debug ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json meta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
+          scons platform=${{ matrix.platform }} target=template_release ${{ matrix.flags }} custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json meta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
           cd ..
       - name: Save Godot build cache
         uses: ./aar/thirdparty/godot-cpp/.github/actions/godot-cache-save
@@ -145,10 +153,16 @@ jobs:
           mkdir aar/plugin/src/main/libs
           cp -r build-files-android-arm64/* aar/plugin/src/main/libs/
           cp -r build-files-android-x86_64/* aar/plugin/src/main/libs/
+      - name: Download Meta OpenXR Preview headers
+        run: |
+          # PowerShell (ick!) works on all GitHub platforms. I don't like it, but it works.
+          Invoke-WebRequest -Uri "${{ env.META_OPENXR_HEADERS_URL }}" -OutFile "ovr_openxr_mobile_sdk.zip"
+          Expand-Archive -Path "ovr_openxr_mobile_sdk.zip" -DestinationPath "ovr_openxr_mobile_sdk"
+        shell: pwsh
       - name: Create Godot OpenXR Vendors AARs
         run: |
           cd aar
-          ./gradlew build
+          ./gradlew build -Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
           cd ..
       - name: Create Godot OpenXR Vendors Addon
         run: |
@@ -158,7 +172,7 @@ jobs:
       - name: Adding vendor licences
         run: |
           mkdir -p asset/addons/godotopenxrvendors/meta/
-          cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE
+          cp ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/LICENSE
 
           mkdir -p asset/addons/godotopenxrvendors/pico/
           cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/pico/LICENSE
