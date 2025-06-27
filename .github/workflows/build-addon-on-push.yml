@@ -131,7 +131,7 @@ jobs:
           echo "SCONS_EXTRA=""meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "GRADLE_EXTRA=""-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
-        if: ${{ matrix.meta_headers == true }}
+        if: ${{ matrix.meta-headers }}
       - name: Install scons
         run: |
           python -m pip install scons==4.0.0
@@ -198,7 +198,7 @@ jobs:
       - name: Copy Android binaries
         run: |
           mkdir aar/plugin/src/main/libs
-          if ${{ matrix.meta_headers && 'true' || 'false' }}; then
+          if ${{ matrix.meta-headers }}; then
             cp -r build-files-android-arm64-meta/* aar/plugin/src/main/libs/
             cp -r build-files-android-x86_64-meta/* aar/plugin/src/main/libs/
           else
@@ -215,7 +215,7 @@ jobs:
           echo "SCONS_EXTRA=""meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "GRADLE_EXTRA=""-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
-        if: ${{ matrix.meta_headers == true }}
+        if: ${{ matrix.meta-headers }}
       - name: Create Godot OpenXR Vendors AARs
         run: |
           cd aar
@@ -231,7 +231,7 @@ jobs:
       - name: Adding vendor licences
         run: |
           mkdir -p asset/addons/godotopenxrvendors/meta/
-          if ${{ matrix.meta_headers && 'true' || 'false' }}; then
+          if ${{ matrix.meta-headers }}; then
             echo "IN META"
             cp ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/LICENSE-SDK
             cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE-LOADER
@@ -252,7 +252,7 @@ jobs:
       - name: Copying artifacts
         run: |
           ARTIFACT_SUFFIX=
-          if ${{ matrix.meta_headers && 'true' || 'false' }}; then
+          if ${{ matrix.meta-headers }}; then
             echo "ADDING META SUFFIX"
             ARTIFACT_SUFFIX=-meta
           fi
