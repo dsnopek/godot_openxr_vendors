@@ -129,7 +129,7 @@ jobs:
 
           # These variables should carry over into bash as well.
           echo "SCONS_EXTRA=meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "GRADLE_EXTRA=-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "GRADLE_EXTRA=-Pmeta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
         if: ${{ matrix.meta-headers }}
       - name: Install scons
@@ -211,7 +211,7 @@ jobs:
 
           # These variables should carry over into bash as well.
           echo "SCONS_EXTRA=meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "GRADLE_EXTRA=-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "GRADLE_EXTRA=-Pmeta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
         if: ${{ matrix.meta-headers }}
       - name: Create Godot OpenXR Vendors AARs
@@ -228,11 +228,9 @@ jobs:
         run: |
           mkdir -p asset/addons/godotopenxrvendors/meta/
           if ${{ matrix.meta-headers }}; then
-            echo "IN META"
             cp ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/LICENSE-SDK
             cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE-LOADER
           else
-            echo "IN DEFAULT"
             cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE
           fi
 
@@ -249,7 +247,6 @@ jobs:
         run: |
           ARTIFACT_SUFFIX=
           if ${{ matrix.meta-headers }}; then
-            echo "ADDING META SUFFIX"
             ARTIFACT_SUFFIX=-meta
           fi
 
