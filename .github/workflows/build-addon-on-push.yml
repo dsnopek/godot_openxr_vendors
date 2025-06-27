@@ -162,7 +162,7 @@ jobs:
             ${{ matrix.artifact_path }}
 
   asset:
-    name: Assembling the asset
+    name: Assembling the asset (${{ matrix.name }})
     runs-on: ubuntu-22.04
     needs: build
     strategy:
@@ -196,7 +196,7 @@ jobs:
       - name: Copy Android binaries
         run: |
           mkdir aar/plugin/src/main/libs
-          if ${{ matrix.meta_headers }}; then
+          if ${{ matrix.meta_headers && 'true' || 'false' }}; then
             cp -r build-files-android-arm64-meta/* aar/plugin/src/main/libs/
             cp -r build-files-android-x86_64-meta/* aar/plugin/src/main/libs/
           else
@@ -227,7 +227,7 @@ jobs:
       - name: Adding vendor licences
         run: |
           mkdir -p asset/addons/godotopenxrvendors/meta/
-          if ${{ matrix.meta_headers }}; then
+          if ${{ matrix.meta_headers && 'true' || 'false' }}; then
             cp ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/LICENSE-SDK
             cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE-LOADER
           else
@@ -246,7 +246,7 @@ jobs:
       - name: Copying artifacts
         run: |
           ARTIFACT_SUFFIX=
-          if ${{ matrix.meta_headers }}; then
+          if ${{ matrix.meta_headers && 'true' || 'false' }}; then
             ARTIFACT_SUFFIX=-meta
           fi
 
