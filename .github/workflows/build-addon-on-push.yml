@@ -218,6 +218,7 @@ jobs:
       - name: Create Godot OpenXR Vendors AARs
         run: |
           cd aar
+          cat $GITHUB_ENV
           echo "GRADLE_EXTRA: $GRADLE_EXTRA"
           ./gradlew build $GRADLE_EXTRA
           cd ..
