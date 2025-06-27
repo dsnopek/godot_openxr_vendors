@@ -131,7 +131,7 @@ jobs:
           echo "SCONS_EXTRA=""meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "GRADLE_EXTRA=""-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
-        if: ${{ matrix.meta_headers }}
+        if: ${{ matrix.meta_headers == true }}
       - name: Install scons
         run: |
           python -m pip install scons==4.0.0
@@ -215,7 +215,7 @@ jobs:
           echo "SCONS_EXTRA=""meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "GRADLE_EXTRA=""-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
-        if: ${{ matrix.meta_headers }}
+        if: ${{ matrix.meta_headers == true }}
       - name: Create Godot OpenXR Vendors AARs
         run: |
           cd aar
