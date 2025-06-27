@@ -7,10 +7,6 @@ on:
     types: [published]
   workflow_dispatch: {}
 
-env:
-  # This is ovr_openxr_mobile_sdk v77.
-  META_OPENXR_HEADERS_URL: 'https://securecdn-ord5-3.oculus.com/binaries/download/?id=23875289988749597'
-
 jobs:
   publish:
     name: Release build and publish
@@ -39,21 +35,15 @@ jobs:
           java-version: 17
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
-      - name: Download Meta OpenXR Preview headers
-        run: |
-          # PowerShell (ick!) works on all GitHub platforms. I don't like it, but it works.
-          Invoke-WebRequest -Uri "${{ env.META_OPENXR_HEADERS_URL }}" -OutFile "ovr_openxr_mobile_sdk.zip"
-          Expand-Archive -Path "ovr_openxr_mobile_sdk.zip" -DestinationPath "ovr_openxr_mobile_sdk"
-        shell: pwsh
 
-        # Builds the release artifacts of the library
+      # Builds the release artifacts of the library
       - name: Release build
         run: |
-          scons platform=android target=template_debug arch=arm64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json meta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
-          scons platform=android target=template_release arch=arm64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json meta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
-          scons platform=android target=template_debug arch=x86_64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json meta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
-          scons platform=android target=template_release arch=x86_64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json meta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/
-          ./gradlew -Prelease_version=${{ github.ref_name }} -Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/ build
+          scons platform=android target=template_debug arch=arm64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
+          scons platform=android target=template_release arch=arm64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
+          scons platform=android target=template_debug arch=x86_64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
+          scons platform=android target=template_release arch=x86_64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
+          ./gradlew -Prelease_version=${{ github.ref_name }}
 
         # Runs upload, and then closes & releases the repository
       - name: Publish to MavenCentral
