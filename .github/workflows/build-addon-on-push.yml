@@ -128,8 +128,8 @@ jobs:
           Expand-Archive -Path "ovr_openxr_mobile_sdk.zip" -DestinationPath "ovr_openxr_mobile_sdk"
 
           # These variables should carry over into bash as well.
-          echo "SCONS_EXTRA=""meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "GRADLE_EXTRA=""-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "SCONS_EXTRA=meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "GRADLE_EXTRA=-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
         if: ${{ matrix.meta-headers }}
       - name: Install scons
@@ -210,8 +210,8 @@ jobs:
           Expand-Archive -Path "ovr_openxr_mobile_sdk.zip" -DestinationPath "ovr_openxr_mobile_sdk"
 
           # These variables should carry over into bash as well.
-          echo "SCONS_EXTRA=""meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "GRADLE_EXTRA=""-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/""" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "SCONS_EXTRA=meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "GRADLE_EXTRA=-Pmeta_headers=../ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
         if: ${{ matrix.meta-headers }}
       - name: Create Godot OpenXR Vendors AARs
