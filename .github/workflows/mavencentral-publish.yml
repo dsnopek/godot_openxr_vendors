@@ -36,14 +36,14 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
 
-      # Builds the release artifacts of the library
+        # Builds the release artifacts of the library
       - name: Release build
         run: |
           scons platform=android target=template_debug arch=arm64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
           scons platform=android target=template_release arch=arm64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
           scons platform=android target=template_debug arch=x86_64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
           scons platform=android target=template_release arch=x86_64 custom_api_file=thirdparty/godot_cpp_gdextension_api/extension_api.json build_profile=thirdparty/godot_cpp_build_profile/build_profile.json
-          ./gradlew -Prelease_version=${{ github.ref_name }}
+          ./gradlew -Prelease_version=${{ github.ref_name }} build
 
         # Runs upload, and then closes & releases the repository
       - name: Publish to MavenCentral
