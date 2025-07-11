@@ -21,6 +21,7 @@ jobs:
           - name: 🐧 Linux (x86_64, GCC)
             os: ubuntu-22.04
             platform: linux
+            preview-headers: true
             flags: arch=x86_64
             artifact_name: build-files-linux-x86_64
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
@@ -28,12 +29,14 @@ jobs:
           - name: 🏁 Windows (x86_64, MSVC)
             os: windows-latest
             platform: windows
+            preview-headers: true
             artifact_name: build-files-windows
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/windows/*/*/*.dll
             cache-name: windows-x86_64-msvc
           - name: 🍎 MacOS (universal)
             os: macos-latest
             platform: macos
+            preview-headers: true
             flags: arch=universal
             artifact_name: build-files-macos
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/macos/*/*.framework
@@ -41,6 +44,7 @@ jobs:
           - name: 🤖 Android (arm64)
             os: ubuntu-22.04
             platform: android
+            preview-headers: true
             flags: arch=arm64
             artifact_name: build-files-android-arm64
             artifact_path: |
@@ -49,54 +53,55 @@ jobs:
           - name: 🤖 Android (x86_64)
             os: ubuntu-22.04
             platform: android
+            preview-headers: true
             flags: arch=x86_64
             artifact_name: build-files-android-x86_64
             artifact_path: |
               aar/plugin/src/main/libs/*/*/*/*.so
             cache-name: android-x86_64
 
-          # Using the Meta OpenXR Preview headers.
-          - name: 🐧 Linux (x86_64, GCC, Meta)
+          # Without the preview headers.
+          - name: 🐧 Linux (x86_64, GCC, No preview)
             os: ubuntu-22.04
             platform: linux
-            meta-headers: true
+            preview-headers: false
             flags: arch=x86_64
-            artifact_name: build-files-linux-x86_64-meta
+            artifact_name: build-files-linux-x86_64-nopreview
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/linux/*/*/*.so
-            cache-name: linux-x86_64-meta
-          - name: 🏁 Windows (x86_64, MSVC, Meta)
+            cache-name: linux-x86_64-nopreview
+          - name: 🏁 Windows (x86_64, MSVC, No preview)
             os: windows-latest
             platform: windows
-            meta-headers: true
-            artifact_name: build-files-windows-meta
+            preview-headers: false
+            artifact_name: build-files-windows-nopreview
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/windows/*/*/*.dll
-            cache-name: windows-x86_64-msvc-meta
-          - name: 🍎 MacOS (universal, Meta)
+            cache-name: windows-x86_64-msvc-nopreview
+          - name: 🍎 MacOS (universal, No preview)
             os: macos-latest
             platform: macos
+            preview-headers: false
             cache-name: macos-universal
-            meta-headers: true
             flags: arch=universal
-            artifact_name: build-files-macos-meta
+            artifact_name: build-files-macos-nopreview
             artifact_path: aar/demo/addons/godotopenxrvendors/.bin/macos/*/*.framework
-          - name: 🤖 Android (arm64, Meta)
+          - name: 🤖 Android (arm64, No Preview)
             os: ubuntu-22.04
             platform: android
-            meta-headers: true
+            preview-headers: false
             flags: arch=arm64
-            artifact_name: build-files-android-arm64-meta
+            artifact_name: build-files-android-arm64-nopreview
             artifact_path: |
               aar/plugin/src/main/libs/*/*/*/*.so
-            cache-name: android-arm64-meta
-          - name: 🤖 Android (x86_64, Meta)
+            cache-name: android-arm64-nopreview
+          - name: 🤖 Android (x86_64, No preview)
             os: ubuntu-22.04
             platform: android
-            meta-headers: true
+            preview-headers: false
             flags: arch=x86_64
-            artifact_name: build-files-android-x86_64-meta
+            artifact_name: build-files-android-x86_64-nopreview
             artifact_path: |
               aar/plugin/src/main/libs/*/*/*/*.so
-            cache-name: android-x86_64-meta
+            cache-name: android-x86_64-nopreview
 
     # Note, to satisfy the asset library we need to make sure our zip files have a root folder
     # this is why we checkout into aar and build into asset
@@ -131,7 +136,7 @@ jobs:
           echo "SCONS_EXTRA=meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "GRADLE_EXTRA=-Pmeta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
-        if: ${{ matrix.meta-headers }}
+        if: ${{ matrix.preview-headers == 'true' }}
       - name: Install scons
         run: |
           python -m pip install scons==4.0.0
@@ -162,22 +167,9 @@ jobs:
             ${{ matrix.artifact_path }}
 
   asset:
-    name: Assembling the asset (${{ matrix.name }})
+    name: Assembling the asset
     runs-on: ubuntu-22.04
     needs: build
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - name: Default
-            meta-headers: false
-            artifact-name: GodotOpenXRVendorsAddon
-            zip-name: godotopenxrvendorsaddon.zip
-
-          - name: Meta Variant
-            meta-headers: true
-            artifact-name: GodotOpenXRVendorsAddonMeta
-            zip-name: godotopenxrvendorsaddon-meta.zip
 
     steps:
       - name: Checkout
@@ -196,13 +188,8 @@ jobs:
       - name: Copy Android binaries
         run: |
           mkdir aar/plugin/src/main/libs
-          if ${{ matrix.meta-headers }}; then
-            cp -r build-files-android-arm64-meta/* aar/plugin/src/main/libs/
-            cp -r build-files-android-x86_64-meta/* aar/plugin/src/main/libs/
-          else
-            cp -r build-files-android-arm64/* aar/plugin/src/main/libs/
-            cp -r build-files-android-x86_64/* aar/plugin/src/main/libs/
-          fi
+          cp -r build-files-android-arm64/* aar/plugin/src/main/libs/
+          cp -r build-files-android-x86_64/* aar/plugin/src/main/libs/
       - name: Download Meta OpenXR Preview headers
         run: |
           # PowerShell (ick!) works on all GitHub platforms. I don't like it, but it works.
@@ -213,7 +200,6 @@ jobs:
           echo "SCONS_EXTRA=meta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "GRADLE_EXTRA=-Pmeta_headers=${{ github.workspace }}/ovr_openxr_mobile_sdk/OpenXR/meta_openxr_preview/" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         shell: pwsh
-        if: ${{ matrix.meta-headers }}
       - name: Create Godot OpenXR Vendors AARs
         run: |
           cd aar
@@ -227,12 +213,8 @@ jobs:
       - name: Adding vendor licences
         run: |
           mkdir -p asset/addons/godotopenxrvendors/meta/
-          if ${{ matrix.meta-headers }}; then
-            cp ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/LICENSE-SDK
-            cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE-LOADER
-          else
-            cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE
-          fi
+          cp ovr_openxr_mobile_sdk/LICENSE.txt asset/addons/godotopenxrvendors/meta/LICENSE-SDK
+          cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/meta/LICENSE-LOADER
 
           mkdir -p asset/addons/godotopenxrvendors/pico/
           cp aar/thirdparty/khronos_openxr_sdk/LICENSE asset/addons/godotopenxrvendors/pico/LICENSE
@@ -245,46 +227,41 @@ jobs:
 
       - name: Copying artifacts
         run: |
-          ARTIFACT_SUFFIX=
-          if ${{ matrix.meta-headers }}; then
-            ARTIFACT_SUFFIX=-meta
-          fi
-
           mkdir -p asset/addons/godotopenxrvendors/.bin/android/template_debug/arm64
           mkdir -p asset/addons/godotopenxrvendors/.bin/android/template_release/arm64
-          cp -r build-files-android-arm64${ARTIFACT_SUFFIX}/debug/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_debug/arm64/
-          cp -r build-files-android-arm64${ARTIFACT_SUFFIX}/release/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_release/arm64/
+          cp -r build-files-android-arm64/debug/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_debug/arm64/
+          cp -r build-files-android-arm64/release/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_release/arm64/
 
           mkdir -p asset/addons/godotopenxrvendors/.bin/android/template_debug/x86_64
           mkdir -p asset/addons/godotopenxrvendors/.bin/android/template_release/x86_64
-          cp -r build-files-android-x86_64${ARTIFACT_SUFFIX}/debug/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_debug/x86_64/
-          cp -r build-files-android-x86_64${ARTIFACT_SUFFIX}/release/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_release/x86_64/
+          cp -r build-files-android-x86_64/debug/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_debug/x86_64/
+          cp -r build-files-android-x86_64/release/*/*/*.so asset/addons/godotopenxrvendors/.bin/android/template_release/x86_64/
 
           mkdir -p asset/addons/godotopenxrvendors/.bin/linux/
-          cp -r build-files-linux-x86_64${ARTIFACT_SUFFIX}/* asset/addons/godotopenxrvendors/.bin/linux/
+          cp -r build-files-linux-x86_64/* asset/addons/godotopenxrvendors/.bin/linux/
 
           mkdir -p asset/addons/godotopenxrvendors/.bin/windows/
-          cp -r build-files-windows${ARTIFACT_SUFFIX}/* asset/addons/godotopenxrvendors/.bin/windows/
+          cp -r build-files-windows/* asset/addons/godotopenxrvendors/.bin/windows/
 
           mkdir -p asset/addons/godotopenxrvendors/.bin/macos/
-          cp -r build-files-macos${ARTIFACT_SUFFIX}/* asset/addons/godotopenxrvendors/.bin/macos/
+          cp -r build-files-macos/* asset/addons/godotopenxrvendors/.bin/macos/
 
       - name: Create Godot OpenXR Vendor addon artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact-name }}
+          name: GodotOpenXRVendorsAddon
           include-hidden-files: true
           path: |
             asset
       - name: Zip addon
         run: |
-          zip -qq -r ${{ matrix.zip-name }} asset
+          zip -qq -r godotopenxrvendorsaddon.zip asset
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       - name: Create and upload asset
         uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          artifacts: "${{ matrix.zip-name }}"
+          artifacts: "godotopenxrvendorsaddon.zip"
           draft: true
           omitNameDuringUpdate: true
           omitBodyDuringUpdate: true
@@ -348,13 +325,13 @@ jobs:
       - name: Download Windows build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-files-windows-meta
-          path: build-files-windows-meta
+          name: build-files-windows
+          path: build-files-windows
 
       - name: Copy Windows build of the addon into the demo and samples project
         run: |
           mkdir -p demo/addons/godotopenxrvendors/.bin/windows/
-          cp -r build-files-windows-meta/* demo/addons/godotopenxrvendors/.bin/windows/
+          cp -r build-files-windows/* demo/addons/godotopenxrvendors/.bin/windows/
 
           $sampleProjects = Get-ChildItem -Path "samples/" -Directory
           foreach ($project in $sampleProjects) {
