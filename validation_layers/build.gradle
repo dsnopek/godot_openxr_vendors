@@ -17,6 +17,8 @@ android {
         targetSdk versions.targetSdk
         versionName getReleaseVersion()
 
+        setProperty("archivesBaseName", "openxr-validation-layers")
+
         ndk {
             //noinspection ChromeOsAbiSupport
             abiFilters "arm64-v8a", "x86_64"
@@ -121,6 +123,18 @@ task buildOpenxrValidationLayersAndroid {
     dependsOn "copyOpenxrValidationLayersAndroidX86_64JSON"
 }
 
+task copyDebugAARToAddons(type: Copy) {
+    from 'build/outputs/aar'
+    include 'openxr-validation-layers-debug.aar'
+    into '../demo/addons/godotopenxrvendors/.bin/android/debug'
+}
+
+task copyReleaseAARToAddons(type: Copy) {
+    from 'build/outputs/aar'
+    include 'openxr-validation-layers-release.aar'
+    into '../demo/addons/godotopenxrvendors/.bin/android/release'
+}
+
 task cleanOpenxrValidationLayersAndroid(type: Delete) {
     delete khronosOpenxrValidationLayersAndroidLibraryTargetDir
     delete khronosOpenxrValidationLayersAndroidAssetsTargetDir
@@ -129,4 +143,6 @@ task cleanOpenxrValidationLayersAndroid(type: Delete) {
 
 preBuild.dependsOn(buildOpenxrValidationLayersAndroid)
 assemble.dependsOn(buildOpenxrValidationLayersAndroid)
+assemble.finalizedBy(copyDebugAARToAddons)
+assemble.finalizedBy(copyReleaseAARToAddons)
 clean.dependsOn(cleanOpenxrValidationLayersAndroid)
