@@ -1,5 +1,5 @@
 /**************************************************************************/
-/*  editor_plugin.cpp                                                     */
+/*  validation_layers_export_plugin.cpp                                   */
 /**************************************************************************/
 /*                       This file is part of:                            */
 /*                              GODOT XR                                  */
@@ -27,57 +27,47 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-#include "editor_plugin.h"
-
-#include "export/khronos_export_plugin.h"
-#include "export/lynx_export_plugin.h"
-#include "export/magicleap_export_plugin.h"
-#include "export/meta_export_plugin.h"
-#include "export/pico_export_plugin.h"
 #include "export/validation_layers_export_plugin.h"
 
-using namespace godot;
+#include <godot_cpp/classes/editor_export_platform_android.hpp>
 
-void OpenXRVendorsEditorPlugin::_add_export_plugin(const Ref<EditorExportPlugin> &p_plugin) {
-	add_export_plugin(p_plugin);
-	export_plugins.push_back(p_plugin);
-}
+OpenXRValidationLayersEditorExportPlugin::OpenXRValidationLayersEditorExportPlugin() {
+	{
+		Dictionary info;
+		info["name"] = "xr_features/enable_openxr_validation_layers";
+		info["type"] = Variant::BOOL;
+		info["hint"] = PROPERTY_HINT_NONE;
+		info["hint_string"] = "";
+		info["usage"] = PROPERTY_USAGE_DEFAULT;
 
-void OpenXRVendorsEditorPlugin::_bind_methods() {
-}
-
-void OpenXRVendorsEditorPlugin::_enter_tree() {
-	Ref<KhronosEditorExportPlugin> khronos_export_plugin;
-	khronos_export_plugin.instantiate();
-	_add_export_plugin(khronos_export_plugin);
-
-	Ref<LynxEditorExportPlugin> lynx_export_plugin;
-	lynx_export_plugin.instantiate();
-	_add_export_plugin(lynx_export_plugin);
-
-	Ref<MagicleapEditorExportPlugin> magicleap_export_plugin;
-	magicleap_export_plugin.instantiate();
-	_add_export_plugin(magicleap_export_plugin);
-
-	Ref<MetaEditorExportPlugin> meta_export_plugin;
-	meta_export_plugin.instantiate();
-	_add_export_plugin(meta_export_plugin);
-
-	Ref<PicoEditorExportPlugin> pico_export_plugin;
-	pico_export_plugin.instantiate();
-	_add_export_plugin(pico_export_plugin);
-
-	Ref<OpenXRValidationLayersEditorExportPlugin> validation_layers_export_plugin;
-	validation_layers_export_plugin.instantiate();
-	_add_export_plugin(validation_layers_export_plugin);
-}
-
-void OpenXRVendorsEditorPlugin::_exit_tree() {
-	for (const Ref<EditorExportPlugin> &export_plugin : export_plugins) {
-		remove_export_plugin(export_plugin);
+		_enable_export_option["option"] = info;
+		_enable_export_option["default_value"] = false;
+		_enable_export_option["update_visibility"] = false;
 	}
-	export_plugins.clear();
 }
 
-OpenXRVendorsEditorPlugin::OpenXRVendorsEditorPlugin() {
+String OpenXRValidationLayersEditorExportPlugin::_get_name() const {
+	return "OpenXRValidationLayers";
+}
+
+bool OpenXRValidationLayersEditorExportPlugin::_supports_platform(const Ref<EditorExportPlatform> &platform) const {
+	return platform->is_class(EditorExportPlatformAndroid::get_class_static());
+}
+
+String OpenXRValidationLayersEditorExportPlugin::_get_export_option_warning(const Ref<EditorExportPlatform> &platform, const String &option) const {
+	if (!_supports_platform(platform)) {
+		return "";
+	}
+
+	return "";
+}
+
+TypedArray<Dictionary> OpenXRValidationLayersEditorExportPlugin::_get_export_options(const Ref<EditorExportPlatform> &platform) const {
+	TypedArray<Dictionary> export_options;
+	if (!_supports_platform(platform)) {
+		return export_options;
+	}
+
+	export_options.push_back(_enable_export_option);
+	return export_options;
 }
