@@ -1,0 +1,35 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    compileSdk versions.compileSdk
+    ndkVersion versions.ndkVersion
+
+    defaultConfig {
+        minSdk versions.minSdk
+        targetSdk versions.targetSdk
+        versionName getReleaseVersion()
+
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters "arm64-v8a", "x86_64"
+        }
+    }
+
+    namespace = "org.godotengine.openxr.validation_layers"
+
+    compileOptions {
+        sourceCompatibility versions.javaVersion
+        targetCompatibility versions.javaVersion
+    }
+
+    kotlinOptions {
+        jvmTarget = versions.javaVersion
+    }
+}
+
+dependencies {
+    implementation "androidx.fragment:fragment:$versions.fragmentVersion"
+}
