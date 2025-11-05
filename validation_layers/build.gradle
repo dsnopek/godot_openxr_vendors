@@ -26,12 +26,15 @@ android {
     namespace = "org.godotengine.openxr.validation_layers"
 
     sourceSets {
-        jniLibs.srcDirs += [
-            "${khronosOpenxrValidationLayersAndroidLibraryTargetDir}/arm64-v8a",
-            "${khronosOpenxrValidationLayersAndroidLibraryTargetDir}/x86_64",
-        ]
+        main {
+            jniLibs.srcDirs += [
+                "${khronosOpenxrValidationLayersAndroidLibraryTargetDir}/arm64-v8a",
+                "${khronosOpenxrValidationLayersAndroidLibraryTargetDir}/x86_64",
+            ]
 
-        assets.srcDirs += ["${khronosOpenxrValidationLayersAndroidAssetsTargetDir}/arm64-v8a"]
+            // We don't need to give separate values for arm64-v8a and x86_64 - just one of them is fine.
+            assets.srcDirs += ["${khronosOpenxrValidationLayersAndroidAssetsTargetDir}/arm64-v8a"]
+        }
     }
 
     packagingOptions {
