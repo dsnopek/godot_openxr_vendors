@@ -51,4 +51,6 @@ public:
 
 	String _get_export_option_warning(const Ref<EditorExportPlatform> &platform, const String &option) const override;
 	TypedArray<Dictionary> _get_export_options(const Ref<EditorExportPlatform> &platform) const override;
+
+	PackedStringArray _get_android_libraries(const Ref<EditorExportPlatform> &platform, bool debug) const;
 };

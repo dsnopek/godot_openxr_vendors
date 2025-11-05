@@ -30,6 +30,7 @@
 #include "export/validation_layers_export_plugin.h"
 
 #include <godot_cpp/classes/editor_export_platform_android.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 
 OpenXRValidationLayersEditorExportPlugin::OpenXRValidationLayersEditorExportPlugin() {
 	{
@@ -59,6 +60,16 @@ String OpenXRValidationLayersEditorExportPlugin::_get_export_option_warning(cons
 		return "";
 	}
 
+	ProjectSettings *project_settings = ProjectSettings::get_singleton();
+	ERR_FAIL_NULL_V(project_settings, "");
+
+	if (option == "xr_features/enable_openxr_validation_layers") {
+		int debug_utils_level = project_settings->get_setting("xr/openxr/extensions/debug_utils");
+		if ((bool)get_option(option) && debug_utils_level < 2) {
+			return "Set XR -> OpenXR -> Extensions -> Debug Utils to \"Warning\" or higher in Project Settings for OpenXR validation messages to appear in Godot.";
+		}
+	}
+
 	return "";
 }
 
@@ -70,4 +81,18 @@ TypedArray<Dictionary> OpenXRValidationLayersEditorExportPlugin::_get_export_opt
 
 	export_options.push_back(_enable_export_option);
 	return export_options;
+}
+
+PackedStringArray OpenXRValidationLayersEditorExportPlugin::_get_android_libraries(const Ref<EditorExportPlatform> &platform, bool debug) const {
+	PackedStringArray dependencies;
+	if (!_supports_platform(platform)) {
+		return dependencies;
+	}
+
+	if ((bool)get_option("xr_features/enable_openxr_validation_layers")) {
+		const String debug_label = debug ? "debug" : "release";
+		dependencies.append("res://addons/godotopenxrvendors/.bin/android/" + debug_label + "/openxr-validation-layers-" + debug_label + ".aar");
+	}
+
+	return dependencies;
 }
