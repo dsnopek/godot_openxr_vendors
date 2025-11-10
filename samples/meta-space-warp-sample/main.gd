@@ -41,8 +41,10 @@ func _process(delta: float) -> void:
 	if countdown_to_check_space_warp_enabled > 0:
 		countdown_to_check_space_warp_enabled -= 1
 		if countdown_to_check_space_warp_enabled == 0:
-			var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
-			if !fb_space_warp or !fb_space_warp.is_enabled():
+			#var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
+			#if !fb_space_warp or !fb_space_warp.is_enabled():
+			var frame_synth = Engine.get_singleton("OpenXRFrameSynthesisExtension")
+			if not frame_synth.enabled:
 				right_controller_label.text = right_controller_label.text.replace("ENABLED", "DISABLED")
 
 
@@ -56,13 +58,16 @@ func _physics_process(delta: float) -> void:
 
 func _on_right_hand_button_pressed(name: String) -> void:
 	if name == "ax_button":
-		var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
-		if !fb_space_warp:
-			return
+		#var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
+		#if !fb_space_warp:
+		#	return
 
-		fb_space_warp.set_space_warp_enabled(!fb_space_warp.is_enabled())
+		var frame_synth = Engine.get_singleton("OpenXRFrameSynthesisExtension")
+		frame_synth.enabled = not frame_synth.enabled
+		#fb_space_warp.set_space_warp_enabled(!fb_space_warp.is_enabled())
 
-		if fb_space_warp.is_enabled():
+		#if fb_space_warp.is_enabled():
+		if frame_synth.enabled:
 			right_controller_label.text = right_controller_label.text.replace("DISABLED", "ENABLED")
 		else:
 			right_controller_label.text = right_controller_label.text.replace("ENABLED", "DISABLED")
@@ -86,9 +91,11 @@ func check_turn(name: String, value: Vector2) -> void:
 			if abs(value.x) > SNAP_TURN_THRESHOLD:
 				rotate_player(sign(value.x) * SNAP_TURN_ANGLE)
 				turn_timer.start()
-				var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
-				if fb_space_warp:
-					fb_space_warp.skip_space_warp_frame()
+				#var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
+				#if fb_space_warp:
+				#	fb_space_warp.skip_space_warp_frame()
+				var frame_synth = Engine.get_singleton("OpenXRFrameSynthesisExtension")
+				frame_synth.skip_next_frame()
 	else:
 		smooth_turn_input = value.x
 
