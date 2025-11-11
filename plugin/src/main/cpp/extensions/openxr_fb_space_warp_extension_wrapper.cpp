@@ -214,6 +214,8 @@ void OpenXRFbSpaceWarpExtensionWrapper::_on_pre_render() {
 
 	Transform3D world_transform = XRServer::get_singleton()->get_world_origin();
 	Transform3D delta_transform = render_state.previous_transform.affine_inverse() * world_transform;
+	//delta_transform = delta_transform.affine_inverse();
+	print_line("appSpaceWarpDelta: ", delta_transform);
 	Quaternion delta_quat = delta_transform.basis.get_quaternion();
 	Vector3 delta_origin = delta_transform.origin;
 
