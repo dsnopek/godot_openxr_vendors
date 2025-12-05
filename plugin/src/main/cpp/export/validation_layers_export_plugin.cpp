@@ -27,10 +27,12 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+#include "export/export_plugin.h"
 #include "export/validation_layers_export_plugin.h"
 
 #include <godot_cpp/classes/editor_export_platform_android.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
+#include <openxr/openxr.h>
 
 OpenXRValidationLayersEditorExportPlugin::OpenXRValidationLayersEditorExportPlugin() {
 	{
@@ -89,10 +91,50 @@ PackedStringArray OpenXRValidationLayersEditorExportPlugin::_get_android_librari
 		return dependencies;
 	}
 
-	if ((bool)get_option("xr_features/enable_openxr_validation_layers")) {
-		const String debug_label = debug ? "debug" : "release";
-		dependencies.append("res://addons/godotopenxrvendors/.bin/android/" + debug_label + "/openxr-validation-layers-" + debug_label + ".aar");
+	if (_is_enabled() && _is_android_aar_file_available(debug)) {
+		dependencies.append(_get_android_aar_file_path(debug));
 	}
 
 	return dependencies;
+}
+
+PackedStringArray OpenXRValidationLayersEditorExportPlugin::_get_android_dependencies(const Ref<godot::EditorExportPlatform> &platform, bool debug) const {
+	PackedStringArray dependencies;
+	if (!_supports_platform(platform)) {
+		return dependencies;
+	}
+
+	if (_is_enabled() && !_is_android_aar_file_available(debug)) {
+		dependencies.append("org.godotengine:openxr-validation-layers:" + _get_version());
+	}
+	return dependencies;
+}
+
+PackedStringArray OpenXRValidationLayersEditorExportPlugin::_get_android_dependencies_maven_repos(const Ref<godot::EditorExportPlatform> &platform, bool debug) const {
+	PackedStringArray maven_repos;
+	if (!_supports_platform(platform)) {
+		return maven_repos;
+	}
+
+	if (_is_enabled() && !_is_android_aar_file_available(debug) && !_get_version().to_lower().ends_with("-stable")) {
+		maven_repos.append("https://central.sonatype.com/repository/maven-snapshots/");
+	}
+	return maven_repos;
+}
+
+String OpenXRValidationLayersEditorExportPlugin::_get_android_aar_file_path(bool debug) const {
+	const String debug_label = debug ? "debug" : "release";
+	return "res://addons/godotopenxrvendors/.bin/android/" + debug_label + "/openxr-validation-layers-" + debug_label + ".aar";
+}
+
+String OpenXRValidationLayersEditorExportPlugin::_get_version() const  {
+	String version = vformat("%d.%d.%d-%s",
+			XR_VERSION_MAJOR(XR_CURRENT_API_VERSION),
+			XR_VERSION_MINOR(XR_CURRENT_API_VERSION),
+			XR_VERSION_PATCH(XR_CURRENT_API_VERSION),
+			PLUGIN_VERSION);
+	if (!version.to_lower().ends_with("-stable") && !version.to_lower().ends_with("-snapshot")) {
+		version = version + "-SNAPSHOT";
+	}
+	return version;
 }
