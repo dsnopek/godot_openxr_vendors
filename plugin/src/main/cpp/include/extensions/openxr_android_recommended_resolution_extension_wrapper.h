@@ -47,7 +47,7 @@ public:
 	OpenXRAndroidRecommendedResolutionExtensionWrapper();
 	virtual ~OpenXRAndroidRecommendedResolutionExtensionWrapper() override;
 
-	virtual Dictionary _get_requested_extensions() override;
+	virtual Dictionary _get_requested_extensions(uint64_t p_xr_version) override;
 	virtual bool _on_event_polled(const void *p_event) override;
 
 protected:
