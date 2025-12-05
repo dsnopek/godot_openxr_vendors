@@ -3,6 +3,14 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+ext {
+    PUBLISH_ARTIFACT_ID = 'openxr-validation-layers'
+    PUBLISH_ARTIFACT_VERSION = getValidationLayersVersion()
+    PUBLISH_ARTIFACT_DESCRIPTION_LABEL = "OpenXR Validation Layers built by Godot"
+}
+
+apply from: "../scripts/publish-module.gradle"
+
 def khronosOpenxrValidationLayersAndroidAssetsTargetDir = file("${buildDir}/temp/openxr_validation_layers_assets")
 def khronosOpenxrValidationLayersAndroidBuildDir = file("${buildDir}/temp/openxr_validation_layers_build")
 
@@ -19,7 +27,7 @@ android {
     defaultConfig {
         minSdk versions.minSdk
         targetSdk versions.targetSdk
-        versionName getReleaseVersion()
+        versionName getValidationLayersVersion()
 
         setProperty("archivesBaseName", "openxr-validation-layers")
 
@@ -121,6 +129,11 @@ android {
         tasks.named("lintAnalyze${capitalizedBuildType}") {
             dependsOn("copyOpenxrValidationLayersAndroid${capitalizedBuildType}JSON")
         }
+    }
+
+    publishing {
+        singleVariant("debug") {}
+        singleVariant("release") {}
     }
 }
 
