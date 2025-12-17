@@ -1,0 +1,86 @@
+[gd_scene load_steps=10 format=3 uid="uid://debi32dnmrjov"]
+
+[ext_resource type="Script" uid="uid://dpb5v8hdohlpc" path="res://main.gd" id="1_ig7tw"]
+[ext_resource type="Script" uid="uid://bnjcoo6qce8d6" path="res://addons/common/start_xr.gd" id="2_0xm2m"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_0xm2m"]
+top_radius = 0.05
+bottom_radius = 0.05
+height = 0.5
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h2yge"]
+shading_mode = 0
+albedo_color = Color(0.33, 0.33, 0.33, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1bvp3"]
+top_radius = 0.1
+bottom_radius = 0.0
+height = 0.1
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
+
+[sub_resource type="Sky" id="Sky_h2yge"]
+sky_material = SubResource("ProceduralSkyMaterial_0xm2m")
+
+[sub_resource type="Environment" id="Environment_tep2q"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+sky = SubResource("Sky_h2yge")
+ambient_light_source = 3
+
+[sub_resource type="SphereMesh" id="SphereMesh_h2yge"]
+radius = 0.1
+height = 0.2
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_ig7tw")
+
+[node name="StartXR" type="Node3D" parent="."]
+script = ExtResource("2_0xm2m")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 1.2260594, -1.3619673)
+sky_mode = 1
+
+[node name="DirectionalLightIndicator" type="Node3D" parent="DirectionalLight3D"]
+unique_name_in_owner = true
+transform = Transform3D(1, -1.4901161e-08, -1.4901161e-08, -1.4901161e-08, 1, -2.9802322e-08, -1.4901161e-08, 0, 1, 0, 0, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="DirectionalLight3D/DirectionalLightIndicator"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0)
+mesh = SubResource("CylinderMesh_0xm2m")
+surface_material_override/0 = SubResource("StandardMaterial3D_h2yge")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="DirectionalLight3D/DirectionalLightIndicator"]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, -7.479684e-09, 1.2645639e-08, -0.2892985)
+mesh = SubResource("CylinderMesh_1bvp3")
+surface_material_override/0 = SubResource("StandardMaterial3D_h2yge")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_tep2q")
+
+[node name="OpenXRAndroidLightEstimation" type="OpenXRAndroidLightEstimation" parent="." node_paths=PackedStringArray("directional_light")]
+directional_light = NodePath("../DirectionalLight3D")
+update_frequency = 0.011
+
+[node name="XROrigin3D" type="XROrigin3D" parent="."]
+
+[node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D"]
+
+[node name="LeftController" type="XRController3D" parent="XROrigin3D"]
+tracker = &"left_hand"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/LeftController"]
+mesh = SubResource("SphereMesh_h2yge")
+
+[node name="RightController" type="XRController3D" parent="XROrigin3D"]
+tracker = &"right_hand"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightController"]
+mesh = SubResource("SphereMesh_h2yge")
+skeleton = NodePath("../../LeftController")
+
+[node name="Timer" type="Timer" parent="."]
+autostart = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
