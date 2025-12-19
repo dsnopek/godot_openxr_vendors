@@ -60,6 +60,8 @@ public:
 	void stop_light_estimation();
 	bool is_light_estimation_started();
 
+	void _on_process() override;
+
 	enum LightEstimateType {
 		LIGHT_ESTIMATE_TYPE_DIRECTIONAL_LIGHT = 1,
 		LIGHT_ESTIMATE_TYPE_AMBIENT = 2,
@@ -69,7 +71,8 @@ public:
 		LIGHT_ESTIMATE_TYPE_ALL = 0x7fffffff,
 	};
 
-	bool update_light_estimate(BitField<LightEstimateType> p_estimate_types);
+	void set_light_estimate_types(BitField<LightEstimateType> p_estimate_types);
+	BitField<LightEstimateType> get_light_estimate_types() const;
 
 	bool is_estimate_valid() const;
 	int64_t get_last_updated_time() const;
@@ -118,6 +121,7 @@ private:
 	HashMap<String, bool *> request_extensions;
 	bool android_light_estimation_ext = false;
 
+	BitField<LightEstimateType> estimate_types = 0;
 	XrLightEstimatorANDROID light_estimator = XR_NULL_HANDLE;
 
 	XrSystemLightEstimationPropertiesANDROID system_light_estimation_properties = {

@@ -62,7 +62,8 @@ void OpenXRAndroidLightEstimationExtensionWrapper::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("stop_light_estimation"), &OpenXRAndroidLightEstimationExtensionWrapper::stop_light_estimation);
 	ClassDB::bind_method(D_METHOD("is_light_estimation_started"), &OpenXRAndroidLightEstimationExtensionWrapper::is_light_estimation_supported);
 
-	ClassDB::bind_method(D_METHOD("update_light_estimate", "estimate_types"), &OpenXRAndroidLightEstimationExtensionWrapper::update_light_estimate);
+	ClassDB::bind_method(D_METHOD("set_light_estimate_types", "estimate_types"), &OpenXRAndroidLightEstimationExtensionWrapper::set_light_estimate_types);
+	ClassDB::bind_method(D_METHOD("get_light_estimate_types"), &OpenXRAndroidLightEstimationExtensionWrapper::get_light_estimate_types);
 
 	ClassDB::bind_method(D_METHOD("is_estimate_valid"), &OpenXRAndroidLightEstimationExtensionWrapper::is_estimate_valid);
 	ClassDB::bind_method(D_METHOD("get_last_updated_time"), &OpenXRAndroidLightEstimationExtensionWrapper::get_last_updated_time);
@@ -80,6 +81,8 @@ void OpenXRAndroidLightEstimationExtensionWrapper::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("is_spherical_harmonics_total_valid"), &OpenXRAndroidLightEstimationExtensionWrapper::is_spherical_harmonics_total_valid);
 	ClassDB::bind_method(D_METHOD("get_spherical_harmonics_total_coefficients"), &OpenXRAndroidLightEstimationExtensionWrapper::get_spherical_harmonics_total_coefficients);
+
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "light_estimate_types", PROPERTY_HINT_FLAGS, "Directional Light,Ambient,Spherical Harmonics (Ambient),Spherical Harmonics (Total),Cubemap"), "set_light_estimate_types", "get_light_estimate_types");
 
 	BIND_ENUM_CONSTANT(LIGHT_ESTIMATE_TYPE_DIRECTIONAL_LIGHT);
 	BIND_ENUM_CONSTANT(LIGHT_ESTIMATE_TYPE_AMBIENT);
@@ -179,11 +182,13 @@ void OpenXRAndroidLightEstimationExtensionWrapper::clear_light_info() {
 	spherical_harmonics_total_info.state = XR_LIGHT_ESTIMATE_STATE_INVALID_ANDROID;
 }
 
-bool OpenXRAndroidLightEstimationExtensionWrapper::update_light_estimate(BitField<LightEstimateType> p_estimate_types) {
-	ERR_FAIL_COND_V(!is_light_estimation_started(), false);
+void OpenXRAndroidLightEstimationExtensionWrapper::_on_process() {
+	if (!is_light_estimation_started()) {
+		return;
+	}
 
 	Ref<OpenXRAPIExtension> openxr_api = get_openxr_api();
-	ERR_FAIL_COND_V(openxr_api.is_null(), false);
+	ERR_FAIL_COND(openxr_api.is_null());
 
 	clear_light_info();
 
@@ -195,19 +200,19 @@ bool OpenXRAndroidLightEstimationExtensionWrapper::update_light_estimate(BitFiel
 	};
 
 	void *next_pointer = nullptr;
-	if (p_estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_DIRECTIONAL_LIGHT)) {
+	if (estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_DIRECTIONAL_LIGHT)) {
 		directional_light_info.next = next_pointer;
 		next_pointer = &directional_light_info;
 	}
-	if (p_estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_AMBIENT)) {
+	if (estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_AMBIENT)) {
 		ambient_light_info.next = next_pointer;
 		next_pointer = &ambient_light_info;
 	}
-	if (p_estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT)) {
+	if (estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT)) {
 		spherical_harmonics_ambient_info.next = next_pointer;
 		next_pointer = &spherical_harmonics_ambient_info;
 	}
-	if (p_estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_TOTAL)) {
+	if (estimate_types.has_flag(LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_TOTAL)) {
 		spherical_harmonics_total_info.next = next_pointer;
 		next_pointer = &spherical_harmonics_total_info;
 	}
@@ -216,10 +221,18 @@ bool OpenXRAndroidLightEstimationExtensionWrapper::update_light_estimate(BitFiel
 	XrResult result = xrGetLightEstimateANDROID(light_estimator, &info, &estimate_info);
 	if (XR_FAILED(result)) {
 		UtilityFunctions::printerr("Failed to get light estimate: ", get_openxr_api()->get_error_string(result));
-		return false;
+		return;
 	}
 
-	return true;
+	// @todo Check previous update time and update the the global shader uniforms (if enabled)
+}
+
+void OpenXRAndroidLightEstimationExtensionWrapper::set_light_estimate_types(BitField<LightEstimateType> p_estimate_types) {
+	estimate_types = p_estimate_types;
+}
+
+BitField<OpenXRAndroidLightEstimationExtensionWrapper::LightEstimateType> OpenXRAndroidLightEstimationExtensionWrapper::get_light_estimate_types() const {
+	return estimate_types;
 }
 
 bool OpenXRAndroidLightEstimationExtensionWrapper::is_estimate_valid() const {

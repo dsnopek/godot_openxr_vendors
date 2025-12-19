@@ -36,7 +36,6 @@
 #include <godot_cpp/classes/shader.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/sky.hpp>
-#include <godot_cpp/classes/timer.hpp>
 #include <godot_cpp/classes/xr_server.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
 
@@ -120,12 +119,6 @@ void OpenXRAndroidLightEstimation::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_world_environment", "world_environment"), &OpenXRAndroidLightEstimation::set_world_environment);
 	ClassDB::bind_method(D_METHOD("get_world_environment"), &OpenXRAndroidLightEstimation::get_world_environment);
 
-	ClassDB::bind_method(D_METHOD("set_update_frequency", "seconds"), &OpenXRAndroidLightEstimation::set_update_frequency);
-	ClassDB::bind_method(D_METHOD("get_update_frequency"), &OpenXRAndroidLightEstimation::get_update_frequency);
-
-	ClassDB::bind_method(D_METHOD("set_spherical_harmonics_type", "type"), &OpenXRAndroidLightEstimation::set_spherical_harmonics_type);
-	ClassDB::bind_method(D_METHOD("get_spherical_harmonics_type"), &OpenXRAndroidLightEstimation::get_spherical_harmonics_type);
-
 	ClassDB::bind_method(D_METHOD("set_spherical_harmonics_degree", "degree"), &OpenXRAndroidLightEstimation::set_spherical_harmonics_degree);
 	ClassDB::bind_method(D_METHOD("get_spherical_harmonics_degree"), &OpenXRAndroidLightEstimation::get_spherical_harmonics_degree);
 
@@ -135,9 +128,6 @@ void OpenXRAndroidLightEstimation::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "spherical_harmonics_type", PROPERTY_HINT_ENUM, "Ambient,Total"), "set_spherical_harmonics_type", "get_spherical_harmonics_type");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "spherical_harmonics_degree", PROPERTY_HINT_ENUM, "L0,L1,L2"), "set_spherical_harmonics_degree", "get_spherical_harmonics_degree");
 
-	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_TYPE_AMBIENT);
-	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_TYPE_TOTAL);
-
 	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L0);
 	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L1);
 	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L2);
@@ -146,10 +136,6 @@ void OpenXRAndroidLightEstimation::_bind_methods() {
 void OpenXRAndroidLightEstimation::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_POSTINITIALIZE: {
-			timer = memnew(Timer);
-			add_child(timer, false, INTERNAL_MODE_FRONT);
-			timer->connect("timeout", callable_mp(this, &OpenXRAndroidLightEstimation::update_light_estimate));
-
 			sky.instantiate();
 
 			XRServer *xr_server = XRServer::get_singleton();
@@ -177,12 +163,19 @@ void OpenXRAndroidLightEstimation::_notification(int p_what) {
 		case NOTIFICATION_EXIT_TREE: {
 			start_or_stop();
 		} break;
+
+		case NOTIFICATION_INTERNAL_PROCESS: {
+			update_light_estimate();
+		} break;
 	}
 }
 
 void OpenXRAndroidLightEstimation::set_directional_light(DirectionalLight3D *p_directional_light) {
 	if (p_directional_light) {
 		directional_light_id = p_directional_light->get_instance_id();
+		if (is_processing_internal()) {
+			configure_light_estimate_types();
+		}
 	} else {
 		directional_light_id = ObjectID();
 	}
@@ -196,6 +189,9 @@ void OpenXRAndroidLightEstimation::set_world_environment(WorldEnvironment *p_wor
 	reset_sky();
 	if (p_world_environment) {
 		world_environment_id = p_world_environment->get_instance_id();
+		if (is_processing_internal()) {
+			configure_light_estimate_types();
+		}
 	} else {
 		world_environment_id = ObjectID();
 	}
@@ -205,33 +201,12 @@ WorldEnvironment *OpenXRAndroidLightEstimation::get_world_environment() const {
 	return Object::cast_to<WorldEnvironment>(ObjectDB::get_instance(world_environment_id));
 }
 
-void OpenXRAndroidLightEstimation::set_update_frequency(double p_seconds) {
-	if (timer) {
-		timer->set_wait_time(p_seconds);
-	}
-}
-
-double OpenXRAndroidLightEstimation::get_update_frequency() const {
-	if (timer) {
-		return timer->get_wait_time();
-	}
-	return 1.0;
-}
-
 void OpenXRAndroidLightEstimation::set_directional_light_color(const Color &p_color) {
 	directional_light_color = p_color;
 }
 
 Color OpenXRAndroidLightEstimation::get_directional_light_color() const {
 	return directional_light_color;
-}
-
-void OpenXRAndroidLightEstimation::set_spherical_harmonics_type(SphericalHarmonicsType p_sh_type) {
-	sh_type = p_sh_type;
-}
-
-OpenXRAndroidLightEstimation::SphericalHarmonicsType OpenXRAndroidLightEstimation::get_spherical_harmonics_type() const {
-	return sh_type;
 }
 
 void OpenXRAndroidLightEstimation::set_spherical_harmonics_degree(SphericalHarmonicsDegree p_sh_degree) {
@@ -256,15 +231,33 @@ void OpenXRAndroidLightEstimation::start_or_stop() {
 		if (!light_estimation_started) {
 			light_estimation_started = light_estimation_extension->start_light_estimation();
 		}
-		if (light_estimation_started && timer->is_stopped()) {
-			timer->start();
+		set_process_internal(light_estimation_started);
+		if (light_estimation_started) {
+			configure_light_estimate_types();
 		}
 	} else {
-		timer->stop();
 		if (light_estimation_extension->is_light_estimation_started()) {
 			light_estimation_extension->stop_light_estimation();
 		}
+		set_process_internal(false);
 	}
+}
+
+void OpenXRAndroidLightEstimation::configure_light_estimate_types() {
+	OpenXRAndroidLightEstimationExtensionWrapper *light_estimation_extension = OpenXRAndroidLightEstimationExtensionWrapper::get_singleton();
+	ERR_FAIL_NULL(light_estimation_extension);
+
+	BitField<OpenXRAndroidLightEstimationExtensionWrapper::LightEstimateType> estimate_types = light_estimation_extension->get_light_estimate_types();
+
+	if (get_directional_light()) {
+		estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_DIRECTIONAL_LIGHT);
+	}
+
+	if (get_world_environment()) {
+		estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT);
+	}
+
+	light_estimation_extension->set_light_estimate_types(estimate_types);
 }
 
 void OpenXRAndroidLightEstimation::update_light_estimate() {
@@ -274,34 +267,17 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 	XRServer *xr_server = XRServer::get_singleton();
 	ERR_FAIL_NULL(xr_server);
 
-	BitField<OpenXRAndroidLightEstimationExtensionWrapper::LightEstimateType> estimate_types(0);
-
-	DirectionalLight3D *direction_light = get_directional_light();
-	if (direction_light) {
-		estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_DIRECTIONAL_LIGHT);
+	if (!light_estimation_extension->is_estimate_valid()) {
+		return;
 	}
-
-	WorldEnvironment *world_environment = get_world_environment();
-	Ref<Environment> env;
-	if (world_environment) {
-		env = world_environment->get_environment();
-	}
-
-	if (env.is_valid()) {
-		if (sh_type == SPHERICAL_HARMONICS_TYPE_AMBIENT) {
-			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT);
-		} else {
-			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_TOTAL);
-		}
-	}
-
-	light_estimation_extension->update_light_estimate(estimate_types);
 
 	int64_t estimate_time = light_estimation_extension->get_last_updated_time();
 	if (estimate_time <= last_update_time) {
 		return;
 	}
 	last_update_time = estimate_time;
+
+	DirectionalLight3D *direction_light = get_directional_light();
 
 	if (direction_light && light_estimation_extension->is_directional_light_valid()) {
 		Basis light_basis = Basis::looking_at(-light_estimation_extension->get_directional_light_direction()) * xr_server->get_world_origin().basis;
@@ -314,35 +290,30 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 		direction_light->set_param(Light3D::PARAM_ENERGY, luminance);
 	}
 
-	if (env.is_valid()) {
-		PackedVector3Array coefficients;
-		if (sh_type == SPHERICAL_HARMONICS_TYPE_AMBIENT) {
-			if (light_estimation_extension->is_spherical_harmonics_ambient_valid()) {
-				coefficients = light_estimation_extension->get_spherical_harmonics_ambient_coefficients();
-			}
-		} else {
-			if (light_estimation_extension->is_spherical_harmonics_total_valid()) {
-				coefficients = light_estimation_extension->get_spherical_harmonics_total_coefficients();
-			}
+	WorldEnvironment *world_environment = get_world_environment();
+	Ref<Environment> env;
+	if (world_environment) {
+		env = world_environment->get_environment();
+	}
+
+	if (env.is_valid() && light_estimation_extension->is_spherical_harmonics_ambient_valid()) {
+		PackedVector3Array coefficients = light_estimation_extension->get_spherical_harmonics_ambient_coefficients();
+		if (sky_material.is_null()) {
+			sky_material.instantiate();
+			sky->set_material(sky_material);
 		}
-		if (coefficients.size() > 0) {
-			if (sky_material.is_null()) {
-				sky_material.instantiate();
-				sky->set_material(sky_material);
+		Ref<Shader> cur_shader = get_shader(sh_degree);
+		if (sky_material->get_shader() != cur_shader) {
+			sky_material->set_shader(cur_shader);
+		}
+		sky_material->set_shader_parameter("coefficients", coefficients);
+		sky_material->set_shader_parameter("rotation", xr_server->get_world_origin().basis);
+		if (env->get_sky() != sky) {
+			if (old_sky.is_null()) {
+				old_sky = env->get_sky();
 			}
-			Ref<Shader> cur_shader = get_shader(sh_degree);
-			if (sky_material->get_shader() != cur_shader) {
-				sky_material->set_shader(cur_shader);
-			}
-			sky_material->set_shader_parameter("coefficients", coefficients);
-			sky_material->set_shader_parameter("rotation", xr_server->get_world_origin().basis);
-			if (env->get_sky() != sky) {
-				if (old_sky.is_null()) {
-					old_sky = env->get_sky();
-				}
-				env->set_sky(sky);
-				env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
-			}
+			env->set_sky(sky);
+			env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
 		}
 	}
 }
@@ -376,7 +347,4 @@ Ref<Shader> OpenXRAndroidLightEstimation::get_shader(SphericalHarmonicsDegree p_
 	sky_shaders[p_sh_degree] = shader;
 
 	return shader;
-}
-
-OpenXRAndroidLightEstimation::~OpenXRAndroidLightEstimation() {
 }

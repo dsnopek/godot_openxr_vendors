@@ -37,14 +37,9 @@
 namespace godot {
 class DirectionalLight3D;
 class WorldEnvironment;
-class Timer;
 }; // namespace godot
 
 using namespace godot;
-
-// @todo Use timer to update estimate. Need update_frequency property, and should start when in tree and visible; stop, otherwise
-// @todo Start with updating directional light (maybe visualize a cylinder attached to the camera?)
-// @todo Then try a sky shader with spherical harmonics
 
 class OpenXRAndroidLightEstimation : public Node3D {
 	GDCLASS(OpenXRAndroidLightEstimation, Node3D)
@@ -55,11 +50,6 @@ protected:
 	void _notification(int p_what);
 
 public:
-	enum SphericalHarmonicsType {
-		SPHERICAL_HARMONICS_TYPE_AMBIENT,
-		SPHERICAL_HARMONICS_TYPE_TOTAL,
-	};
-
 	enum SphericalHarmonicsDegree {
 		SPHERICAL_HARMONICS_DEGREE_L0,
 		SPHERICAL_HARMONICS_DEGREE_L1,
@@ -73,30 +63,19 @@ public:
 	void set_world_environment(WorldEnvironment *p_world_environment);
 	WorldEnvironment *get_world_environment() const;
 
-	void set_update_frequency(double p_seconds);
-	double get_update_frequency() const;
-
 	void set_directional_light_color(const Color &p_color);
 	Color get_directional_light_color() const;
-
-	void set_spherical_harmonics_type(SphericalHarmonicsType p_sh_type);
-	SphericalHarmonicsType get_spherical_harmonics_type() const;
 
 	void set_spherical_harmonics_degree(SphericalHarmonicsDegree p_sh_degree);
 	SphericalHarmonicsDegree get_spherical_harmonics_degree() const;
 
-	~OpenXRAndroidLightEstimation();
-
 private:
-	Timer *timer = nullptr;
-
 	ObjectID directional_light_id;
 	ObjectID world_environment_id;
 	int64_t last_update_time = 0;
 
 	Color directional_light_color = Color(1.0, 1.0, 1.0, 1.0);
 
-	SphericalHarmonicsType sh_type = SPHERICAL_HARMONICS_TYPE_AMBIENT;
 	SphericalHarmonicsDegree sh_degree = SPHERICAL_HARMONICS_DEGREE_L1;
 
 	Ref<Shader> sky_shaders[SPHERICAL_HARMONICS_DEGREE_MAX];
@@ -105,11 +84,11 @@ private:
 	Ref<Sky> old_sky;
 
 	void start_or_stop();
+	void configure_light_estimate_types();
 	void update_light_estimate();
 	void reset_sky();
 
 	Ref<Shader> get_shader(SphericalHarmonicsDegree p_sh_degree);
 };
 
-VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::SphericalHarmonicsType);
 VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::SphericalHarmonicsDegree);
