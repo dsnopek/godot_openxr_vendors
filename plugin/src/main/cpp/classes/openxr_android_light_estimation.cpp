@@ -276,7 +276,11 @@ void OpenXRAndroidLightEstimation::configure_light_estimate_types() {
 	}
 
 	if (get_world_environment()) {
-		estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT);
+		if (ambient_light_mode == AMBIENT_LIGHT_MODE_COLOR) {
+			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_AMBIENT);
+		} else if (ambient_light_mode == AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS) {
+			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT);
+		}
 	}
 
 	light_estimation_extension->set_light_estimate_types(estimate_types);
