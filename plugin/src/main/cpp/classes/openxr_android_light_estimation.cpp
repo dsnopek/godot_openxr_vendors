@@ -98,12 +98,12 @@ vec3 linear_to_srgb(vec3 color) {
 void sky() {
 	if (AT_CUBEMAP_PASS) {
 		vec3 dir = rotation * EYEDIR;
-		vec3 luminance = applySH(dir, coefficients);
-		luminance = max(luminance, vec3(0.0));
+		vec3 color = applySH(dir, coefficients);
+		color = max(color, vec3(0.0));
 #if CURRENT_RENDERER == RENDERER_COMPATIBILITY
-		COLOR = linear_to_srgb(luminance);
+		COLOR = linear_to_srgb(color);
 #else
-		COLOR = luminance;
+		COLOR = color;
 #endif
 	} else {
 		// Allows visualizing the radiance map.
