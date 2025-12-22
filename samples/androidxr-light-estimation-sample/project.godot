@@ -24,5 +24,6 @@ environment/defaults/default_clear_color=Color(0, 0, 0, 0)
 
 openxr/enabled=true
 openxr/environment_blend_mode=2
+openxr/extensions/hand_interaction_profile=true
 shaders/enabled=true
 openxr/extensions/androidxr/light_estimation=true

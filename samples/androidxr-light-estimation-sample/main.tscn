@@ -1,8 +1,12 @@
-[gd_scene load_steps=12 format=3 uid="uid://debi32dnmrjov"]
+[gd_scene load_steps=16 format=3 uid="uid://debi32dnmrjov"]
 
 [ext_resource type="Script" uid="uid://dpb5v8hdohlpc" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://bnjcoo6qce8d6" path="res://addons/common/start_xr.gd" id="2_0xm2m"]
 [ext_resource type="Material" uid="uid://d158fsief2mgl" path="res://reflective_grey_material.tres" id="3_h2yge"]
+[ext_resource type="PackedScene" uid="uid://dcwibwtseri8h" path="res://addons/common/viewport_2d_in_3d/viewport_2d_in_3d.tscn" id="4_1bvp3"]
+[ext_resource type="PackedScene" uid="uid://cqs8c3rq6cxvk" path="res://addons/common/function_pointer/function_pointer.tscn" id="4_lquwl"]
+[ext_resource type="PackedScene" uid="uid://xga880omsrpm" path="res://addons/common/view_pivot/view_pivot.tscn" id="5_272bh"]
+[ext_resource type="PackedScene" uid="uid://x07cf480vboe" path="res://menu.tscn" id="6_7mycd"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_0xm2m"]
 top_radius = 0.05
@@ -83,6 +87,8 @@ tracker = &"left_hand"
 mesh = SubResource("SphereMesh_h2yge")
 surface_material_override/0 = ExtResource("3_h2yge")
 
+[node name="FunctionPointer" parent="XROrigin3D/LeftController" instance=ExtResource("4_lquwl")]
+
 [node name="RightController" type="XRController3D" parent="XROrigin3D"]
 tracker = &"right_hand"
 
@@ -91,33 +97,44 @@ mesh = SubResource("SphereMesh_h2yge")
 skeleton = NodePath("../../LeftController")
 surface_material_override/0 = ExtResource("3_h2yge")
 
+[node name="FunctionPointer" parent="XROrigin3D/RightController" instance=ExtResource("4_lquwl")]
+
 [node name="Timer" type="Timer" parent="."]
 autostart = true
 
 [node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 
 [node name="Sphere1" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -2)
 mesh = SubResource("SphereMesh_1bvp3")
 skeleton = NodePath("../..")
 surface_material_override/0 = ExtResource("3_h2yge")
 
 [node name="Sphere2" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, -2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -2)
 mesh = SubResource("SphereMesh_1bvp3")
 skeleton = NodePath("../..")
 surface_material_override/0 = ExtResource("3_h2yge")
 
 [node name="Sphere3" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, 2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 2)
 mesh = SubResource("SphereMesh_1bvp3")
 skeleton = NodePath("../..")
 surface_material_override/0 = ExtResource("3_h2yge")
 
 [node name="Sphere4" type="MeshInstance3D" parent="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 2)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
 mesh = SubResource("SphereMesh_1bvp3")
 skeleton = NodePath("../..")
 surface_material_override/0 = ExtResource("3_h2yge")
+
+[node name="ViewPivot" parent="." instance=ExtResource("5_272bh")]
+direction_threshold = 0.8
+
+[node name="Viewport2Din3D" parent="ViewPivot" instance=ExtResource("4_1bvp3")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3697349, -2.179494)
+scene = ExtResource("6_7mycd")
+pixel_size = 0.002
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
