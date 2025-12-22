@@ -30,9 +30,22 @@
 #include "extensions/openxr_android_light_estimation_extension_wrapper.h"
 
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
+
+static const char *ANDROID_LIGHT_ESTIMATION_DEPTH_DIRECTIONAL_LIGHT_VALID_NAME = "ANDROID_LIGHT_ESTIMATION_DIRECTIONAL_LIGHT_VALID";
+static const char *ANDROID_LIGHT_ESTIMATION_DEPTH_DIRECTIONAL_LIGHT_DIRECTION_NAME = "ANDROID_LIGHT_ESTIMATION_DIRECTIONAL_LIGHT_DIRECTION";
+static const char *ANDROID_LIGHT_ESTIMATION_DEPTH_DIRECTIONAL_LIGHT_INTENSITY_NAME = "ANDROID_LIGHT_ESTIMATION_DIRECTIONAL_LIGHT_INTENSITY";
+static const char *ANDROID_LIGHT_ESTIMATION_AMBIENT_LIGHT_VALID_NAME = "ANDROID_LIGHT_ESTIMATION_AMBIENT_LIGHT_VALID";
+static const char *ANDROID_LIGHT_ESTIMATION_AMBIENT_LIGHT_INTENSITY_NAME = "ANDROID_LIGHT_ESTIMATION_AMBIENT_LIGHT_INTENSITY";
+static const char *ANDROID_LIGHT_ESTIMATION_AMBIENT_LIGHT_COLOR_CORRECTION_NAME = "ANDROID_LIGHT_ESTIMATION_AMBIENT_LIGHT_COLOR_CORRECTION";
+static const char *ANDROID_LIGHT_ESTIMATION_SH_AMBIENT_VALID_NAME = "ANDROID_LIGHT_ESTIMATION_SH_AMBIENT_VALID";
+static const char *ANDROID_LIGHT_ESTIMATION_SH_AMBIENT_COEFFICIENTS_NAME = "ANDROID_LIGHT_ESTIMATION_SH_AMBIENT_COEFFICIENTS";
+static const char *ANDROID_LIGHT_ESTIMATION_SH_TOTAL_VALID_NAME = "ANDROID_LIGHT_ESTIMATION_SH_TOTAL_VALID";
+static const char *ANDROID_LIGHT_ESTIMATION_SH_TOTAL_COEFFICIENTS_NAME = "ANDROID_LIGHT_ESTIMATION_SH_TOTAL_COEFFICIENTS";
 
 OpenXRAndroidLightEstimationExtensionWrapper *OpenXRAndroidLightEstimationExtensionWrapper::singleton = nullptr;
 
@@ -224,7 +237,11 @@ void OpenXRAndroidLightEstimationExtensionWrapper::_on_process() {
 		return;
 	}
 
-	// @todo Check previous update time and update the the global shader uniforms (if enabled)
+	if (estimate_info.state == XR_LIGHT_ESTIMATE_STATE_VALID_ANDROID && estimate_info.lastUpdatedTime > last_update_uniforms_time) {
+		last_update_uniforms_time == estimate_info.lastUpdatedTime;
+
+		// @todo Update all the global uniforms
+	}
 }
 
 void OpenXRAndroidLightEstimationExtensionWrapper::set_light_estimate_types(BitField<LightEstimateType> p_estimate_types) {
@@ -315,3 +332,95 @@ PackedVector3Array OpenXRAndroidLightEstimationExtensionWrapper::get_spherical_h
 	}
 	return ret;
 }
+
+static void create_shader_global_uniform(const String &p_name, RenderingServer::GlobalShaderParameterType p_type, Variant p_value, RenderingServer *p_rendering_server, ProjectSettings *p_project_settings, bool p_is_editor) {
+	String setting_name = "shader_globals/" + p_name;
+	if (!p_project_settings->has_setting(setting_name)) {
+		p_rendering_server->global_shader_parameter_add(p_name, p_type, p_value);
+		if (p_is_editor) {
+			String type_name;
+			switch (p_type) {
+				case RenderingServer::GLOBAL_VAR_TYPE_BOOL: {
+					type_name = "bool";
+				} break;
+				case RenderingServer::GLOBAL_VAR_TYPE_VEC2: {
+					type_name = "vec3";
+				} break;
+				case RenderingServer::GLOBAL_VAR_TYPE_MAT4: {
+					type_name = "mat4";
+				} break;
+			}
+
+			Variant setting_value = p_value;
+			if (p_type == RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY) {
+				// In ProjectSettings, this uses a path as a value.
+				setting_value = "";
+			}
+
+			Dictionary d;
+			d["type"] = type_name;
+			d["value"] = setting_value;
+			p_project_settings->set(setting_name, d);
+		}
+	}
+}
+
+static void remove_shader_global_uniform(const String &p_name, RenderingServer *p_rendering_server, ProjectSettings *p_project_settings) {
+	String setting_name = "shader_globals/" + p_name;
+	if (p_project_settings->has_setting(setting_name)) {
+		p_rendering_server->global_shader_parameter_remove(p_name);
+		p_project_settings->clear(setting_name);
+	}
+}
+
+void OpenXRAndroidLightEstimationExtensionWrapper::setup_global_uniforms() {
+	RenderingServer *rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL(rs);
+
+	ProjectSettings *project_settings = ProjectSettings::get_singleton();
+	ERR_FAIL_NULL(project_settings);
+
+	bool enabled = project_settings->get_setting_with_override("xr/openxr/extensions/meta/environment_depth");
+
+	if (!enabled) {
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_TEXEL_SIZE_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_PROJECTION_VIEW_LEFT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_PROJECTION_VIEW_RIGHT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_INV_PROJECTION_VIEW_LEFT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_INV_PROJECTION_VIEW_RIGHT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME, rs, project_settings);
+		remove_shader_global_uniform(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, rs, project_settings);
+
+		already_setup_global_uniforms = false;
+		return;
+	}
+
+	if (already_setup_global_uniforms) {
+		return;
+	}
+
+	Engine *engine = Engine::get_singleton();
+	ERR_FAIL_NULL(engine);
+
+	bool is_editor = engine->is_editor_hint();
+
+	// Set this right away, to prevent getting in a loop of project settings changes.
+	already_setup_global_uniforms = true;
+
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_AVAILABLE_NAME, RenderingServer::GLOBAL_VAR_TYPE_BOOL, false, rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TEXTURE_NAME, RenderingServer::GLOBAL_VAR_TYPE_SAMPLER2DARRAY, Variant(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TEXEL_SIZE_NAME, RenderingServer::GLOBAL_VAR_TYPE_VEC2, Vector2(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_PROJECTION_VIEW_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_PROJECTION_VIEW_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_INV_PROJECTION_VIEW_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_INV_PROJECTION_VIEW_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_FROM_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_LEFT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+	create_shader_global_uniform(META_ENVIRONMENT_DEPTH_TO_CAMERA_PROJECTION_RIGHT_NAME, RenderingServer::GLOBAL_VAR_TYPE_MAT4, Projection(), rs, project_settings, is_editor);
+}
+

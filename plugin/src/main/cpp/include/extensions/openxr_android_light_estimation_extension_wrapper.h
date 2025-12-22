@@ -74,6 +74,9 @@ public:
 	void set_light_estimate_types(BitField<LightEstimateType> p_estimate_types);
 	BitField<LightEstimateType> get_light_estimate_types() const;
 
+	void set_populate_shader_uniforms(bool p_enable);
+	bool get_populate_shader_uinforms() const;
+
 	bool is_estimate_valid() const;
 	int64_t get_last_updated_time() const;
 
@@ -90,6 +93,8 @@ public:
 
 	bool is_spherical_harmonics_total_valid() const;
 	PackedVector3Array get_spherical_harmonics_total_coefficients() const;
+
+	void setup_global_uniforms();
 
 	OpenXRAndroidLightEstimationExtensionWrapper();
 	~OpenXRAndroidLightEstimationExtensionWrapper();
@@ -120,8 +125,11 @@ private:
 
 	HashMap<String, bool *> request_extensions;
 	bool android_light_estimation_ext = false;
+	bool already_setup_global_uniforms = false;
 
 	BitField<LightEstimateType> estimate_types = 0;
+	bool populate_shader_uniforms = false;
+	uint64_t last_update_uniforms_time = 0;
 	XrLightEstimatorANDROID light_estimator = XR_NULL_HANDLE;
 
 	XrSystemLightEstimationPropertiesANDROID system_light_estimation_properties = {
