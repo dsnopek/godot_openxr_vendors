@@ -65,9 +65,9 @@ surface_material_override/0 = SubResource("StandardMaterial3D_h2yge")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_tep2q")
 
-[node name="OpenXRAndroidLightEstimation" type="OpenXRAndroidLightEstimation" parent="." node_paths=PackedStringArray("directional_light")]
+[node name="OpenXRAndroidLightEstimation" type="OpenXRAndroidLightEstimation" parent="." node_paths=PackedStringArray("directional_light", "world_environment")]
 directional_light = NodePath("../DirectionalLight3D")
-set_directional_light_mode = 2
+world_environment = NodePath("../WorldEnvironment")
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
 
