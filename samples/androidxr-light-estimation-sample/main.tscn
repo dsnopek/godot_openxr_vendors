@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://debi32dnmrjov"]
+[gd_scene load_steps=12 format=3 uid="uid://debi32dnmrjov"]
 
 [ext_resource type="Script" uid="uid://dpb5v8hdohlpc" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://bnjcoo6qce8d6" path="res://addons/common/start_xr.gd" id="2_0xm2m"]
+[ext_resource type="Material" uid="uid://d158fsief2mgl" path="res://reflective_grey_material.tres" id="3_h2yge"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_0xm2m"]
 top_radius = 0.05
@@ -32,6 +33,10 @@ ambient_light_source = 3
 radius = 0.1
 height = 0.2
 
+[sub_resource type="SphereMesh" id="SphereMesh_1bvp3"]
+radius = 0.25
+height = 0.5
+
 [node name="Main" type="Node3D"]
 script = ExtResource("1_ig7tw")
 
@@ -39,7 +44,8 @@ script = ExtResource("1_ig7tw")
 script = ExtResource("2_0xm2m")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 1.2260594, -1.3619673)
+unique_name_in_owner = true
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 1.22606, -1)
 sky_mode = 1
 
 [node name="DirectionalLightIndicator" type="Node3D" parent="DirectionalLight3D"]
@@ -61,7 +67,7 @@ environment = SubResource("Environment_tep2q")
 
 [node name="OpenXRAndroidLightEstimation" type="OpenXRAndroidLightEstimation" parent="." node_paths=PackedStringArray("directional_light")]
 directional_light = NodePath("../DirectionalLight3D")
-update_frequency = 0.011
+set_directional_light_mode = 2
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
 
@@ -72,6 +78,7 @@ tracker = &"left_hand"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/LeftController"]
 mesh = SubResource("SphereMesh_h2yge")
+surface_material_override/0 = ExtResource("3_h2yge")
 
 [node name="RightController" type="XRController3D" parent="XROrigin3D"]
 tracker = &"right_hand"
@@ -79,8 +86,35 @@ tracker = &"right_hand"
 [node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightController"]
 mesh = SubResource("SphereMesh_h2yge")
 skeleton = NodePath("../../LeftController")
+surface_material_override/0 = ExtResource("3_h2yge")
 
 [node name="Timer" type="Timer" parent="."]
 autostart = true
+
+[node name="Node3D" type="Node3D" parent="."]
+
+[node name="Sphere1" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, -2)
+mesh = SubResource("SphereMesh_1bvp3")
+skeleton = NodePath("../..")
+surface_material_override/0 = ExtResource("3_h2yge")
+
+[node name="Sphere2" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, -2)
+mesh = SubResource("SphereMesh_1bvp3")
+skeleton = NodePath("../..")
+surface_material_override/0 = ExtResource("3_h2yge")
+
+[node name="Sphere3" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1, 2)
+mesh = SubResource("SphereMesh_1bvp3")
+skeleton = NodePath("../..")
+surface_material_override/0 = ExtResource("3_h2yge")
+
+[node name="Sphere4" type="MeshInstance3D" parent="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 1, 2)
+mesh = SubResource("SphereMesh_1bvp3")
+skeleton = NodePath("../..")
+surface_material_override/0 = ExtResource("3_h2yge")
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

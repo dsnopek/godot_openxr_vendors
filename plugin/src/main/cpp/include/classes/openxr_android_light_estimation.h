@@ -50,6 +50,18 @@ protected:
 	void _notification(int p_what);
 
 public:
+	enum DirectionalLightMode {
+		DIRECTIONAL_LIGHT_MODE_DIRECTION_ONLY,
+		DIRECTIONAL_LIGHT_MODE_DIRECTION_INTENSITY,
+		DIRECTIONAL_LIGHT_MODE_DIRECTION_COLOR_INTENSITY,
+	};
+
+	enum AmbientLightMode {
+		AMBIENT_LIGHT_MODE_COLOR,
+		AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS,
+		AMBIENT_LIGHT_MODE_CUBEMAP,
+	};
+
 	enum SphericalHarmonicsDegree {
 		SPHERICAL_HARMONICS_DEGREE_L0,
 		SPHERICAL_HARMONICS_DEGREE_L1,
@@ -60,11 +72,14 @@ public:
 	void set_directional_light(DirectionalLight3D *p_directional_light);
 	DirectionalLight3D *get_directional_light() const;
 
+	void set_directional_light_mode(DirectionalLightMode p_directional_light_mode);
+	DirectionalLightMode get_directional_light_mode() const;
+
 	void set_world_environment(WorldEnvironment *p_world_environment);
 	WorldEnvironment *get_world_environment() const;
 
-	void set_directional_light_color(const Color &p_color);
-	Color get_directional_light_color() const;
+	void set_ambient_light_mode(AmbientLightMode p_ambient_light_mode);
+	AmbientLightMode get_ambient_light_mode() const;
 
 	void set_spherical_harmonics_degree(SphericalHarmonicsDegree p_sh_degree);
 	SphericalHarmonicsDegree get_spherical_harmonics_degree() const;
@@ -74,7 +89,8 @@ private:
 	ObjectID world_environment_id;
 	int64_t last_update_time = 0;
 
-	Color directional_light_color = Color(1.0, 1.0, 1.0, 1.0);
+	DirectionalLightMode directional_light_mode = DIRECTIONAL_LIGHT_MODE_DIRECTION_ONLY;
+	AmbientLightMode ambient_light_mode = AMBIENT_LIGHT_MODE_COLOR;
 
 	SphericalHarmonicsDegree sh_degree = SPHERICAL_HARMONICS_DEGREE_L1;
 
@@ -91,4 +107,6 @@ private:
 	Ref<Shader> get_shader(SphericalHarmonicsDegree p_sh_degree);
 };
 
+VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::DirectionalLightMode);
+VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::AmbientLightMode);
 VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::SphericalHarmonicsDegree);

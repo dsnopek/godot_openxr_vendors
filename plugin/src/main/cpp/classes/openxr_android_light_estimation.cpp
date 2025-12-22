@@ -116,17 +116,31 @@ void OpenXRAndroidLightEstimation::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_directional_light", "directional_light"), &OpenXRAndroidLightEstimation::set_directional_light);
 	ClassDB::bind_method(D_METHOD("get_directional_light"), &OpenXRAndroidLightEstimation::get_directional_light);
 
+	ClassDB::bind_method(D_METHOD("set_directional_light_mode", "mode"), &OpenXRAndroidLightEstimation::set_directional_light_mode);
+	ClassDB::bind_method(D_METHOD("get_directional_light_mode"), &OpenXRAndroidLightEstimation::get_directional_light_mode);
+
 	ClassDB::bind_method(D_METHOD("set_world_environment", "world_environment"), &OpenXRAndroidLightEstimation::set_world_environment);
 	ClassDB::bind_method(D_METHOD("get_world_environment"), &OpenXRAndroidLightEstimation::get_world_environment);
+
+	ClassDB::bind_method(D_METHOD("set_ambient_light_mode", "mode"), &OpenXRAndroidLightEstimation::set_ambient_light_mode);
+	ClassDB::bind_method(D_METHOD("get_ambient_light_mode"), &OpenXRAndroidLightEstimation::get_ambient_light_mode);
 
 	ClassDB::bind_method(D_METHOD("set_spherical_harmonics_degree", "degree"), &OpenXRAndroidLightEstimation::set_spherical_harmonics_degree);
 	ClassDB::bind_method(D_METHOD("get_spherical_harmonics_degree"), &OpenXRAndroidLightEstimation::get_spherical_harmonics_degree);
 
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "directional_light", PROPERTY_HINT_NODE_TYPE, "DirectionalLight3D"), "set_directional_light", "get_directional_light");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "directional_light_mode", PROPERTY_HINT_ENUM, "Direction Only,Direction + Intensity,Direction + Color + Intensity"), "set_directional_light_mode", "get_directional_light_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world_environment", PROPERTY_HINT_NODE_TYPE, "WorldEnvironment"), "set_world_environment", "get_world_environment");
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "update_frequency", PROPERTY_HINT_RANGE, "0.001,4096,0.001,or_greater,exp,suffix:s"), "set_update_frequency", "get_update_frequency");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "spherical_harmonics_type", PROPERTY_HINT_ENUM, "Ambient,Total"), "set_spherical_harmonics_type", "get_spherical_harmonics_type");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "ambient_light_mode", PROPERTY_HINT_ENUM, "Color,Spherical Harmonics,Cubemap"), "set_ambient_light_mode", "get_ambient_light_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "spherical_harmonics_degree", PROPERTY_HINT_ENUM, "L0,L1,L2"), "set_spherical_harmonics_degree", "get_spherical_harmonics_degree");
+
+	BIND_ENUM_CONSTANT(DIRECTIONAL_LIGHT_MODE_DIRECTION_ONLY);
+	BIND_ENUM_CONSTANT(DIRECTIONAL_LIGHT_MODE_DIRECTION_INTENSITY);
+	BIND_ENUM_CONSTANT(DIRECTIONAL_LIGHT_MODE_DIRECTION_COLOR_INTENSITY);
+
+	BIND_ENUM_CONSTANT(AMBIENT_LIGHT_MODE_COLOR);
+	BIND_ENUM_CONSTANT(AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS);
+	BIND_ENUM_CONSTANT(AMBIENT_LIGHT_MODE_CUBEMAP);
 
 	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L0);
 	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L1);
@@ -185,6 +199,14 @@ DirectionalLight3D *OpenXRAndroidLightEstimation::get_directional_light() const 
 	return Object::cast_to<DirectionalLight3D>(ObjectDB::get_instance(directional_light_id));
 }
 
+void OpenXRAndroidLightEstimation::set_directional_light_mode(DirectionalLightMode p_directional_light_mode) {
+	directional_light_mode = p_directional_light_mode;
+}
+
+OpenXRAndroidLightEstimation::DirectionalLightMode OpenXRAndroidLightEstimation::get_directional_light_mode() const {
+	return directional_light_mode;
+}
+
 void OpenXRAndroidLightEstimation::set_world_environment(WorldEnvironment *p_world_environment) {
 	reset_sky();
 	if (p_world_environment) {
@@ -201,12 +223,12 @@ WorldEnvironment *OpenXRAndroidLightEstimation::get_world_environment() const {
 	return Object::cast_to<WorldEnvironment>(ObjectDB::get_instance(world_environment_id));
 }
 
-void OpenXRAndroidLightEstimation::set_directional_light_color(const Color &p_color) {
-	directional_light_color = p_color;
+void OpenXRAndroidLightEstimation::set_ambient_light_mode(AmbientLightMode p_ambient_light_mode) {
+	ambient_light_mode = p_ambient_light_mode;
 }
 
-Color OpenXRAndroidLightEstimation::get_directional_light_color() const {
-	return directional_light_color;
+OpenXRAndroidLightEstimation::AmbientLightMode OpenXRAndroidLightEstimation::get_ambient_light_mode() const {
+	return ambient_light_mode;
 }
 
 void OpenXRAndroidLightEstimation::set_spherical_harmonics_degree(SphericalHarmonicsDegree p_sh_degree) {
@@ -278,16 +300,20 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 	last_update_time = estimate_time;
 
 	DirectionalLight3D *direction_light = get_directional_light();
-
 	if (direction_light && light_estimation_extension->is_directional_light_valid()) {
 		Basis light_basis = Basis::looking_at(-light_estimation_extension->get_directional_light_direction()) * xr_server->get_world_origin().basis;
 		direction_light->set_global_basis(light_basis);
 
-		Color intensity = light_estimation_extension->get_directional_light_intensity();
-		float luminance = (0.2126 * intensity.r) + (0.7152 * intensity.g) + (0.0722 * intensity.b);
-		Color color = intensity / Math::max(luminance, 0.000001f);
-		direction_light->set_color(color);
-		direction_light->set_param(Light3D::PARAM_ENERGY, luminance);
+		if (directional_light_mode >= DIRECTIONAL_LIGHT_MODE_DIRECTION_INTENSITY) {
+			Color intensity = light_estimation_extension->get_directional_light_intensity();
+			float luminance = (0.2126 * intensity.r) + (0.7152 * intensity.g) + (0.0722 * intensity.b);
+			direction_light->set_param(Light3D::PARAM_ENERGY, luminance);
+
+			if (directional_light_mode >= DIRECTIONAL_LIGHT_MODE_DIRECTION_COLOR_INTENSITY) {
+				Color color = intensity / Math::max(luminance, 0.000001f);
+				direction_light->set_color(color);
+			}
+		}
 	}
 
 	WorldEnvironment *world_environment = get_world_environment();
@@ -297,23 +323,27 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 	}
 
 	if (env.is_valid() && light_estimation_extension->is_spherical_harmonics_ambient_valid()) {
-		PackedVector3Array coefficients = light_estimation_extension->get_spherical_harmonics_ambient_coefficients();
-		if (sky_material.is_null()) {
-			sky_material.instantiate();
-			sky->set_material(sky_material);
-		}
-		Ref<Shader> cur_shader = get_shader(sh_degree);
-		if (sky_material->get_shader() != cur_shader) {
-			sky_material->set_shader(cur_shader);
-		}
-		sky_material->set_shader_parameter("coefficients", coefficients);
-		sky_material->set_shader_parameter("rotation", xr_server->get_world_origin().basis);
-		if (env->get_sky() != sky) {
-			if (old_sky.is_null()) {
-				old_sky = env->get_sky();
+		// @todo Handle raw ambient light color and intensity
+
+		if (ambient_light_mode >= AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS) {
+			PackedVector3Array coefficients = light_estimation_extension->get_spherical_harmonics_ambient_coefficients();
+			if (sky_material.is_null()) {
+				sky_material.instantiate();
+				sky->set_material(sky_material);
 			}
-			env->set_sky(sky);
-			env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
+			Ref<Shader> cur_shader = get_shader(sh_degree);
+			if (sky_material->get_shader() != cur_shader) {
+				sky_material->set_shader(cur_shader);
+			}
+			sky_material->set_shader_parameter("coefficients", coefficients);
+			sky_material->set_shader_parameter("rotation", xr_server->get_world_origin().basis);
+			if (env->get_sky() != sky) {
+				if (old_sky.is_null()) {
+					old_sky = env->get_sky();
+				}
+				env->set_sky(sky);
+				env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
+			}
 		}
 	}
 }

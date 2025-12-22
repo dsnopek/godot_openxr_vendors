@@ -10,6 +10,8 @@ func _ready() -> void:
 	openxr_interface = XRServer.find_interface("OpenXR")
 	openxr_interface.session_begun.connect(_on_openxr_session_begun)
 
+	OpenXRAndroidLightEstimationExtensionWrapper.light_estimate_types = OpenXRAndroidLightEstimationExtensionWrapper.LIGHT_ESTIMATE_TYPE_ALL
+
 #	var sh := PackedVector3Array()
 #	sh.resize(9)
 #
@@ -34,12 +36,18 @@ func _on_request_permissions_result(p_permission: String, p_granted: bool) -> vo
 		start_light_estimation()
 
 
+func _process(_delta: float) -> void:
+	var directional_light_color = %DirectionalLight3D.light_color
+	for child in %DirectionalLightIndicator.get_children():
+		var material: StandardMaterial3D = child.get_surface_override_material(0)
+		material.albedo_color = directional_light_color
+
+
 func _on_timer_timeout() -> void:
-	var ale := OpenXRAndroidLightEstimationExtensionWrapper
+
+	var ale = OpenXRAndroidLightEstimationExtensionWrapper
 	if ale.is_light_estimation_started():
-		var ret := ale.update_light_estimate(ale.LIGHT_ESTIMATE_TYPE_ALL);
 		print("---------------------------------------------------------------------------")
-		print("update_light_estimate: ", ret)
 		print("is_estimate_valid: ", ale.is_estimate_valid())
 		print("get_last_updated_time: ", ale.get_last_updated_time())
 		print("is_directional_light_valid: ", ale.is_directional_light_valid())
@@ -52,11 +60,6 @@ func _on_timer_timeout() -> void:
 		print("get_spherical_harmonics_ambient_coefficients: ", ale.get_spherical_harmonics_ambient_coefficients())
 		print("is_spherical_harmonics_total_valid: ", ale.is_spherical_harmonics_total_valid())
 		print("get_spherical_harmonics_total_coefficients: ", ale.get_spherical_harmonics_total_coefficients())
-
-		if ale.is_directional_light_valid():
-			for child in %DirectionalLightIndicator.get_children():
-				var material: StandardMaterial3D = child.get_surface_override_material(0)
-				material.albedo_color = ale.get_directional_light_intensity()
 
 		#if ale.is_spherical_harmonics_ambient_valid():
 		#	$WorldEnvironment.environment.sky.sky_material.set_shader_parameter("coefficients", ale.get_spherical_harmonics_ambient_coefficients())
