@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://cn2xal02mbeq4"]
+
+[ext_resource type="Shader" uid="uid://ca70mf81shkp0" path="res://test_sky_material.gdshader" id="1_71bdy"]
+
+[resource]
+shader = ExtResource("1_71bdy")
+shader_parameter/coefficients = PackedVector3Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/rotation = Basis(1, 0, 0, 0, 1, 0, 0, 0, 1)

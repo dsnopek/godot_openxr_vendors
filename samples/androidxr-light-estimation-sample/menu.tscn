@@ -111,6 +111,12 @@ toggle_mode = true
 button_group = SubResource("ButtonGroup_ouk20")
 text = "Custom Shader"
 
+[node name="AmbientLightTestSkyShaderButton" type="Button" parent="MarginContainer/GridContainer/AmbientLightContainer"]
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_ouk20")
+text = "Test Sky Shader"
+
 [node name="SphericalHarmonicsLabel" type="Label" parent="MarginContainer/GridContainer"]
 layout_mode = 2
 size_flags_vertical = 1

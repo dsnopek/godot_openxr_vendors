@@ -2,6 +2,8 @@ extends Node3D
 
 const REFLECTIVE_GREY_MATERIAL = preload("res://reflective_grey_material.tres")
 const CUSTOM_AMBIENT_MATERIAL = preload("res://custom_ambient_material.tres")
+const TEST_SKY_MATERIAL = preload("res://test_sky_material.tres")
+const TEST_SKY = preload("res://test_sky.tres")
 
 @onready var directional_light: DirectionalLight3D = $DirectionalLight3D
 @onready var directional_light_orig_transform = directional_light.transform
@@ -71,6 +73,13 @@ func _on_ambient_light_mode_changed(p_mode: int) -> void:
 		# Our "custom" mode.
 		$OpenXRAndroidLightEstimation.ambient_light_mode = OpenXRAndroidLightEstimation.AMBIENT_LIGHT_MODE_DISABLED
 		get_tree().set_group("test_sphere", "surface_material_override/0", CUSTOM_AMBIENT_MATERIAL)
+	elif p_mode == 4:
+		# Secret test mode.
+		$OpenXRAndroidLightEstimation.ambient_light_mode = OpenXRAndroidLightEstimation.AMBIENT_LIGHT_MODE_DISABLED
+		get_tree().set_group("test_sphere", "surface_material_override/0", REFLECTIVE_GREY_MATERIAL)
+
+		environment.sky = TEST_SKY
+		environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 	else:
 		$OpenXRAndroidLightEstimation.ambient_light_mode = p_mode
 		get_tree().set_group("test_sphere", "surface_material_override/0", REFLECTIVE_GREY_MATERIAL)
@@ -80,6 +89,7 @@ func _on_spherical_harmonics_degree_changed(p_degree: int) -> void:
 	# Set on both the node and our custom shader.
 	$OpenXRAndroidLightEstimation.spherical_harmonics_degree = p_degree
 	CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("sh_l", p_degree)
+	TEST_SKY_MATERIAL.set_shader_parameter("sh_l", p_degree)
 
 
 func _process(_delta: float) -> void:
@@ -90,3 +100,6 @@ func _process(_delta: float) -> void:
 			last_material_update = next_update
 			CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("coefficients", ale.get_spherical_harmonics_ambient_coefficients())
 			CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("rotation", XRServer.world_origin.basis)
+
+			TEST_SKY_MATERIAL.set_shader_parameter("coefficients", ale.get_spherical_harmonics_ambient_coefficients())
+			TEST_SKY_MATERIAL.set_shader_parameter("rotation", XRServer.world_origin.basis)
