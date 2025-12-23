@@ -360,8 +360,8 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 					old_sky = env->get_sky();
 				}
 				env->set_sky(sky);
-				env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
 			}
+			env->set_ambient_source(Environment::AMBIENT_SOURCE_SKY);
 		}
 	}
 }

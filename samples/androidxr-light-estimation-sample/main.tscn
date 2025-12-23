@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://debi32dnmrjov"]
+[gd_scene load_steps=14 format=3 uid="uid://debi32dnmrjov"]
 
 [ext_resource type="Script" uid="uid://dpb5v8hdohlpc" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://bnjcoo6qce8d6" path="res://addons/common/start_xr.gd" id="2_0xm2m"]
@@ -22,15 +22,9 @@ top_radius = 0.1
 bottom_radius = 0.0
 height = 0.1
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
-
-[sub_resource type="Sky" id="Sky_h2yge"]
-sky_material = SubResource("ProceduralSkyMaterial_0xm2m")
-
 [sub_resource type="Environment" id="Environment_tep2q"]
 background_mode = 1
 background_color = Color(0, 0, 0, 0)
-sky = SubResource("Sky_h2yge")
 ambient_light_source = 3
 
 [sub_resource type="SphereMesh" id="SphereMesh_h2yge"]
@@ -103,8 +97,10 @@ surface_material_override/0 = ExtResource("3_h2yge")
 direction_threshold = 0.8
 
 [node name="Viewport2Din3D" parent="ViewPivot" instance=ExtResource("4_1bvp3")]
+unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3697349, -2.179494)
 scene = ExtResource("6_7mycd")
+viewport_size = Vector2i(1152, 648)
 pixel_size = 0.002
 
 [node name="TestSpheres" type="Node3D" parent="."]

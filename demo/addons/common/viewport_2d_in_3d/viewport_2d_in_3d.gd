@@ -11,21 +11,22 @@ const CURSOR_DISTANCE = 0.005
 const DOUBLE_CLICK_TIME = 400
 const DOUBLE_CLICK_DIST = 5.0
 
-## Signal called when the underlying quad mesh's size changes.[br]
-## Call [method get_size] to get the new size.
-signal resized
-
 ## The current [PackedScene] rendered by the quad.[br]
 ## The [PackedScene]'s root node must be a [Control] node.[br]
 ## Can be [code]null[/code].
 @export var scene: PackedScene:
 	set = set_scene
 
+
+## The viewport size in pixels.
+@export var viewport_size := Vector2i(512, 512):
+	set = set_viewport_size
+
 ## 1 pixel in 2D space is this size, in meters, in 3D space.[br]
 ## The default chosen here results in the best text rendering (though the font will need to be
 ## oversampled)[br]
 ## Example:[br]
-## a [code]200x300pixel[/code] scene in 2D, when [param pixel_size] is [code]0.0001[/code],
+## with a [code]viewport_size[/code] of 200 x 300 pixels when [param pixel_size] is [code]0.0001[/code],
 ## is 0.02x0.03meters in 3D space.
 @export var pixel_size := 0.0001:
 	set = set_pixel_size
@@ -60,10 +61,17 @@ func _ready():
 	# may be unexpected, and setters may not have been called (which happens for values not set in the
 	# inspector)
 	_try_to_add_scene_root_to_viewport()
-	set_pixel_size(pixel_size)
+	_update_sizes()
 	set_render_priority(render_priority)
 	set_no_depth_test(no_depth_test)
 	set_modulate_color(modulate_color)
+
+
+func _update_sizes() -> void:
+	if not _viewport or not _quad:
+		return
+	_viewport.size = viewport_size
+	_quad.mesh.size = _viewport.size * pixel_size
 
 
 ## Set a new 2D scene resource as the scene to render.[br]
@@ -77,7 +85,6 @@ func set_scene(new_scene: PackedScene):
 			return
 
 	if _scene_root != null:
-		_scene_root.resized.disconnect(set_pixel_size.bind(pixel_size))
 		_scene_root.queue_free()
 		_scene_root = null
 
@@ -85,7 +92,11 @@ func set_scene(new_scene: PackedScene):
 	_scene_root = new_scene_root
 
 	_try_to_add_scene_root_to_viewport()
-	set_pixel_size(pixel_size)
+
+
+func set_viewport_size(new_viewport_size: Vector2i) -> void:
+	viewport_size = new_viewport_size
+	_update_sizes()
 
 
 func set_pixel_size(new_pixel_size: float):
@@ -93,18 +104,13 @@ func set_pixel_size(new_pixel_size: float):
 		printerr("pixel size must be >= 0")
 		return
 
-	# always set the pixel size, and always attempt to set the size, since maybe
-	# _scene_root wasn't ready the first time set_pixel_size() was called during initialization
 	pixel_size = new_pixel_size
-
-	if is_inside_tree() && _scene_root != null:
-		_quad.mesh.size = _scene_root.size * pixel_size
-		resized.emit()
+	_update_sizes()
 
 
 func set_render_priority(new_render_priority: int):
 	render_priority = new_render_priority
-	if !is_inside_tree():
+	if not _quad:
 		return
 
 	_quad.mesh.material.render_priority = render_priority
@@ -112,7 +118,7 @@ func set_render_priority(new_render_priority: int):
 
 func set_no_depth_test(new_no_depth_test: bool):
 	no_depth_test = new_no_depth_test
-	if !is_inside_tree():
+	if not _quad:
 		return
 
 	_quad.mesh.material.no_depth_test = no_depth_test
@@ -120,7 +126,7 @@ func set_no_depth_test(new_no_depth_test: bool):
 
 func set_modulate_color(new_modulate_color: Color):
 	modulate_color = new_modulate_color
-	if !is_inside_tree():
+	if not _quad:
 		return
 
 	_quad.mesh.material.albedo_color = modulate_color
@@ -135,7 +141,9 @@ func get_scene_root() -> Control:
 ## Get the size of the 3D Quad, in meters, where [member Vector2.x]
 ## is the width and [member Vector2.y] is the height
 func get_size() -> Vector2:
-	return _quad.mesh.size if is_inside_tree() && _scene_root != null else Vector2.ZERO
+	if _quad:
+		return _quad.mesh.size
+	return Vector2.ZERO
 
 
 func _try_to_add_scene_root_to_viewport():
@@ -143,21 +151,6 @@ func _try_to_add_scene_root_to_viewport():
 		return
 
 	_viewport.add_child(_scene_root)
-	_viewport.size = _scene_root.size
-
-	# resize the mesh any time the root node resizes (so that the mesh grows/shrinks as needed)
-	_scene_root.resized.connect(_on_scene_root_resized)
-
-
-func _on_scene_root_resized():
-	# _scene_root should be non-null since _on_scene_root_resized is only called when we receive a
-	# signal from it
-	if _scene_root == null:
-		printerr("Unexpected; how did we get a signal from _scene_root when it is null?")
-		return
-
-	_viewport.size = _scene_root.size
-	set_pixel_size(pixel_size)
 
 
 func _intersect_to_global_pos(p_intersection: Vector2, p_distance: float = 0.0) -> Vector3:
