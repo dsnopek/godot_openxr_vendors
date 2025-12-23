@@ -1,8 +1,6 @@
-[gd_scene load_steps=6 format=3 uid="uid://x07cf480vboe"]
+[gd_scene load_steps=5 format=3 uid="uid://x07cf480vboe"]
 
 [ext_resource type="Script" uid="uid://ceeldg46vn411" path="res://menu.gd" id="1_lti8b"]
-
-[sub_resource type="ButtonGroup" id="ButtonGroup_vsb4k"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_lti8b"]
 
@@ -42,42 +40,8 @@ theme_override_constants/margin_bottom = 20
 
 [node name="GridContainer" type="GridContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/v_separation = 20
+theme_override_constants/v_separation = 30
 columns = 2
-
-[node name="ModeLabel" type="Label" parent="MarginContainer/GridContainer"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 1
-text = "The method to apply light estimation"
-autowrap_mode = 3
-
-[node name="ModeContainer" type="VBoxContainer" parent="MarginContainer/GridContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="ModeNodeButton" type="Button" parent="MarginContainer/GridContainer/ModeContainer"]
-layout_mode = 2
-toggle_mode = true
-button_pressed = true
-button_group = SubResource("ButtonGroup_vsb4k")
-text = "OpenXRAndrodLightEstimation Node"
-
-[node name="ModeShaderButton" type="Button" parent="MarginContainer/GridContainer/ModeContainer"]
-layout_mode = 2
-toggle_mode = true
-button_group = SubResource("ButtonGroup_vsb4k")
-text = "Custom Shader"
-
-[node name="NodeSettingsLabel" type="Label" parent="MarginContainer/GridContainer"]
-layout_mode = 2
-size_flags_vertical = 1
-text = "Node settings"
-
-[node name="Control" type="Control" parent="MarginContainer/GridContainer"]
-layout_mode = 2
 
 [node name="DirectionalLightLabel" type="Label" parent="MarginContainer/GridContainer"]
 layout_mode = 2
@@ -140,6 +104,12 @@ toggle_mode = true
 button_pressed = true
 button_group = SubResource("ButtonGroup_ouk20")
 text = "Spherical Harmonics"
+
+[node name="AmbientLightCustomShaderButton" type="Button" parent="MarginContainer/GridContainer/AmbientLightContainer"]
+layout_mode = 2
+toggle_mode = true
+button_group = SubResource("ButtonGroup_ouk20")
+text = "Custom Shader"
 
 [node name="SphericalHarmonicsLabel" type="Label" parent="MarginContainer/GridContainer"]
 layout_mode = 2
