@@ -17,9 +17,8 @@ const DOUBLE_CLICK_DIST = 5.0
 @export var scene: PackedScene:
 	set = set_scene
 
-
 ## The viewport size in pixels.
-@export var viewport_size := Vector2i(512, 512):
+@export var viewport_size := Vector2i(1152, 648):
 	set = set_viewport_size
 
 ## 1 pixel in 2D space is this size, in meters, in 3D space.[br]
@@ -68,10 +67,10 @@ func _ready():
 
 
 func _update_sizes() -> void:
-	if not _viewport or not _quad:
-		return
-	_viewport.size = viewport_size
-	_quad.mesh.size = _viewport.size * pixel_size
+	if _viewport and _viewport.size != viewport_size:
+		_viewport.size = viewport_size
+	if _quad:
+		_quad.mesh.size = viewport_size * pixel_size
 
 
 ## Set a new 2D scene resource as the scene to render.[br]

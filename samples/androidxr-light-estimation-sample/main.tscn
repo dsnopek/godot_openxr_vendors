@@ -25,7 +25,7 @@ height = 0.1
 [sub_resource type="Environment" id="Environment_tep2q"]
 background_mode = 1
 background_color = Color(0, 0, 0, 0)
-ambient_light_source = 3
+ambient_light_source = 1
 
 [sub_resource type="SphereMesh" id="SphereMesh_h2yge"]
 radius = 0.1
@@ -100,7 +100,6 @@ direction_threshold = 0.8
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3697349, -2.179494)
 scene = ExtResource("6_7mycd")
-viewport_size = Vector2i(1152, 648)
 pixel_size = 0.002
 
 [node name="TestSpheres" type="Node3D" parent="."]

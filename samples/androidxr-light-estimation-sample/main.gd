@@ -30,13 +30,6 @@ func _ready() -> void:
 	menu.ambient_light_mode_changed.connect(_on_ambient_light_mode_changed)
 	menu.spherical_harmonics_degree_changed.connect(_on_spherical_harmonics_degree_changed)
 
-#	var sh := PackedVector3Array()
-#	sh.resize(9)
-#
-#	var test_color := Color(0.2, 0.4, 0.9) / 0.2820947918
-#	sh[0] = Vector3(test_color.r, test_color.g, test_color.b)
-#	$WorldEnvironment.environment.sky.sky_material.set_shader_parameter("coefficients", sh)
-
 
 func _on_openxr_session_begun() -> void:
 	start_light_estimation()

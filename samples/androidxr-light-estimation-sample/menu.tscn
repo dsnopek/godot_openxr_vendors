@@ -97,13 +97,13 @@ text = "Disabled"
 [node name="DirectionLightDirectionButton" type="Button" parent="MarginContainer/GridContainer/DirectionalLightContainer"]
 layout_mode = 2
 toggle_mode = true
-button_pressed = true
 button_group = SubResource("ButtonGroup_lti8b")
 text = "Direction Only"
 
 [node name="DirectionLightDirectionIntensityButton" type="Button" parent="MarginContainer/GridContainer/DirectionalLightContainer"]
 layout_mode = 2
 toggle_mode = true
+button_pressed = true
 button_group = SubResource("ButtonGroup_lti8b")
 text = "Direction + Intensity"
 
@@ -159,12 +159,12 @@ text = "L0"
 [node name="SphericalHarmonicsL1Button" type="Button" parent="MarginContainer/GridContainer/SphericalHarmonicsContainer"]
 layout_mode = 2
 toggle_mode = true
-button_pressed = true
 button_group = SubResource("ButtonGroup_mae5d")
 text = "L1"
 
 [node name="SphericalHarmonicsL2Button" type="Button" parent="MarginContainer/GridContainer/SphericalHarmonicsContainer"]
 layout_mode = 2
 toggle_mode = true
+button_pressed = true
 button_group = SubResource("ButtonGroup_mae5d")
 text = "L2"
