@@ -41,7 +41,6 @@ directional_light = NodePath("../DirectionalLight3D")
 directional_light_mode = 2
 world_environment = NodePath("../WorldEnvironment")
 ambient_light_mode = 2
-spherical_harmonics_degree = 2
 
 [node name="XROrigin3D" type="XROrigin3D" parent="."]
 
@@ -73,7 +72,7 @@ direction_threshold = 0.8
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3697349, -2.179494)
 scene = ExtResource("6_7mycd")
-viewport_size = Vector2i(512, 512)
+viewport_size = Vector2i(512, 360)
 pixel_size = 0.002
 
 [node name="TestSpheres" type="Node3D" parent="."]
