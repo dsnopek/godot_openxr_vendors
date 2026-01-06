@@ -30,6 +30,7 @@
 #include "classes/openxr_android_light_estimation.h"
 
 #include <godot_cpp/classes/directional_light3d.hpp>
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/environment.hpp>
 #include <godot_cpp/classes/open_xr_interface.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
@@ -158,7 +159,9 @@ void OpenXRAndroidLightEstimation::_notification(int p_what) {
 		case NOTIFICATION_VISIBILITY_CHANGED:
 		case NOTIFICATION_ENTER_TREE:
 		case NOTIFICATION_EXIT_TREE: {
-			start_or_stop();
+			if (!Engine::get_singleton()->is_editor_hint()) {
+				start_or_stop();
+			}
 		} break;
 
 		case NOTIFICATION_INTERNAL_PROCESS: {
