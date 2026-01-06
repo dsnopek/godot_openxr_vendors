@@ -17,6 +17,19 @@ const CUSTOM_AMBIENT_MATERIAL = preload("res://custom_ambient_material.tres")
 var openxr_interface: OpenXRInterface
 var last_material_update := 0
 
+# Lifted from ARCore's hello_ar_kotlin sample.
+# See: https://github.com/google-ar/arcore-android-sdk/blob/52c722e43cd8ce546eea5dc4587e70e0c7f2c006/samples/hello_ar_kotlin/app/src/main/java/com/google/ar/core/examples/kotlin/helloar/HelloArRenderer.kt#L60
+const SH_FACTORS = [
+	0.282095,
+	-0.325735,
+	0.325735,
+	-0.325735,
+	0.273137,
+	-0.273137,
+	0.078848,
+	-0.273137,
+	0.136569,
+]
 
 func _ready() -> void:
 	get_tree().on_request_permissions_result.connect(_on_request_permissions_result)
@@ -59,6 +72,9 @@ func _on_directional_light_mode_changed(p_mode: int) -> void:
 	# Then change the mode.
 	$OpenXRAndroidLightEstimation.directional_light_mode = p_mode
 
+	# Goes as far as disabling the directional light if we're not using it.
+	%DirectionalLight3D.visible = (p_mode != OpenXRAndroidLightEstimation.DIRECTIONAL_LIGHT_MODE_DISABLED)
+
 
 func _on_ambient_light_mode_changed(p_mode: int) -> void:
 	# Reset the original values.
@@ -86,7 +102,12 @@ func _process(_delta: float) -> void:
 	var ale = OpenXRAndroidLightEstimationExtensionWrapper
 	if ale.is_light_estimation_started():
 		var next_update = ale.get_last_updated_time()
-		if next_update > last_material_update and ale.is_spherical_harmonics_ambient_valid():
+		if next_update > last_material_update and ale.is_spherical_harmonics_total_valid():
 			last_material_update = next_update
-			CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("coefficients", ale.get_spherical_harmonics_ambient_coefficients())
+
+			var coefficients = ale.get_spherical_harmonics_total_coefficients()
+			for i in range(9):
+				coefficients[i] = coefficients[i] * SH_FACTORS[i]
+
+			CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("coefficients", coefficients)
 			CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("rotation", XRServer.world_origin.basis)
