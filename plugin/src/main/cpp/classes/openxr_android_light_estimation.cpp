@@ -321,8 +321,9 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 			Color intensity = light_estimation_extension->get_directional_light_intensity();
 
 			if (directional_light_mode == DIRECTIONAL_LIGHT_MODE_DIRECTION_COLOR_INTENSITY) {
+				// The color is premultiplied with intensity.
+				direction_light->set_color(intensity.linear_to_srgb());
 				direction_light->set_param(Light3D::PARAM_ENERGY, 1.0);
-				direction_light->set_color(intensity);
 			} else {
 				float luminance = (0.2126 * intensity.r) + (0.7152 * intensity.g) + (0.0722 * intensity.b);
 				direction_light->set_param(Light3D::PARAM_ENERGY, luminance);
@@ -338,12 +339,10 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 
 	if (env.is_valid() && ambient_light_mode != AMBIENT_LIGHT_MODE_DISABLED) {
 		if (ambient_light_mode == AMBIENT_LIGHT_MODE_COLOR && light_estimation_extension->is_ambient_light_valid()) {
-			Color intensity = light_estimation_extension->get_directional_light_intensity();
-			float luminance = (0.2126 * intensity.r) + (0.7152 * intensity.g) + (0.0722 * intensity.b);
-			Color color = intensity / Math::max(luminance, 0.000001f);
-
-			env->set_ambient_light_color(color);
-			env->set_ambient_light_energy(luminance);
+			// The color is premultiplied with intensity.
+			Color intensity = light_estimation_extension->get_ambient_light_intensity();
+			env->set_ambient_light_color(intensity.linear_to_srgb());
+			env->set_ambient_light_energy(1.0);
 			env->set_ambient_source(Environment::AMBIENT_SOURCE_COLOR);
 		} else if (ambient_light_mode == AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS && light_estimation_extension->is_spherical_harmonics_ambient_valid()) {
 			PackedVector3Array coefficients = light_estimation_extension->get_spherical_harmonics_ambient_coefficients();
