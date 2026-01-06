@@ -319,12 +319,13 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 
 		if (directional_light_mode >= DIRECTIONAL_LIGHT_MODE_DIRECTION_INTENSITY) {
 			Color intensity = light_estimation_extension->get_directional_light_intensity();
-			float luminance = (0.2126 * intensity.r) + (0.7152 * intensity.g) + (0.0722 * intensity.b);
-			direction_light->set_param(Light3D::PARAM_ENERGY, luminance);
 
-			if (directional_light_mode >= DIRECTIONAL_LIGHT_MODE_DIRECTION_COLOR_INTENSITY) {
-				Color color = intensity / Math::max(luminance, 0.000001f);
-				direction_light->set_color(color);
+			if (directional_light_mode == DIRECTIONAL_LIGHT_MODE_DIRECTION_COLOR_INTENSITY) {
+				direction_light->set_param(Light3D::PARAM_ENERGY, 1.0);
+				direction_light->set_color(intensity);
+			} else {
+				float luminance = (0.2126 * intensity.r) + (0.7152 * intensity.g) + (0.0722 * intensity.b);
+				direction_light->set_param(Light3D::PARAM_ENERGY, luminance);
 			}
 		}
 	}
