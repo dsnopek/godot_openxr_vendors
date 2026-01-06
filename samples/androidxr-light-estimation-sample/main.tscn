@@ -12,6 +12,7 @@
 background_mode = 1
 background_color = Color(0, 0, 0, 0)
 ambient_light_source = 1
+reflected_light_source = 1
 
 [sub_resource type="SphereMesh" id="SphereMesh_h2yge"]
 radius = 0.1

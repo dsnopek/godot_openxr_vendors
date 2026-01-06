@@ -1,4 +1,5 @@
 shader_type spatial;
+render_mode ambient_light_disabled;
 
 uniform vec3 albedo : source_color = vec3(0.0, 0.0, 0.0);
 uniform vec3 coefficients[9];
