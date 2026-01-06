@@ -3,7 +3,8 @@ shader_type spatial;
 uniform vec3 albedo : source_color = vec3(0.0, 0.0, 0.0);
 uniform vec3 coefficients[9];
 uniform mat3 rotation;
-uniform int sh_l = 2;
+// @todo Remove if we remove from the built-in shader.
+//uniform int sh_l = 2;
 
 // Lifted from ARCore's hello_ar_kotlin sample.
 // See: https://github.com/google-ar/arcore-android-sdk/blob/52c722e43cd8ce546eea5dc4587e70e0c7f2c006/samples/hello_ar_kotlin/app/src/main/assets/shaders/environmental_hdr.frag#L132

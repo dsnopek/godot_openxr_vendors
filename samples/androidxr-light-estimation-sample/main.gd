@@ -95,7 +95,8 @@ func _on_ambient_light_mode_changed(p_mode: int) -> void:
 func _on_spherical_harmonics_degree_changed(p_degree: int) -> void:
 	# Set on both the node and our custom shader.
 	$OpenXRAndroidLightEstimation.spherical_harmonics_degree = p_degree
-	CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("sh_l", p_degree)
+	# @todo Remove if we remove from the built-in shader.
+	#CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("sh_l", p_degree)
 
 
 func _process(_delta: float) -> void:
