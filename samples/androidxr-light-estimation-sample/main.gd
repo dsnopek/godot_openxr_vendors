@@ -44,7 +44,6 @@ func _ready() -> void:
 	var menu: Control = %Viewport2Din3D.get_scene_root()
 	menu.directional_light_mode_changed.connect(_on_directional_light_mode_changed)
 	menu.ambient_light_mode_changed.connect(_on_ambient_light_mode_changed)
-	menu.spherical_harmonics_degree_changed.connect(_on_spherical_harmonics_degree_changed)
 
 
 func _on_openxr_session_begun() -> void:
@@ -90,13 +89,6 @@ func _on_ambient_light_mode_changed(p_mode: int) -> void:
 	else:
 		$OpenXRAndroidLightEstimation.ambient_light_mode = p_mode
 		get_tree().set_group("test_sphere", "surface_material_override/0", REFLECTIVE_GREY_MATERIAL)
-
-
-func _on_spherical_harmonics_degree_changed(p_degree: int) -> void:
-	# Set on both the node and our custom shader.
-	$OpenXRAndroidLightEstimation.spherical_harmonics_degree = p_degree
-	# @todo Remove if we remove from the built-in shader.
-	#CUSTOM_AMBIENT_MATERIAL.set_shader_parameter("sh_l", p_degree)
 
 
 func _process(_delta: float) -> void:

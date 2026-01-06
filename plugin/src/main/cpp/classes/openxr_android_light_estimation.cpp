@@ -43,6 +43,20 @@
 
 using namespace godot;
 
+// Lifted from ARCore's hello_ar_kotlin sample.
+// See: https://github.com/google-ar/arcore-android-sdk/blob/52c722e43cd8ce546eea5dc4587e70e0c7f2c006/samples/hello_ar_kotlin/app/src/main/java/com/google/ar/core/examples/kotlin/helloar/HelloArRenderer.kt#L60
+static constexpr float ANDROID_LIGHT_ESTIMATION_SH_FACTORS[9] = {
+	0.282095,
+	-0.325735,
+	0.325735,
+	-0.325735,
+	0.273137,
+	-0.273137,
+	0.078848,
+	-0.273137,
+	0.136569,
+};
+
 static const char *ANDROID_LIGHT_ESTIMATION_SHADER = R"(
 shader_type sky;
 render_mode use_debanding;
@@ -50,44 +64,19 @@ render_mode use_debanding;
 uniform vec3 coefficients[9];
 uniform mat3 rotation;
 
-//DEFINES
-
+// Lifted from ARCore's hello_ar_kotlin sample.
+// See: https://github.com/google-ar/arcore-android-sdk/blob/52c722e43cd8ce546eea5dc4587e70e0c7f2c006/samples/hello_ar_kotlin/app/src/main/assets/shaders/environmental_hdr.frag#L132
 vec3 applySH(vec3 dir, vec3 sh[9]) {
-	float x = dir.x;
-	float y = dir.y;
-	float z = dir.z;
-
-	// SH basis constants.
-	const float c0 = 0.2820947918;  // 1/(2*sqrt(pi))
-	const float c1 = 0.4886025119;  // sqrt(3)/(2*sqrt(pi))
-	const float c2 = 1.0925484306;  // sqrt(15)/(2*sqrt(pi))
-	const float c3 = 0.3153915653;  // sqrt(5)/(4*sqrt(pi))
-	const float c4 = 0.5462742153;  // sqrt(15)/(4*sqrt(pi))
-
-	vec3 result = vec3(0.0);
-
-	// L0
-#if SH_L >= 0
-	result += sh[0] * c0;
-#endif
-
-	// L1
-#if SH_L >= 1
-	result += sh[1] * (c1 * y);
-	result += sh[2] * (c1 * z);
-	result += sh[3] * (c1 * x);
-#endif
-
-	// L2
-#if SH_L >= 2
-	result += sh[4] * (c2 * x * y);
-	result += sh[5] * (c2 * y * z);
-	result += sh[6] * (c3 * (3.0 * z * z - 1.0));
-	result += sh[7] * (c2 * x * z);
-	result += sh[8] * (c4 * (x * x - y * y));
-#endif
-
-	return result;
+	vec3 radiance = sh[0] +
+					sh[1] * (dir.y) +
+					sh[2] * (dir.z) +
+					sh[3] * (dir.x) +
+					sh[4] * (dir.y * dir.x) +
+					sh[5] * (dir.y * dir.z) +
+					sh[6] * (3.0 * dir.z * dir.z - 1.0) +
+					sh[7] * (dir.z * dir.x) +
+					sh[8] * (dir.x * dir.x - dir.y * dir.y);
+	return max(radiance, 0.0);
 }
 
 vec3 linear_to_srgb(vec3 color) {
@@ -98,7 +87,7 @@ vec3 linear_to_srgb(vec3 color) {
 void sky() {
 	if (AT_CUBEMAP_PASS) {
 		vec3 dir = rotation * EYEDIR;
-		vec3 color = applySH(dir, coefficients);
+		vec3 color = applySH(-dir, coefficients);
 		color = max(color, vec3(0.0));
 #if CURRENT_RENDERER == RENDERER_COMPATIBILITY
 		COLOR = linear_to_srgb(color);
@@ -125,14 +114,10 @@ void OpenXRAndroidLightEstimation::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_ambient_light_mode", "mode"), &OpenXRAndroidLightEstimation::set_ambient_light_mode);
 	ClassDB::bind_method(D_METHOD("get_ambient_light_mode"), &OpenXRAndroidLightEstimation::get_ambient_light_mode);
 
-	ClassDB::bind_method(D_METHOD("set_spherical_harmonics_degree", "degree"), &OpenXRAndroidLightEstimation::set_spherical_harmonics_degree);
-	ClassDB::bind_method(D_METHOD("get_spherical_harmonics_degree"), &OpenXRAndroidLightEstimation::get_spherical_harmonics_degree);
-
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "directional_light", PROPERTY_HINT_NODE_TYPE, "DirectionalLight3D"), "set_directional_light", "get_directional_light");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "directional_light_mode", PROPERTY_HINT_ENUM, "Disabled,Direction Only,Direction + Intensity,Direction + Color + Intensity"), "set_directional_light_mode", "get_directional_light_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "world_environment", PROPERTY_HINT_NODE_TYPE, "WorldEnvironment"), "set_world_environment", "get_world_environment");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "ambient_light_mode", PROPERTY_HINT_ENUM, "Disabled,Color,Spherical Harmonics"), "set_ambient_light_mode", "get_ambient_light_mode");
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "spherical_harmonics_degree", PROPERTY_HINT_ENUM, "L0,L1,L2"), "set_spherical_harmonics_degree", "get_spherical_harmonics_degree");
 
 	BIND_ENUM_CONSTANT(DIRECTIONAL_LIGHT_MODE_DISABLED);
 	BIND_ENUM_CONSTANT(DIRECTIONAL_LIGHT_MODE_DIRECTION_ONLY);
@@ -143,10 +128,6 @@ void OpenXRAndroidLightEstimation::_bind_methods() {
 	BIND_ENUM_CONSTANT(AMBIENT_LIGHT_MODE_COLOR);
 	BIND_ENUM_CONSTANT(AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS);
 	//BIND_ENUM_CONSTANT(AMBIENT_LIGHT_MODE_CUBEMAP);
-
-	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L0);
-	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L1);
-	BIND_ENUM_CONSTANT(SPHERICAL_HARMONICS_DEGREE_L2);
 }
 
 void OpenXRAndroidLightEstimation::_notification(int p_what) {
@@ -239,15 +220,6 @@ OpenXRAndroidLightEstimation::AmbientLightMode OpenXRAndroidLightEstimation::get
 	return ambient_light_mode;
 }
 
-void OpenXRAndroidLightEstimation::set_spherical_harmonics_degree(SphericalHarmonicsDegree p_sh_degree) {
-	ERR_FAIL_INDEX(p_sh_degree, SPHERICAL_HARMONICS_DEGREE_MAX);
-	sh_degree = p_sh_degree;
-}
-
-OpenXRAndroidLightEstimation::SphericalHarmonicsDegree OpenXRAndroidLightEstimation::get_spherical_harmonics_degree() const {
-	return sh_degree;
-}
-
 void OpenXRAndroidLightEstimation::start_or_stop() {
 	OpenXRAndroidLightEstimationExtensionWrapper *light_estimation_extension = OpenXRAndroidLightEstimationExtensionWrapper::get_singleton();
 	ERR_FAIL_NULL(light_estimation_extension);
@@ -288,7 +260,7 @@ void OpenXRAndroidLightEstimation::configure_light_estimate_types() {
 		if (ambient_light_mode == AMBIENT_LIGHT_MODE_COLOR) {
 			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_AMBIENT);
 		} else if (ambient_light_mode == AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS) {
-			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_AMBIENT);
+			estimate_types.set_flag(OpenXRAndroidLightEstimationExtensionWrapper::LIGHT_ESTIMATE_TYPE_SPHERICAL_HARMONICS_TOTAL);
 		}
 	}
 
@@ -344,16 +316,23 @@ void OpenXRAndroidLightEstimation::update_light_estimate() {
 			env->set_ambient_light_color(intensity.linear_to_srgb());
 			env->set_ambient_light_energy(1.0);
 			env->set_ambient_source(Environment::AMBIENT_SOURCE_COLOR);
-		} else if (ambient_light_mode == AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS && light_estimation_extension->is_spherical_harmonics_ambient_valid()) {
-			PackedVector3Array coefficients = light_estimation_extension->get_spherical_harmonics_ambient_coefficients();
+		} else if (ambient_light_mode == AMBIENT_LIGHT_MODE_SPHERICAL_HARMONICS && light_estimation_extension->is_spherical_harmonics_total_valid()) {
+			PackedVector3Array coefficients = light_estimation_extension->get_spherical_harmonics_total_coefficients();
+			Vector3 *coefficients_ptr = coefficients.ptrw();
+			for (int i = 0; i < 9; i++) {
+				coefficients_ptr[i] = coefficients_ptr[i] * ANDROID_LIGHT_ESTIMATION_SH_FACTORS[i];
+			}
+
+			if (sky_shader.is_null()) {
+				sky_shader.instantiate();
+				sky_shader->set_code(ANDROID_LIGHT_ESTIMATION_SHADER);
+			}
 			if (sky_material.is_null()) {
 				sky_material.instantiate();
+				sky_material->set_shader(sky_shader);
 				sky->set_material(sky_material);
 			}
-			Ref<Shader> cur_shader = get_shader(sh_degree);
-			if (sky_material->get_shader() != cur_shader) {
-				sky_material->set_shader(cur_shader);
-			}
+
 			sky_material->set_shader_parameter("coefficients", coefficients);
 			sky_material->set_shader_parameter("rotation", xr_server->get_world_origin().basis);
 			if (env->get_sky() != sky) {
@@ -376,24 +355,4 @@ void OpenXRAndroidLightEstimation::reset_sky() {
 		}
 	}
 	old_sky.unref();
-}
-
-Ref<Shader> OpenXRAndroidLightEstimation::get_shader(SphericalHarmonicsDegree p_sh_degree) {
-	if (sky_shaders[p_sh_degree].is_valid()) {
-		return sky_shaders[p_sh_degree];
-	}
-
-	String shader_code = ANDROID_LIGHT_ESTIMATION_SHADER;
-
-	PackedStringArray defines;
-	defines.push_back(vformat("#define SH_L %d", p_sh_degree));
-	shader_code = shader_code.replace("//DEFINES", String("\n").join(defines));
-
-	Ref<Shader> shader;
-	shader.instantiate();
-	shader->set_code(shader_code);
-
-	sky_shaders[p_sh_degree] = shader;
-
-	return shader;
 }

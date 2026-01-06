@@ -1,12 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://x07cf480vboe"]
+[gd_scene load_steps=4 format=3 uid="uid://x07cf480vboe"]
 
 [ext_resource type="Script" uid="uid://ceeldg46vn411" path="res://menu.gd" id="1_lti8b"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_lti8b"]
 
 [sub_resource type="ButtonGroup" id="ButtonGroup_ouk20"]
-
-[sub_resource type="ButtonGroup" id="ButtonGroup_mae5d"]
 
 [node name="Menu" type="Control"]
 layout_mode = 3
@@ -40,11 +38,12 @@ theme_override_constants/margin_bottom = 20
 
 [node name="GridContainer" type="GridContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/v_separation = 30
+theme_override_constants/v_separation = 40
 columns = 2
 
 [node name="DirectionalLightLabel" type="Label" parent="MarginContainer/GridContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 1
 text = "Directional Light Mode"
 
@@ -79,6 +78,7 @@ text = "Direction + Intensity + Color"
 
 [node name="AmbientLightLabel" type="Label" parent="MarginContainer/GridContainer"]
 layout_mode = 2
+size_flags_horizontal = 3
 size_flags_vertical = 1
 text = "Ambient Light"
 
@@ -110,31 +110,3 @@ layout_mode = 2
 toggle_mode = true
 button_group = SubResource("ButtonGroup_ouk20")
 text = "Custom Shader"
-
-[node name="SphericalHarmonicsLabel" type="Label" parent="MarginContainer/GridContainer"]
-layout_mode = 2
-size_flags_vertical = 1
-text = "Spherical Harmonics Degree"
-
-[node name="SphericalHarmonicsContainer" type="VBoxContainer" parent="MarginContainer/GridContainer"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="SphericalHarmonicsL0Button" type="Button" parent="MarginContainer/GridContainer/SphericalHarmonicsContainer"]
-layout_mode = 2
-toggle_mode = true
-button_group = SubResource("ButtonGroup_mae5d")
-text = "L0"
-
-[node name="SphericalHarmonicsL1Button" type="Button" parent="MarginContainer/GridContainer/SphericalHarmonicsContainer"]
-layout_mode = 2
-toggle_mode = true
-button_group = SubResource("ButtonGroup_mae5d")
-text = "L1"
-
-[node name="SphericalHarmonicsL2Button" type="Button" parent="MarginContainer/GridContainer/SphericalHarmonicsContainer"]
-layout_mode = 2
-toggle_mode = true
-button_pressed = true
-button_group = SubResource("ButtonGroup_mae5d")
-text = "L2"

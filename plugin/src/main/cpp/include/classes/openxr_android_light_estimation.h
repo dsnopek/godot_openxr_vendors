@@ -64,13 +64,6 @@ public:
 		AMBIENT_LIGHT_MODE_CUBEMAP,
 	};
 
-	enum SphericalHarmonicsDegree {
-		SPHERICAL_HARMONICS_DEGREE_L0,
-		SPHERICAL_HARMONICS_DEGREE_L1,
-		SPHERICAL_HARMONICS_DEGREE_L2,
-		SPHERICAL_HARMONICS_DEGREE_MAX,
-	};
-
 	void set_directional_light(DirectionalLight3D *p_directional_light);
 	DirectionalLight3D *get_directional_light() const;
 
@@ -83,9 +76,6 @@ public:
 	void set_ambient_light_mode(AmbientLightMode p_ambient_light_mode);
 	AmbientLightMode get_ambient_light_mode() const;
 
-	void set_spherical_harmonics_degree(SphericalHarmonicsDegree p_sh_degree);
-	SphericalHarmonicsDegree get_spherical_harmonics_degree() const;
-
 private:
 	ObjectID directional_light_id;
 	ObjectID world_environment_id;
@@ -94,9 +84,7 @@ private:
 	DirectionalLightMode directional_light_mode = DIRECTIONAL_LIGHT_MODE_DIRECTION_ONLY;
 	AmbientLightMode ambient_light_mode = AMBIENT_LIGHT_MODE_COLOR;
 
-	SphericalHarmonicsDegree sh_degree = SPHERICAL_HARMONICS_DEGREE_L1;
-
-	Ref<Shader> sky_shaders[SPHERICAL_HARMONICS_DEGREE_MAX];
+	Ref<Shader> sky_shader;
 	Ref<ShaderMaterial> sky_material;
 	Ref<Sky> sky;
 	Ref<Sky> old_sky;
@@ -105,10 +93,7 @@ private:
 	void configure_light_estimate_types();
 	void update_light_estimate();
 	void reset_sky();
-
-	Ref<Shader> get_shader(SphericalHarmonicsDegree p_sh_degree);
 };
 
 VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::DirectionalLightMode);
 VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::AmbientLightMode);
-VARIANT_ENUM_CAST(OpenXRAndroidLightEstimation::SphericalHarmonicsDegree);
