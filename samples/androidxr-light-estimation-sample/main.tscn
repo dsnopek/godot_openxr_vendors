@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://bnjcoo6qce8d6" path="res://addons/common/start_xr.gd" id="2_0xm2m"]
 [ext_resource type="Material" uid="uid://d158fsief2mgl" path="res://reflective_grey_material.tres" id="3_h2yge"]
 [ext_resource type="PackedScene" uid="uid://dcwibwtseri8h" path="res://addons/common/viewport_2d_in_3d/viewport_2d_in_3d.tscn" id="4_1bvp3"]
-[ext_resource type="PackedScene" uid="uid://cqs8c3rq6cxvk" path="res://addons/common/function_pointer/function_pointer.tscn" id="4_lquwl"]
+[ext_resource type="PackedScene" uid="uid://cqs8c3rq6cxvk" path="res://addons/common/viewport_2d_in_3d/function_pointer.tscn" id="4_lquwl"]
 [ext_resource type="PackedScene" uid="uid://xga880omsrpm" path="res://addons/common/view_pivot/view_pivot.tscn" id="5_272bh"]
 [ext_resource type="PackedScene" uid="uid://x07cf480vboe" path="res://menu.tscn" id="6_7mycd"]
 
