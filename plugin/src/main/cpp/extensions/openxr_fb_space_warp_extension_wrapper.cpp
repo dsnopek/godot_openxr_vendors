@@ -219,15 +219,14 @@ void OpenXRFbSpaceWarpExtensionWrapper::_on_pre_render() {
 	Vector3 delta_origin;
 	if (!world_origin.is_equal_approx(render_state.previous_origin)) {
 		delta_origin = world_origin - render_state.previous_origin;
+		print_line("appSpaceWarpDelta - origin: ", delta_origin);
 	}
 
 	Quaternion delta_quat;
 	if (!world_quat.is_equal_approx(render_state.previous_quat)) {
 		delta_quat = render_state.previous_quat.inverse() * world_quat;
+		print_line("appSpaceWarpDelta - quat: ", delta_quat);
 	}
-
-	print_line("appSpaceWarpDelta - origin: ", delta_origin);
-	print_line("appSpaceWarpDelta - quat: ", delta_quat);
 
 	Ref<OpenXRInterface> openxr_interface = XRServer::get_singleton()->find_interface("OpenXR");
 	int view_count = openxr_interface->get_view_count();
