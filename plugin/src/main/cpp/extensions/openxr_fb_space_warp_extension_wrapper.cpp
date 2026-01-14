@@ -213,20 +213,14 @@ void OpenXRFbSpaceWarpExtensionWrapper::_on_pre_render() {
 	get_openxr_api()->set_velocity_target_size(render_target_size);
 
 	Transform3D world_transform = XRServer::get_singleton()->get_world_origin();
-	Vector3 world_origin = world_transform.origin;
-	Quaternion world_quat = world_transform.basis.get_quaternion();
+	Transform3D delta_transform = render_state.previous_transform.affine_inverse() * world_transform;
 
-	Vector3 delta_origin;
-	if (!world_origin.is_equal_approx(render_state.previous_origin)) {
-		delta_origin = world_origin - render_state.previous_origin;
-		print_line("appSpaceWarpDelta - origin: ", delta_origin);
-	}
-
+	//Quaternion delta_quat = delta_transform.basis.get_quaternion();
 	Quaternion delta_quat;
-	if (!world_quat.is_equal_approx(render_state.previous_quat)) {
-		delta_quat = render_state.previous_quat.inverse() * world_quat;
-		print_line("appSpaceWarpDelta - quat: ", delta_quat);
-	}
+	delta_quat = delta_transform.basis.get_quaternion();
+	//Vector3 delta_origin = delta_transform.origin;
+	Vector3 delta_origin;
+	delta_origin = delta_transform.origin;
 
 	Ref<OpenXRInterface> openxr_interface = XRServer::get_singleton()->find_interface("OpenXR");
 	int view_count = openxr_interface->get_view_count();
@@ -238,8 +232,7 @@ void OpenXRFbSpaceWarpExtensionWrapper::_on_pre_render() {
 	}
 
 	render_state.skip_space_warp_frame = false;
-	render_state.previous_origin = world_origin;
-	render_state.previous_quat = world_quat;
+	render_state.previous_transform = world_transform;
 }
 
 void OpenXRFbSpaceWarpExtensionWrapper::_on_post_draw_viewport(const RID &p_render_target) {
