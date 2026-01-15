@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3 uid="uid://cqsodpswgup8w"]
+[gd_scene load_steps=26 format=3 uid="uid://cqsodpswgup8w"]
 
 [ext_resource type="Script" uid="uid://cxxy74r3njgxw" path="res://main.gd" id="1_fsva1"]
 [ext_resource type="Script" uid="uid://w3jfhbcsh0bl" path="res://multi_mesh_move.gd" id="3_h2yge"]
@@ -84,6 +84,9 @@ uv1_triplanar = true
 [sub_resource type="PlaneMesh" id="PlaneMesh_5vw27"]
 material = SubResource("StandardMaterial3D_272bh")
 size = Vector2(8, 6)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lquwl"]
+albedo_color = Color(1, 0, 1, 1)
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_fsva1")
@@ -256,3 +259,8 @@ skeleton = NodePath("../..")
 transform = Transform3D(4.37114e-08, -1, 8.74228e-08, -1, -4.37114e-08, 0, 3.82138e-15, -8.74228e-08, -1, 5, 2, -0.996788)
 mesh = SubResource("PlaneMesh_5vw27")
 skeleton = NodePath("../..")
+
+[node name="StaticCube" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.80028677, 2.2144403)
+mesh = SubResource("BoxMesh_7mycd")
+surface_material_override/0 = SubResource("StandardMaterial3D_lquwl")

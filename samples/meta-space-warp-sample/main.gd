@@ -88,7 +88,9 @@ func check_turn(name: String, value: Vector2) -> void:
 				turn_timer.start()
 				var fb_space_warp = Engine.get_singleton("OpenXRFbSpaceWarpExtensionWrapper")
 				if fb_space_warp:
-					fb_space_warp.skip_space_warp_frame()
+					# Disable so that we can see the effect of appSpaceDeltaPose:
+					#fb_space_warp.skip_space_warp_frame()
+					pass
 	else:
 		smooth_turn_input = value.x
 
