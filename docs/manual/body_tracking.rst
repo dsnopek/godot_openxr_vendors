@@ -1,20 +1,25 @@
-Meta Body Tracking
-==================
+Body and Face Tracking
+======================
 
 .. note::
 
-    Check out the `Meta Body Tracking Sample Project <https://github.com/GodotVR/godot_openxr_vendors/tree/master/samples/meta-body-tracking-sample>`_
-    for a working demo of some Meta body tracking features.
+    Check out the `Body Tracking Sample Project <https://github.com/GodotVR/godot_openxr_vendors/tree/master/samples/body-tracking-sample>`_
+    for a working demo of some Meta and Android XR body and face tracking features.
 
-The Godot OpenXR Vendors plugin supports a number of OpenXR extensions related to Meta body tracking.
+The Godot OpenXR Vendors plugin supports a number of OpenXR extensions related to body and face tracking
+from both Meta and Android XR.
 This document will walk through the provided features and how to use them.
 
 Project Settings
 ----------------
 
-To use body tracking, the Meta body tracking setting must be enabled in project settings.
-The extension setting can be found in **Project Settings** under the **OpenXR** section,
-the **Body Tracking** setting should be listed under **Extensions** in the **Meta** subcategory.
+To use body tracking, the vendor-specific body tracking extensions must be enabled in project settings,
+under the **OpenXR** section:
+
+- Meta supports extensions for **Body Tracking** and **Face Tracking**, which can be found in the
+**Meta** subcategory.
+- Android XR supports extensions for **Face Tracking** and **Eye Tracking**, which can be found in
+the **Android XR** subcategory.
 
 .. image:: img/body_tracking/body_tracking_project_settings.png
 
@@ -46,8 +51,26 @@ or rotation only.
     While hand tracking may be used as a part of body tracking, the hand tracking extension
     must be enabled to do this. See the documentation on :doc:`hand_tracking` for more info.
 
-Lower Body Tracking
+Face Tracking Setup
 -------------------
+
+Face tracking features require a mesh with blend shapes that are compatible with the
+`Unified Expressions <https://docs.vrcft.io/docs/tutorial-avatars/tutorial-avatars-extras/unified-blendshapes>`_
+standard, ARKit, or SRanipal.
+
+After adding the mesh to your scene, you can apply face tracking to it with the
+`XRFaceModifier3D <https://docs.godotengine.org/en/latest/classes/class_xrfacemodifier3d.html>`_ node.
+You can add this node anywhere in your scene.
+
+Set the ``target`` property to the mesh with the blend shapes:
+
+.. image:: img/body_tracking/face_tracking_properties.png
+
+Meta-specific Extensions
+------------------------
+
+Lower Body Tracking
+~~~~~~~~~~~~~~~~~~~
 
 The basic Meta OpenXR body tracking extension ``XR_FB_body_tracking`` only provides data
 for upper body tracking. The extension ``XR_META_body_tracking_full_body``, if supported,
@@ -56,7 +79,7 @@ setup. You can check if ``XR_META_body_tracking_full_body`` is supported by call
 :ref:`is_full_body_tracking_supported() <class_openxrfbbodytrackingextensionwrapper_method_is_full_body_tracking_supported>`.
 
 Manual Height Override
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 When using body tracking, automatic calibration of a user's height will take place.
 Should you wish to override this, first check to see if the runtime supports the ``XR_META_body_tracking_calibration``
@@ -66,7 +89,7 @@ If supported, you may suggest an override value within the range of 0.5 and 3.0 
 The runtime then may adjust the returned body tracking data to be scaled to this height.
 
 Body Tracking Fidelity
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 The ``XR_META_body_tracking_fidelity`` extension allows users to request that body tracking
 data be collected with either a low or high level of fidelity. Check if this extension is supported with
