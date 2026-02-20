@@ -620,6 +620,8 @@ void add_plugin_project_settings() {
 		project_settings->add_property_info(property_info);
 	}
 
+	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/depth_test/depth_test_main_projection_layer", false);
+
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/automatically_request_runtime_permissions", true);
 }
 

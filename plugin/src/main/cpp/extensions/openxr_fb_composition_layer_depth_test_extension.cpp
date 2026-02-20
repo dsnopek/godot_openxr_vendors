@@ -30,6 +30,7 @@
 #include "extensions/openxr_fb_composition_layer_depth_test_extension.h"
 
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
@@ -71,6 +72,29 @@ Dictionary OpenXRFbCompositionLayerDepthTestExtension::_get_requested_extensions
 		result[ext.key] = (Variant)value;
 	}
 	return result;
+}
+
+void OpenXRFbCompositionLayerDepthTestExtension::_on_session_created(uint64_t p_session) {
+	if (!fb_composition_layer_depth_test_ext) {
+		return;
+	}
+
+	depth_test_main_projection_layer = ProjectSettings::get_singleton()->get_setting_with_override("xr/openxr/extensions/meta/depth_test/depth_test_main_projection_layer");
+
+	if (depth_test_main_projection_layer) {
+		get_openxr_api()->register_projection_layer_extension(this);
+	}
+}
+
+void OpenXRFbCompositionLayerDepthTestExtension::_on_session_destroyed() {
+	if (fb_composition_layer_depth_test_ext && depth_test_main_projection_layer) {
+		get_openxr_api()->unregister_projection_layer_extension(this);
+	}
+}
+
+uint64_t OpenXRFbCompositionLayerDepthTestExtension::_set_projection_views_and_get_next_pointer(int32_t p_view_index, void *p_next_pointer) {
+	main_projection_layer_struct.next = p_next_pointer;
+	return reinterpret_cast<uint64_t>(&main_projection_layer_struct);
 }
 
 uint64_t OpenXRFbCompositionLayerDepthTestExtension::_set_viewport_composition_layer_and_get_next_pointer(const void *p_layer, const Dictionary &p_property_values, void *p_next_pointer) {

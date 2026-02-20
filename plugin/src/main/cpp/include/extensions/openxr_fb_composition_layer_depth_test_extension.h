@@ -43,6 +43,9 @@ class OpenXRFbCompositionLayerDepthTestExtension : public OpenXRExtensionWrapper
 
 public:
 	Dictionary _get_requested_extensions(uint64_t p_xr_version) override;
+	virtual void _on_session_created(uint64_t p_session) override;
+	virtual void _on_session_destroyed() override;
+	virtual uint64_t _set_projection_views_and_get_next_pointer(int32_t p_view_index, void *p_next_pointer) override;
 	virtual uint64_t _set_viewport_composition_layer_and_get_next_pointer(const void *p_layer, const Dictionary &p_property_values, void *p_next_pointer) override;
 	virtual TypedArray<Dictionary> _get_viewport_composition_layer_extension_properties() override;
 	virtual Dictionary _get_viewport_composition_layer_extension_property_defaults() override;
@@ -63,6 +66,13 @@ protected:
 private:
 	HashMap<String, bool *> request_extensions;
 	HashMap<const XrCompositionLayerBaseHeader *, XrCompositionLayerDepthTestFB> layer_structs;
+	XrCompositionLayerDepthTestFB main_projection_layer_struct = {
+		XR_TYPE_COMPOSITION_LAYER_DEPTH_TEST_FB,
+		nullptr,
+		true,
+		XR_COMPARE_OP_LESS_FB,
+	};
+	bool depth_test_main_projection_layer = false;
 
 	void cleanup();
 
