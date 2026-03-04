@@ -51,6 +51,8 @@ class AndroidXREditorExportPlugin : public OpenXRVendorsEditorExportPlugin {
 	static const int RECOMMENDED_BOUNDARY_TYPE_NONE_VALUE = 0;
 	static const int RECOMMENDED_BOUNDARY_TYPE_LARGE_VALUE = 1;
 
+	static constexpr const char *VOLUME_ENABLED_SETTING_NAME = "xr/openxr/extensions/volume/enabled";
+
 public:
 	AndroidXREditorExportPlugin();
 

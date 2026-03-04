@@ -138,7 +138,8 @@ String AndroidXREditorExportPlugin::_get_export_option_warning(const Ref<EditorE
 			return "\"Tracked Controllers\" requires \"XR Mode\" to be \"OpenXR\".\n";
 		}
 	} else if (option == "android_xr_features/use_experimental_features") {
-		if (!openxr_enabled && _get_bool_option(option)) {
+		bool experimental_features_enabled = _get_bool_option(option);
+		if (!openxr_enabled && experimental_features_enabled) {
 			return "\"Use experimental features\" is only valid when \"XR Mode\" is \"OpenXR\".\n";
 		}
 	}
@@ -179,18 +180,33 @@ String AndroidXREditorExportPlugin::_get_android_manifest_activity_element_conte
 					<action android:name="android.intent.action.MAIN" />
 					<category android:name="android.intent.category.DEFAULT" />
 
+)";
+
+	bool volume_enabled = ProjectSettings::get_singleton()->get_setting_with_override(VOLUME_ENABLED_SETTING_NAME);
+	if (!volume_enabled) {
+		contents += R"(
 					<!-- OpenXR category tag to indicate the activity starts in an immersive OpenXR mode.
 					See https://registry.khronos.org/OpenXR/specs/1.0/html/xrspec.html#android-runtime-category. -->
 					<category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
 )";
+	}
 
 	contents += _get_common_activity_intent_filter_contents();
-	contents += R"(
-				</intent-filter>
-				<property
-					android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
-					android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_UNMANAGED" />
-)";
+	if (volume_enabled) {
+		contents += R"(
+					</intent-filter>
+					<property
+						android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+						android:value="XR_ACTIVITY_START_MODE_HOME_SPACE" />
+	)";
+	} else {
+		contents += R"(
+					</intent-filter>
+					<property
+						android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+						android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_UNMANAGED" />
+	)";
+	}
 
 	return contents;
 }
@@ -217,7 +233,8 @@ String AndroidXREditorExportPlugin::_get_android_manifest_application_element_co
 	}
 
 	// Check for experimental features
-	bool use_experimental_features = _get_bool_option("android_xr_features/use_experimental_features");
+	bool volume_enabled = ProjectSettings::get_singleton()->get_setting_with_override(VOLUME_ENABLED_SETTING_NAME);
+	bool use_experimental_features = volume_enabled || _get_bool_option("android_xr_features/use_experimental_features");
 	if (use_experimental_features) {
 		contents += "    <meta-data android:name=\"com.android.extensions.xr.uses_experimental_openxr_feature\" android:value=\"true\" />\n";
 	}
@@ -339,6 +356,11 @@ String AndroidXREditorExportPlugin::_get_android_manifest_element_contents(const
 			(bool)project_settings->get_setting_with_override("xr/openxr/extensions/androidxr/light_estimation") ||
 			(bool)project_settings->get_setting_with_override("xr/openxr/extensions/androidxr/trackables")) {
 		contents += "    <uses-permission android:name=\"android.permission.SCENE_UNDERSTANDING_COARSE\" />\n";
+	}
+
+	// Check for volume.
+	if ((bool)project_settings->get_setting_with_override(VOLUME_ENABLED_SETTING_NAME)) {
+		contents += "    <uses-permission android:name=\"android.permission.HEAD_TRACKING\" />\n";
 	}
 
 	return contents;
