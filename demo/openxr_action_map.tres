@@ -115,13 +115,13 @@ toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right")
 resource_name = "default_pose"
 localized_name = "Default pose"
 action_type = 3
-toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right", "/user/vive_tracker_htcx/role/left_foot", "/user/vive_tracker_htcx/role/right_foot", "/user/vive_tracker_htcx/role/left_shoulder", "/user/vive_tracker_htcx/role/right_shoulder", "/user/vive_tracker_htcx/role/left_elbow", "/user/vive_tracker_htcx/role/right_elbow", "/user/vive_tracker_htcx/role/left_knee", "/user/vive_tracker_htcx/role/right_knee", "/user/vive_tracker_htcx/role/waist", "/user/vive_tracker_htcx/role/chest", "/user/vive_tracker_htcx/role/camera", "/user/vive_tracker_htcx/role/keyboard", "/user/eyes_ext")
+toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right", "/user/vive_tracker_htcx/role/left_foot", "/user/vive_tracker_htcx/role/right_foot", "/user/vive_tracker_htcx/role/left_shoulder", "/user/vive_tracker_htcx/role/right_shoulder", "/user/vive_tracker_htcx/role/left_elbow", "/user/vive_tracker_htcx/role/right_elbow", "/user/vive_tracker_htcx/role/left_knee", "/user/vive_tracker_htcx/role/right_knee", "/user/vive_tracker_htcx/role/waist", "/user/vive_tracker_htcx/role/chest", "/user/vive_tracker_htcx/role/camera", "/user/vive_tracker_htcx/role/keyboard", "/user/eyes_ext", "/user/mouse")
 
 [sub_resource type="OpenXRAction" id="OpenXRAction_1vol5"]
 resource_name = "aim_pose"
 localized_name = "Aim pose"
 action_type = 3
-toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right")
+toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right", "/user/mouse")
 
 [sub_resource type="OpenXRAction" id="OpenXRAction_18qyl"]
 resource_name = "grip_pose"
@@ -141,10 +141,39 @@ localized_name = "Haptic"
 action_type = 4
 toplevel_paths = PackedStringArray("/user/hand/left", "/user/hand/right", "/user/vive_tracker_htcx/role/left_foot", "/user/vive_tracker_htcx/role/right_foot", "/user/vive_tracker_htcx/role/left_shoulder", "/user/vive_tracker_htcx/role/right_shoulder", "/user/vive_tracker_htcx/role/left_elbow", "/user/vive_tracker_htcx/role/right_elbow", "/user/vive_tracker_htcx/role/left_knee", "/user/vive_tracker_htcx/role/right_knee", "/user/vive_tracker_htcx/role/waist", "/user/vive_tracker_htcx/role/chest", "/user/vive_tracker_htcx/role/camera", "/user/vive_tracker_htcx/role/keyboard")
 
+[sub_resource type="OpenXRAction" id="OpenXRAction_6ivru"]
+resource_name = "mouse_click1"
+localized_name = "mouse_click1"
+action_type = 0
+toplevel_paths = PackedStringArray("/user/mouse")
+
+[sub_resource type="OpenXRAction" id="OpenXRAction_vfhwq"]
+resource_name = "mouse_click2"
+localized_name = "mous_click2"
+action_type = 0
+toplevel_paths = PackedStringArray("/user/mouse")
+
+[sub_resource type="OpenXRAction" id="OpenXRAction_5w03k"]
+resource_name = "mouse_click3"
+localized_name = "mouse_click3"
+action_type = 0
+toplevel_paths = PackedStringArray("/user/mouse")
+
+[sub_resource type="OpenXRAction" id="OpenXRAction_typ1r"]
+resource_name = "mouse_scroll"
+localized_name = "mouse_scroll"
+action_type = 2
+toplevel_paths = PackedStringArray("/user/mouse")
+
+[sub_resource type="OpenXRAction" id="OpenXRAction_clvbf"]
+resource_name = "mouse_scroll_float"
+localized_name = "mouse_scroll_float"
+toplevel_paths = PackedStringArray("/user/mouse")
+
 [sub_resource type="OpenXRActionSet" id="OpenXRActionSet_kd2ms"]
 resource_name = "godot"
 localized_name = "Godot action set"
-actions = [SubResource("OpenXRAction_6v1ja"), SubResource("OpenXRAction_iw5kk"), SubResource("OpenXRAction_8vn7r"), SubResource("OpenXRAction_57lfg"), SubResource("OpenXRAction_my2cy"), SubResource("OpenXRAction_s0au3"), SubResource("OpenXRAction_h857g"), SubResource("OpenXRAction_jhwoi"), SubResource("OpenXRAction_ujxhj"), SubResource("OpenXRAction_2sp3t"), SubResource("OpenXRAction_sfrr4"), SubResource("OpenXRAction_nagay"), SubResource("OpenXRAction_6xco2"), SubResource("OpenXRAction_stco1"), SubResource("OpenXRAction_oxyin"), SubResource("OpenXRAction_vcq1d"), SubResource("OpenXRAction_3fgr7"), SubResource("OpenXRAction_vo38g"), SubResource("OpenXRAction_qcwp8"), SubResource("OpenXRAction_vk7pf"), SubResource("OpenXRAction_1vol5"), SubResource("OpenXRAction_18qyl"), SubResource("OpenXRAction_1pnpo"), SubResource("OpenXRAction_0kk6l")]
+actions = [SubResource("OpenXRAction_6v1ja"), SubResource("OpenXRAction_iw5kk"), SubResource("OpenXRAction_8vn7r"), SubResource("OpenXRAction_57lfg"), SubResource("OpenXRAction_my2cy"), SubResource("OpenXRAction_s0au3"), SubResource("OpenXRAction_h857g"), SubResource("OpenXRAction_jhwoi"), SubResource("OpenXRAction_ujxhj"), SubResource("OpenXRAction_2sp3t"), SubResource("OpenXRAction_sfrr4"), SubResource("OpenXRAction_nagay"), SubResource("OpenXRAction_6xco2"), SubResource("OpenXRAction_stco1"), SubResource("OpenXRAction_oxyin"), SubResource("OpenXRAction_vcq1d"), SubResource("OpenXRAction_3fgr7"), SubResource("OpenXRAction_vo38g"), SubResource("OpenXRAction_qcwp8"), SubResource("OpenXRAction_vk7pf"), SubResource("OpenXRAction_1vol5"), SubResource("OpenXRAction_18qyl"), SubResource("OpenXRAction_1pnpo"), SubResource("OpenXRAction_0kk6l"), SubResource("OpenXRAction_6ivru"), SubResource("OpenXRAction_vfhwq"), SubResource("OpenXRAction_5w03k"), SubResource("OpenXRAction_typ1r"), SubResource("OpenXRAction_clvbf")]
 
 [sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_6ivru"]
 action = SubResource("OpenXRAction_vk7pf")
@@ -1542,6 +1571,38 @@ binding_path = "/user/eyes_ext/input/gaze_ext/pose"
 interaction_profile_path = "/interaction_profiles/ext/eye_gaze_interaction"
 bindings = [SubResource("OpenXRIPBinding_73bb6")]
 
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_p8l30"]
+action = SubResource("OpenXRAction_vk7pf")
+binding_path = "/user/mouse/input/aim/pose"
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_qwnvq"]
+action = SubResource("OpenXRAction_1vol5")
+binding_path = "/user/mouse/input/aim/pose"
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_1o618"]
+action = SubResource("OpenXRAction_6ivru")
+binding_path = "/user/mouse/input/select/click"
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_k8gkf"]
+action = SubResource("OpenXRAction_vfhwq")
+binding_path = "/user/mouse/input/secondary_android/click"
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_7atrr"]
+action = SubResource("OpenXRAction_5w03k")
+binding_path = "/user/mouse/input/tertiary_android/click"
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_nc7nm"]
+action = SubResource("OpenXRAction_typ1r")
+binding_path = "/user/mouse/input/scroll_android"
+
+[sub_resource type="OpenXRIPBinding" id="OpenXRIPBinding_u48na"]
+action = SubResource("OpenXRAction_clvbf")
+binding_path = "/user/mouse/input/scroll_android/value"
+
+[sub_resource type="OpenXRInteractionProfile" id="OpenXRInteractionProfile_1o618"]
+interaction_profile_path = "/interaction_profiles/android/mouse_interaction_android"
+bindings = [SubResource("OpenXRIPBinding_p8l30"), SubResource("OpenXRIPBinding_qwnvq"), SubResource("OpenXRIPBinding_1o618"), SubResource("OpenXRIPBinding_k8gkf"), SubResource("OpenXRIPBinding_7atrr"), SubResource("OpenXRIPBinding_nc7nm"), SubResource("OpenXRIPBinding_u48na")]
+
 [resource]
 action_sets = [SubResource("OpenXRActionSet_kd2ms")]
-interaction_profiles = [SubResource("OpenXRInteractionProfile_kitsa"), SubResource("OpenXRInteractionProfile_uoohe"), SubResource("OpenXRInteractionProfile_k2llo"), SubResource("OpenXRInteractionProfile_2masb"), SubResource("OpenXRInteractionProfile_ert82"), SubResource("OpenXRInteractionProfile_aq5p3"), SubResource("OpenXRInteractionProfile_4petf"), SubResource("OpenXRInteractionProfile_sd46l"), SubResource("OpenXRInteractionProfile_prh4s"), SubResource("OpenXRInteractionProfile_kk5vf"), SubResource("OpenXRInteractionProfile_wxdsn"), SubResource("OpenXRInteractionProfile_07fna")]
+interaction_profiles = [SubResource("OpenXRInteractionProfile_kitsa"), SubResource("OpenXRInteractionProfile_uoohe"), SubResource("OpenXRInteractionProfile_k2llo"), SubResource("OpenXRInteractionProfile_2masb"), SubResource("OpenXRInteractionProfile_ert82"), SubResource("OpenXRInteractionProfile_aq5p3"), SubResource("OpenXRInteractionProfile_4petf"), SubResource("OpenXRInteractionProfile_sd46l"), SubResource("OpenXRInteractionProfile_prh4s"), SubResource("OpenXRInteractionProfile_kk5vf"), SubResource("OpenXRInteractionProfile_wxdsn"), SubResource("OpenXRInteractionProfile_07fna"), SubResource("OpenXRInteractionProfile_1o618")]

@@ -17,3 +17,16 @@ func _on_session_stopping() -> void:
 		# When we're running tests via the XR Simulator, it will end the OpenXR
 		# session automatically, and in that case, we want to quit.
 		get_tree().quit()
+
+
+func _on_android_mouse_button_pressed(name: String) -> void:
+	print("Android button pressed: ", name)
+
+func _on_android_mouse_button_released(name: String) -> void:
+	print("Android button released: ", name)
+
+func _on_android_mouse_input_float_changed(name: String, value: float) -> void:
+	print("Android float: ", name, " - ", value)
+
+func _on_android_mouse_input_vector_2_changed(name: String, value: Vector2) -> void:
+	print("Android vector2: ", name, " - ", value)

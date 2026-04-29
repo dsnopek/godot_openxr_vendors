@@ -26,6 +26,10 @@ size = Vector3(0.1, 0.1, 0.1)
 [sub_resource type="BoxMesh" id="BoxMesh_ey3x4"]
 size = Vector3(0.1, 0.1, 0.1)
 
+[sub_resource type="SphereMesh" id="SphereMesh_1bvp3"]
+radius = 0.1
+height = 0.2
+
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_k604q"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_mjcgt"]
@@ -117,5 +121,16 @@ bones/25/name = "RightLittleTip"
 [node name="RightXRHandModifier3D" type="XRHandModifier3D" parent="XROrigin3D/RightHandTracker/RightHandModel" unique_id=1610719126]
 hand_tracker = &"/user/hand_tracker/right"
 
+[node name="AndroidMouse" type="XRController3D" parent="XROrigin3D" unique_id=1053144371]
+tracker = &"/user/mouse"
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/AndroidMouse" unique_id=1698669477]
+mesh = SubResource("SphereMesh_1bvp3")
+
 [node name="Floor" type="MeshInstance3D" parent="." unique_id=938472357]
 mesh = SubResource("PlaneMesh_mjcgt")
+
+[connection signal="button_pressed" from="XROrigin3D/AndroidMouse" to="." method="_on_android_mouse_button_pressed"]
+[connection signal="button_released" from="XROrigin3D/AndroidMouse" to="." method="_on_android_mouse_button_released"]
+[connection signal="input_float_changed" from="XROrigin3D/AndroidMouse" to="." method="_on_android_mouse_input_float_changed"]
+[connection signal="input_vector2_changed" from="XROrigin3D/AndroidMouse" to="." method="_on_android_mouse_input_vector_2_changed"]
