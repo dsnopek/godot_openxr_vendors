@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="OpenXRAndroidGlobalPassthroughDimmingExtension" inherits="OpenXRExtensionWrapper" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Allow requesting a global passthrough dimming level via the [code]XR_ANDROID_global_passthrough_dimming[/code] extension.
+	</brief_description>
+	<description>
+		Allow requesting a global passthrough dimming level via the [code]XR_ANDROID_global_passthrough_dimming[/code] extension.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_dimming_level" qualifiers="const">
+			<return type="float" />
+			<description>
+				Gets the current global passthrough dimming level, with a range from [code]0.0[/code] (no dimming) to [code]1.0[/code] (maximum dimming).
+			</description>
+		</method>
+		<method name="get_supported_dimming_levels">
+			<return type="PackedFloat32Array" />
+			<description>
+				Gets an array of the supported dimming levels on this device.
+			</description>
+		</method>
+		<method name="is_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if this extension is supported on this device; otherwise, [code]false[/code].
+			</description>
+		</method>
+		<method name="set_dimming_level">
+			<return type="void" />
+			<param index="0" name="dimming_level" type="float" />
+			<description>
+				Requests changing the current global passthrough dimming level, with a range from [code]0.0[/code] (no dimming) to [code]1.0[/code] (maximum dimming).
+				This is only a request, which may be ignored or modified. You can call [method get_dimming_level] to get the actual dimming level, however, it won't be updated right away, so you may want to connect to [signal openxr_android_global_passthrough_dimming_level_changed].
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="openxr_android_global_passthrough_dimming_level_changed">
+			<description>
+				Emitted when the global passthrough dimming level has changed, either due to calling [method set_dimming_level] or the user interacting with system controls.
+			</description>
+		</signal>
+	</signals>
+</class>

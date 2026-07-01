@@ -110,6 +110,7 @@ CORE_TYPES: List[str] = [
     "Node3D",
     "Object",
     "PackedByteArray",
+    "PackedFloat32Array",
     "PackedScene",
     "PackedStringArray",
     "PackedVector2Array",
