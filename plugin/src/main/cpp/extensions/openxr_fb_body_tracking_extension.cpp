@@ -151,12 +151,8 @@ OpenXRFbBodyTrackingExtension::OpenXRFbBodyTrackingExtension() :
 
 	request_extensions[XR_FB_BODY_TRACKING_EXTENSION_NAME] = &fb_body_tracking_ext;
 	request_extensions[XR_META_BODY_TRACKING_FULL_BODY_EXTENSION_NAME] = &meta_body_tracking_full_body_ext;
-
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	request_extensions[XR_META_BODY_TRACKING_FIDELITY_EXTENSION_NAME] = &meta_body_tracking_fidelity_ext;
 	request_extensions[XR_META_BODY_TRACKING_CALIBRATION_EXTENSION_NAME] = &meta_body_tracking_calibration_ext;
-#endif // META_HEADERS_ENABLED
 
 	singleton = this;
 }
@@ -169,8 +165,6 @@ OpenXRFbBodyTrackingExtension::~OpenXRFbBodyTrackingExtension() {
 void OpenXRFbBodyTrackingExtension::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_full_body_tracking_supported"), &OpenXRFbBodyTrackingExtension::is_full_body_tracking_supported);
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	ClassDB::bind_method(D_METHOD("is_body_tracking_fidelity_supported"), &OpenXRFbBodyTrackingExtension::is_body_tracking_fidelity_supported);
 	ClassDB::bind_method(D_METHOD("request_body_tracking_fidelity", "fidelity"), &OpenXRFbBodyTrackingExtension::request_body_tracking_fidelity);
 	ClassDB::bind_method(D_METHOD("get_body_tracking_fidelity_status"), &OpenXRFbBodyTrackingExtension::get_body_tracking_fidelity_status);
@@ -187,18 +181,14 @@ void OpenXRFbBodyTrackingExtension::_bind_methods() {
 	BIND_ENUM_CONSTANT(BODY_TRACKING_CALIBRATION_STATE_VALID);
 	BIND_ENUM_CONSTANT(BODY_TRACKING_CALIBRATION_STATE_CALIBRATING);
 	BIND_ENUM_CONSTANT(BODY_TRACKING_CALIBRATION_STATE_INVALID);
-#endif // META_HEADERS_ENABLED
 }
 
 void OpenXRFbBodyTrackingExtension::cleanup() {
 	fb_body_tracking_ext = false;
 	meta_body_tracking_full_body_ext = false;
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	meta_body_tracking_fidelity_ext = false;
 	meta_body_tracking_calibration_ext = false;
-#endif // META_HEADERS_ENABLED
 }
 
 uint64_t OpenXRFbBodyTrackingExtension::_set_system_properties_and_get_next_pointer(void *p_next_pointer) {
@@ -211,8 +201,6 @@ uint64_t OpenXRFbBodyTrackingExtension::_set_system_properties_and_get_next_poin
 		p_next_pointer = &system_body_tracking_full_body_properties;
 	}
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	if (meta_body_tracking_fidelity_ext) {
 		system_body_tracking_fidelity_properties.next = p_next_pointer;
 		p_next_pointer = &system_body_tracking_fidelity_properties;
@@ -221,7 +209,6 @@ uint64_t OpenXRFbBodyTrackingExtension::_set_system_properties_and_get_next_poin
 		system_body_tracking_calibration_properties.next = p_next_pointer;
 		p_next_pointer = &system_body_tracking_calibration_properties;
 	}
-#endif // META_HEADERS_ENABLED
 
 	return reinterpret_cast<uint64_t>(p_next_pointer);
 }
@@ -245,8 +232,6 @@ void OpenXRFbBodyTrackingExtension::_on_instance_created(uint64_t p_instance) {
 		}
 	}
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	if (meta_body_tracking_fidelity_ext) {
 		bool result = initialize_meta_body_tracking_fidelity_extension((XrInstance)p_instance);
 		if (!result) {
@@ -262,7 +247,6 @@ void OpenXRFbBodyTrackingExtension::_on_instance_created(uint64_t p_instance) {
 			meta_body_tracking_calibration_ext = false;
 		}
 	}
-#endif // META_HEADERS_ENABLED
 }
 
 void OpenXRFbBodyTrackingExtension::_on_instance_destroyed() {
@@ -347,8 +331,6 @@ void OpenXRFbBodyTrackingExtension::_on_process() {
 
 	// Construct locations struct next chain.
 	void *next_pointer = nullptr;
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	if (meta_body_tracking_fidelity_ext && is_body_tracking_fidelity_supported()) {
 		body_tracking_fidelity_status.next = next_pointer;
 		next_pointer = &body_tracking_fidelity_status;
@@ -358,7 +340,6 @@ void OpenXRFbBodyTrackingExtension::_on_process() {
 		body_tracking_calibration_status.next = next_pointer;
 		next_pointer = &body_tracking_calibration_status;
 	}
-#endif // META_HEADERS_ENABLED
 
 	// Construct the locations struct.
 	uint32_t fb_joint_count = XR_BODY_JOINT_COUNT_FB;
@@ -492,8 +473,6 @@ bool OpenXRFbBodyTrackingExtension::is_full_body_tracking_supported() {
 	return system_body_tracking_full_body_properties.supportsFullBodyTracking;
 }
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 // META_body_tracking_fidelity extension.
 
 bool OpenXRFbBodyTrackingExtension::is_body_tracking_fidelity_supported() {
@@ -579,4 +558,3 @@ bool OpenXRFbBodyTrackingExtension::initialize_meta_body_tracking_calibration_ex
 
 	return true;
 }
-#endif // META_HEADERS_ENABLED

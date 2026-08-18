@@ -29,12 +29,6 @@
 
 #pragma once
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
-#include <meta_openxr_preview/meta_body_tracking_calibration.h>
-#include <meta_openxr_preview/meta_body_tracking_fidelity.h>
-#endif
-
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/open_xr_extension_wrapper.hpp>
 #include <godot_cpp/classes/xr_body_tracker.hpp>
@@ -125,8 +119,6 @@ private:
 		XR_FALSE, // supportsFullBodyTracking
 	};
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	// META_body_tracking_fidelity extension.
 public:
 	enum BodyTrackingFidelity {
@@ -201,11 +193,7 @@ private:
 		nullptr, // next
 		XR_BODY_TRACKING_CALIBRATION_STATE_INVALID_META, // status
 	};
-#endif
 };
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 VARIANT_ENUM_CAST(OpenXRFbBodyTrackingExtension::BodyTrackingFidelity);
 VARIANT_ENUM_CAST(OpenXRFbBodyTrackingExtension::BodyTrackingCalibrationState);
-#endif
