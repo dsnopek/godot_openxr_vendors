@@ -55,8 +55,12 @@ func _update_data() -> void:
 
 
 func _update_recommended_resolution():
-	var render_target_size = _xr_interface.get_render_target_size()
-	_recommended_resolution.text = "Recommended resolution:\n  width %s\n  height %s" % [render_target_size.x, render_target_size.y]
+	var resolution: Vector2
+	if _xr_interface.has_method("get_recommended_target_size"):
+		resolution = _xr_interface.get_recommended_target_size()
+	else:
+		resolution = _xr_interface.get_render_target_size()
+	_recommended_resolution.text = "Recommended resolution:\n  width %s\n  height %s" % [resolution.x, resolution.y]
 
 
 func _get_usage_string(label_prefix: String, counter_name: String) -> String:
