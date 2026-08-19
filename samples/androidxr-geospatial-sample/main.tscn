@@ -33,6 +33,7 @@ script = ExtResource("2_0xm2m")
 [node name="XROrigin3D" type="XROrigin3D" parent="." unique_id=990045554]
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D" unique_id=2139115797]
+unique_name_in_owner = true
 
 [node name="LeftController" type="XRController3D" parent="XROrigin3D" unique_id=548191848]
 tracker = &"left_hand"
@@ -45,3 +46,8 @@ tracker = &"right_hand"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightController" unique_id=1774839197]
 mesh = SubResource("BoxMesh_0xm2m")
+
+[node name="Timer" type="Timer" parent="." unique_id=1513758556]
+unique_name_in_owner = true
+
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
