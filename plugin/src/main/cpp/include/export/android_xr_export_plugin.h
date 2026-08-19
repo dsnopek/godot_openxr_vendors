@@ -66,6 +66,8 @@ public:
 	String _get_android_manifest_application_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
 	String _get_android_manifest_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
 
+	PackedStringArray _get_android_dependencies(const Ref<EditorExportPlatform> &platform, bool debug) const override;
+
 protected:
 	static void _bind_methods();
 

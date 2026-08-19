@@ -9,14 +9,66 @@ const GEOSPATIAL_STATES = {
 	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_STOPPED: "Stopped",
 }
 
+class LocationFinder:
+	var _client
+	var _task
+	var _is_complete := false
+	var _tried_fresh := false
+
+	signal completed(latitude: float, longitude: float)
+
+	func _init() -> void:
+		var android_runtime = Engine.get_singleton("AndroidRuntime")
+		var activity = android_runtime.getActivity()
+
+		var LocationServices = JavaClassWrapper.wrap("com.google.android.gms.location.LocationServices")
+
+		_client = LocationServices.getFusedLocationProviderClient(activity)
+		_task = client.getLastLocation()
+
+	func poll() -> void:
+		if _is_complete:
+			return
+		if _task == null:
+			return
+		if not _task.isComplete():
+			return
+
+		if _task.isSuccessful():
+			var location = _task.getResult()
+			if location != null:
+				var lat: float = location.getLatitude()
+				var lng: float = location.getLongitude()
+				_is_completed = true
+				completed.emit(lat, lng)
+
+		# @todo try fresh
+		pass
+
+
+var location_client
+
 func _ready() -> void:
 	var authenticated := await authenticate_with_google_cloud()
 	print("Authenticated: ", authenticated)
 	if not authenticated:
 		return
 
+	# @todo Wait on permissions to actually try to do this
+
+	var android_runtime = Engine.get_singleton("AndroidRuntime")
+	var activity = android_runtime.getActivity()
+
+	var LocationServices = JavaClassWrapper.wrap("com.google.android.gms.location.LocationServices")
+	var client = LocationServices.getFusedLocationProviderClient(activity)
+
+	print("Client: ", client)
+
 	OpenXRAndroidGeospatialExtension.openxr_android_geospatial_state_changed.connect(_on_geospatial_state_changed)
 	OpenXRAndroidGeospatialExtension.start_geospatial()
+
+
+func
 
 
 func authenticate_with_google_cloud() -> bool:

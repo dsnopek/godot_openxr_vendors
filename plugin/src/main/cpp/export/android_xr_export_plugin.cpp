@@ -356,3 +356,21 @@ String AndroidXREditorExportPlugin::_get_android_manifest_element_contents(const
 
 	return contents;
 }
+
+PackedStringArray AndroidXREditorExportPlugin::_get_android_dependencies(const Ref<EditorExportPlatform> &platform, bool debug) const {
+	PackedStringArray dependencies = OpenXRVendorsEditorExportPlugin::_get_android_dependencies(platform, debug);
+
+	if (!_supports_platform(platform)) {
+		return dependencies;
+	}
+
+	if (_is_vendor_plugin_enabled()) {
+		bool geospatial_enabled = get_export_preset()->get_project_setting("xr/openxr/extensions/androidxr/geospatial");
+		if (geospatial_enabled) {
+			// This dependency is needed to check VPS availability for Geospatial.
+			dependencies.push_back("com.google.android.gms:play-services-location:21.3.0");
+		}
+	}
+
+	return dependencies;
+}
