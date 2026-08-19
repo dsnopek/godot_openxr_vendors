@@ -148,6 +148,10 @@ String AndroidXREditorExportPlugin::_get_export_option_warning(const Ref<EditorE
 				return "\"Frame Synthesis\" requires enabling \"Flip Y\" on Android XR when using Vulkan.\n";
 			}
 		}
+		bool geospatial_enabled = export_preset->get_project_setting("xr/openxr/extensions/androidxr/geospatial");
+		if (geospatial_enabled && !_get_bool_option("permissions/access_fine_location")) {
+			return "\"Access Fine Location\" is required to use Geospatial.\n";
+		}
 	}
 
 	return OpenXRVendorsEditorExportPlugin::_get_export_option_warning(platform, option);
