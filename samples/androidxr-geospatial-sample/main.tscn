@@ -2,6 +2,8 @@
 
 [ext_resource type="Script" uid="uid://biiu53ef0jkj0" path="res://main.gd" id="1_ig7tw"]
 [ext_resource type="Script" uid="uid://bnjcoo6qce8d6" path="res://addons/common/start_xr.gd" id="2_0xm2m"]
+[ext_resource type="PackedScene" uid="uid://dcwibwtseri8h" path="res://addons/common/viewport_2d_in_3d/viewport_2d_in_3d.tscn" id="3_h2yge"]
+[ext_resource type="PackedScene" uid="uid://baihhee3p1y1h" path="res://hud.tscn" id="4_1bvp3"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_0xm2m"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -34,6 +36,12 @@ script = ExtResource("2_0xm2m")
 
 [node name="XRCamera3D" type="XRCamera3D" parent="XROrigin3D" unique_id=2139115797]
 unique_name_in_owner = true
+
+[node name="Viewport2Din3D" parent="XROrigin3D/XRCamera3D" unique_id=167215468 instance=ExtResource("3_h2yge")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.01173006, -0.5967002)
+scene = ExtResource("4_1bvp3")
+pixel_size = 0.0005
 
 [node name="LeftController" type="XRController3D" parent="XROrigin3D" unique_id=548191848]
 tracker = &"left_hand"
