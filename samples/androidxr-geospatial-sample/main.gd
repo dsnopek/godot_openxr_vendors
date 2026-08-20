@@ -88,12 +88,10 @@ func _ready() -> void:
 	var geospatial_supported := OpenXRAndroidGeospatialExtension.is_geospatial_supported()
 	hud.geospatial_supported_field.text = str(geospatial_supported)
 	if not geospatial_supported:
-		print("Geospatial isn't supported.")
 		return
 
 	var authenticated := await authenticate_with_google_cloud()
 	hud.authenticated_field.text = str(authenticated)
-	print("Authenticated: ", authenticated)
 	if not authenticated:
 		return
 
@@ -115,7 +113,6 @@ func _ready() -> void:
 
 	var vps_available: bool = vps_result.get_result_value()
 	hud.vps_availability_field.text = str(vps_available)
-	print("VPS available: ", vps_available)
 	if not vps_available:
 		return
 
@@ -183,16 +180,3 @@ func _on_timer_timeout() -> void:
 	if orientation_valid:
 		hud.orientation_field.text = str(pose.orientation)
 		hud.orientation_yaw_accuracy_field.text = str(pose.orientation_yaw_accuracy)
-
-	print("Position valid: ", pose.is_position_valid())
-	print("Orientation valid: ", pose.is_orientation_valid())
-	print("-----")
-	print("Horizontal accuracy: ", pose.horizontal_accuracy)
-	print("Vertical accuracy: ", pose.vertical_accuracy)
-	print("Orientation/yaw accuracy: ", pose.orientation_yaw_accuracy)
-	print("-----")
-	print("Latitude: ", pose.latitude)
-	print("Longitude: ", pose.longitude)
-	print("Altitude: ", pose.altitude)
-	print("Orientation: ", pose.orientation)
-	print("")
