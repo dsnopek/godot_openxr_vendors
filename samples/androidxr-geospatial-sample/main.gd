@@ -12,22 +12,43 @@ const GEOSPATIAL_STATES = {
 class LocationFinder:
 	var _client
 	var _task
-	var _is_complete := false
-	var _tried_fresh := false
 
-	signal completed(latitude: float, longitude: float)
+	var _latitude: float
+	var _longitude: float
+
+	var _is_completed := false
+	var _tried_fresh := false
+	var _is_success := false
+
+	signal completed(success: bool, latitude: float, longitude: float)
 
 	func _init() -> void:
+		_start()
+
+	func is_completed() -> bool:
+		return _is_completed
+
+	func is_success() -> bool:
+		return _is_success
+
+	func get_latitude() -> float:
+		return _latitude
+
+	func get_longitude() -> float:
+		return _longitude
+
+	func _start() -> void:
 		var android_runtime = Engine.get_singleton("AndroidRuntime")
 		var activity = android_runtime.getActivity()
 
 		var LocationServices = JavaClassWrapper.wrap("com.google.android.gms.location.LocationServices")
 
 		_client = LocationServices.getFusedLocationProviderClient(activity)
-		_task = client.getLastLocation()
+		# Attempt to get the cached location.
+		_task = _client.getLastLocation()
 
 	func poll() -> void:
-		if _is_complete:
+		if _is_completed:
 			return
 		if _task == null:
 			return
@@ -37,16 +58,26 @@ class LocationFinder:
 		if _task.isSuccessful():
 			var location = _task.getResult()
 			if location != null:
-				var lat: float = location.getLatitude()
-				var lng: float = location.getLongitude()
+				_latitude = location.getLatitude()
+				_longitude = location.getLongitude()
 				_is_completed = true
-				completed.emit(lat, lng)
+				_is_success = true
+				completed.emit(_is_success, _latitude, _longitude)
 
-		# @todo try fresh
-		pass
+		# If we failed to get the cached location, we'll try fresh.
+		if not _tried_fresh:
+			_tried_fresh = true
+			var Priority = JavaClassWrapper.wrap("com.google.android.gms.location.Priority")
+			_task = _client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null)
+			return
+
+		# If we failed both, then we're done.
+		_task = null
+		_is_completed = true
+		completed.emit(false, 0.0, 0.0)
 
 
-var location_client
+var location_finder: LocationFinder
 
 func _ready() -> void:
 	var authenticated := await authenticate_with_google_cloud()
@@ -54,21 +85,32 @@ func _ready() -> void:
 	if not authenticated:
 		return
 
-	# @todo Wait on permissions to actually try to do this
+	location_finder = LocationFinder.new()
+	await location_finder.completed
+	if not location_finder.is_success():
+		print("Location not found.")
+		return
 
-	var android_runtime = Engine.get_singleton("AndroidRuntime")
-	var activity = android_runtime.getActivity()
+	print("Location: ", location_finder.get_latitude(), ", ", location_finder.get_longitude())
 
-	var LocationServices = JavaClassWrapper.wrap("com.google.android.gms.location.LocationServices")
-	var client = LocationServices.getFusedLocationProviderClient(activity)
+	# Check VPS availability
+	var vps_result := OpenXRAndroidGeospatialExtension.check_vps_availability(location_finder.get_latitude(), location_finder.get_longitude())
+	await vps_result.completed
+	if vps_result.get_status() != OpenXRFutureResult.RESULT_FINISHED:
+		print("Getting VPS didn't finish: ", vps_result.get_status())
 
-	print("Client: ", client)
+	var vps_available: bool = vps_result.get_result_value()
+	print("VPS available: ", vps_available)
+	if not vps_available:
+		return
 
 	OpenXRAndroidGeospatialExtension.openxr_android_geospatial_state_changed.connect(_on_geospatial_state_changed)
 	OpenXRAndroidGeospatialExtension.start_geospatial()
 
 
-func
+func _process(_delta: float) -> void:
+	if location_finder:
+		location_finder.poll()
 
 
 func authenticate_with_google_cloud() -> bool:
