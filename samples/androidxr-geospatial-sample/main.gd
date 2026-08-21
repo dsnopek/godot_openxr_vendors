@@ -28,7 +28,7 @@ func _ready() -> void:
 		return
 
 	if ANDROID_FINE_LOCATION_PERMISSION in OS.get_granted_permissions():
-		get_coarse_location()
+		get_android_location()
 	else:
 		get_tree().on_request_permissions_result.connect(_on_request_permissions_result)
 		OS.request_permission(ANDROID_FINE_LOCATION_PERMISSION)
@@ -36,13 +36,13 @@ func _ready() -> void:
 
 func _on_request_permissions_result(permission: String, granted: bool) -> void:
 	if permission == ANDROID_FINE_LOCATION_PERMISSION and granted:
-		get_coarse_location()
+		get_android_location()
 
 
-func get_coarse_location() -> void:
+func get_android_location() -> void:
 	# If we want to confirm VPS availability before starting Geospatial,
-	# then we need to get the coarse location without the VPS first.
-	OpenXRAndroidGeospatialExtension.get_coarse_location(func (p_success: bool, p_latitude: float, p_longitude: float):
+	# then we need to get the approximate location without the VPS first.
+	OpenXRAndroidGeospatialExtension.get_android_location(func (p_success: bool, p_latitude: float, p_longitude: float):
 		if not p_success:
 			print("Location not found.")
 			hud.vps_availability_field.text = "error"

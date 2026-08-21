@@ -58,7 +58,7 @@ public:
 	bool is_geospatial_supported() const;
 
 	// @todo We could remove this in Godot 4.6+ because it can be done with JavaClassWrapper
-	void get_coarse_location(const Callable &p_callback);
+	void get_android_location(const Callable &p_callback);
 
 	Ref<OpenXRFutureResult> check_vps_availability(double p_latitude, double p_longitude);
 
