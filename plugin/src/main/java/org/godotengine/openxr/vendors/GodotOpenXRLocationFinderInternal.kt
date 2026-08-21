@@ -35,6 +35,7 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresPermission
 import androidx.core.content.ContextCompat
 import androidx.core.location.LocationManagerCompat
 import org.godotengine.godot.Godot
@@ -53,6 +54,7 @@ class GodotOpenXRLocationFinderInternal(godot: Godot?) : GodotPlugin(godot) {
 	override fun getPluginName() = "GodotOpenXRLocationFinderInternal"
 
 	@UsedByGodot
+	@RequiresPermission(anyOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
 	private fun findLocation(callback: Callable) {
 		val context = activity
 		if (context == null) {

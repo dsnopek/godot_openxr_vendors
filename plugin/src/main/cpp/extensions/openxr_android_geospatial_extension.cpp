@@ -29,6 +29,7 @@
 
 #include "extensions/openxr_android_geospatial_extension.h"
 
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
 #include <godot_cpp/classes/open_xr_future_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -59,6 +60,7 @@ OpenXRAndroidGeospatialExtension::~OpenXRAndroidGeospatialExtension() {
 
 void OpenXRAndroidGeospatialExtension::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_geospatial_supported"), &OpenXRAndroidGeospatialExtension::is_geospatial_supported);
+	ClassDB::bind_method(D_METHOD("get_coarse_location"), &OpenXRAndroidGeospatialExtension::get_coarse_location);
 	ClassDB::bind_method(D_METHOD("check_vps_availability", "latitude", "longitude"), &OpenXRAndroidGeospatialExtension::check_vps_availability);
 	ClassDB::bind_method(D_METHOD("start_geospatial"), &OpenXRAndroidGeospatialExtension::start_geospatial);
 	ClassDB::bind_method(D_METHOD("stop_geospatial"), &OpenXRAndroidGeospatialExtension::stop_geospatial);
@@ -79,6 +81,15 @@ bool OpenXRAndroidGeospatialExtension::is_geospatial_supported() const {
 
 	// But for testing, let's not check the system properties.
 	return android_geospatial_ext;
+}
+
+void OpenXRAndroidGeospatialExtension::get_coarse_location(const Callable &p_callback) {
+	Object *godot_openxr_location_finder = Engine::get_singleton()->get_singleton("GodotOpenXRLocationFinderInternal");
+	if (!godot_openxr_location_finder) {
+		p_callback.call_deferred(false, 0.0f, 0.0f);
+	}
+
+	godot_openxr_location_finder->call("findLocation", p_callback);
 }
 
 Ref<OpenXRFutureResult> OpenXRAndroidGeospatialExtension::check_vps_availability(double p_latitude, double p_longitude) {
