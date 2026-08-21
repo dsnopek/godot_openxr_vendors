@@ -47,12 +47,14 @@ pixel_size = 0.0005
 tracker = &"left_hand"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/LeftController" unique_id=254909014]
+visible = false
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="RightController" type="XRController3D" parent="XROrigin3D" unique_id=1098605462]
 tracker = &"right_hand"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="XROrigin3D/RightController" unique_id=1774839197]
+visible = false
 mesh = SubResource("BoxMesh_0xm2m")
 
 [node name="Timer" type="Timer" parent="." unique_id=1513758556]

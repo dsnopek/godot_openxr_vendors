@@ -31,6 +31,10 @@
         <meta-data
             android:name="org.godotengine.plugin.v2.GodotOpenXRHybridAppInternal"
             android:value="org.godotengine.openxr.vendors.GodotOpenXRHybridAppInternal" />
+
+        <meta-data
+            android:name="org.godotengine.plugin.v2.GodotOpenXRLocationFinderInternal"
+            android:value="org.godotengine.openxr.vendors.GodotOpenXRLocationFinderInternal" />
     </application>
 
 </manifest>
