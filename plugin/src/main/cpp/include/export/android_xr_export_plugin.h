@@ -76,6 +76,7 @@ protected:
 	Dictionary _tracked_controllers_option;
 	Dictionary _recommended_boundary_type_option;
 	Dictionary _use_experimental_features_option;
+	Dictionary _google_play_location_services_option;
 
 	mutable bool _should_update_options = false;
 
