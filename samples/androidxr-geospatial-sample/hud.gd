@@ -3,6 +3,7 @@ extends CenterContainer
 @onready var geospatial_supported_field: Label = %GeospatialSupportedField
 @onready var authenticated_field: Label = %AuthenticatedField
 @onready var vps_availability_field: Label = %VPSAvailabilityField
+@onready var geospatial_state_field: Label = %GeospatialStateField
 @onready var position_valid_field: Label = %PositionValidField
 @onready var latitude_field: Label = %LatitudeField
 @onready var longitude_field: Label = %LongitudeField

@@ -7,10 +7,12 @@ const HUD = preload("res://hud.gd")
 @onready var camera: XRCamera3D = %XRCamera3D
 @onready var timer: Timer = %Timer
 
+const ANDROID_FINE_LOCATION_PERMISSION = "android.permission.ACCESS_FINE_LOCATION"
+
 const GEOSPATIAL_STATES = {
-	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_INITIALIZATION_FAILED: "Initialization Failed",
-	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_RUNNING: "Running",
-	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_STOPPED: "Stopped",
+	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_INITIALIZATION_FAILED: "initialization failed",
+	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_RUNNING: "running",
+	OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_STOPPED: "stopped",
 }
 
 
@@ -25,24 +27,35 @@ func _ready() -> void:
 	if not authenticated:
 		return
 
-	# @todo We need to make sure we have the right permissions!
+	if ANDROID_FINE_LOCATION_PERMISSION in OS.get_granted_permissions():
+		get_coarse_location()
+	else:
+		get_tree().on_request_permissions_result.connect(_on_request_permissions_result)
+		OS.request_permission(ANDROID_FINE_LOCATION_PERMISSION)
 
+
+func _on_request_permissions_result(permission: String, granted: bool) -> void:
+	if permission == ANDROID_FINE_LOCATION_PERMISSION and granted:
+		get_coarse_location()
+
+
+func get_coarse_location() -> void:
 	# If we want to confirm VPS availability before starting Geospatial,
-	# then we need to get the coarse location with the VPS first.
-	OpenXRAndroidGeospatialExtension.get_coarse_location(func (success: bool, latitude: float, longitude: float):
-		if not success:
+	# then we need to get the coarse location without the VPS first.
+	OpenXRAndroidGeospatialExtension.get_coarse_location(func (p_success: bool, p_latitude: float, p_longitude: float):
+		if not p_success:
 			print("Location not found.")
 			hud.vps_availability_field.text = "error"
 			return
 
-		print("Location: ", latitude, ", ", longitude)
+		print("Location: ", p_latitude, ", ", p_longitude)
 
-		check_vps_availability_and_start_geospatial(latitude, longitude)
+		check_vps_availability_and_start_geospatial.call_deferred(p_latitude, p_longitude)
 	)
 
 
-func check_vps_availability_and_start_geospatial(latitude: float, longitude: float) -> void:
-	var vps_result := OpenXRAndroidGeospatialExtension.check_vps_availability(latitude, longitude)
+func check_vps_availability_and_start_geospatial(p_latitude: float, p_longitude: float) -> void:
+	var vps_result := OpenXRAndroidGeospatialExtension.check_vps_availability(p_latitude, p_longitude)
 	await vps_result.completed
 	if vps_result.get_status() != OpenXRFutureResult.RESULT_FINISHED:
 		print("Getting VPS didn't finish: ", vps_result.get_status())
@@ -87,7 +100,7 @@ func authenticate_with_google_cloud() -> bool:
 
 
 func _on_geospatial_state_changed(p_state) -> void:
-	print("Geospatial state changed: ", GEOSPATIAL_STATES[p_state])
+	hud.geospatial_state_field.text = GEOSPATIAL_STATES[p_state]
 
 	if p_state == OpenXRAndroidGeospatialExtension.GEOSPATIAL_STATE_RUNNING:
 		# Start printing out pose information about the camera.

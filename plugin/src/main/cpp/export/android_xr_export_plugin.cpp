@@ -82,15 +82,6 @@ AndroidXREditorExportPlugin::AndroidXREditorExportPlugin() {
 			PROPERTY_USAGE_DEFAULT,
 			false,
 			false);
-	_google_play_location_services_option = _generate_export_option(
-			"android_xr_features/google_play_location_services",
-			"",
-			Variant::Type::BOOL,
-			PROPERTY_HINT_NONE,
-			"",
-			PROPERTY_USAGE_DEFAULT,
-			false,
-			false);
 
 	ProjectSettings::get_singleton()->connect("settings_changed", callable_mp(this, &AndroidXREditorExportPlugin::_project_settings_changed));
 }
@@ -109,7 +100,6 @@ TypedArray<Dictionary> AndroidXREditorExportPlugin::_get_export_options(const Re
 	export_options.append(_tracked_controllers_option);
 	export_options.append(_recommended_boundary_type_option);
 	export_options.append(_use_experimental_features_option);
-	export_options.append(_google_play_location_services_option);
 
 	return export_options;
 }
@@ -367,22 +357,4 @@ String AndroidXREditorExportPlugin::_get_android_manifest_element_contents(const
 	}
 
 	return contents;
-}
-
-PackedStringArray AndroidXREditorExportPlugin::_get_android_dependencies(const Ref<EditorExportPlatform> &platform, bool debug) const {
-	PackedStringArray dependencies = OpenXRVendorsEditorExportPlugin::_get_android_dependencies(platform, debug);
-
-	if (!_supports_platform(platform)) {
-		return dependencies;
-	}
-
-	if (_is_vendor_plugin_enabled()) {
-		bool geospatial_enabled = (bool)get_export_preset()->get_project_setting("xr/openxr/extensions/androidxr/geospatial");
-		if(geospatial_enabled && _get_bool_option("android_xr_features/google_play_location_services")) {
-			// This dependency is needed to check VPS availability for Geospatial.
-			dependencies.push_back("com.google.android.gms:play-services-location:21.3.0");
-		}
-	}
-
-	return dependencies;
 }

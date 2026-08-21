@@ -66,8 +66,6 @@ public:
 	String _get_android_manifest_application_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
 	String _get_android_manifest_element_contents(const Ref<EditorExportPlatform> &platform, bool debug) const override;
 
-	PackedStringArray _get_android_dependencies(const Ref<EditorExportPlatform> &platform, bool debug) const override;
-
 protected:
 	static void _bind_methods();
 
@@ -76,7 +74,6 @@ protected:
 	Dictionary _tracked_controllers_option;
 	Dictionary _recommended_boundary_type_option;
 	Dictionary _use_experimental_features_option;
-	Dictionary _google_play_location_services_option;
 
 	mutable bool _should_update_options = false;
 

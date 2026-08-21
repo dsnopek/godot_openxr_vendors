@@ -72,6 +72,16 @@ layout_mode = 2
 text = "unknown"
 horizontal_alignment = 2
 
+[node name="GeospatialStateLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TopGridContainer" unique_id=814669752]
+layout_mode = 2
+text = "Geospatial state:"
+
+[node name="GeospatialStateField" type="Label" parent="PanelContainer/MarginContainer/VBoxContainer/TopGridContainer" unique_id=132620873]
+unique_name_in_owner = true
+layout_mode = 2
+text = "stopped"
+horizontal_alignment = 2
+
 [node name="HSeparator1" type="HSeparator" parent="PanelContainer/MarginContainer/VBoxContainer" unique_id=613058703]
 layout_mode = 2
 
