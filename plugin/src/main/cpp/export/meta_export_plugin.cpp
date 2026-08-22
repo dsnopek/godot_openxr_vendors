@@ -432,13 +432,14 @@ String MetaEditorExportPlugin::_get_android_manifest_element_contents(const Ref<
 		contents += "    <uses-permission android:name=\"com.oculus.permission.USE_COLOCATION_DISCOVERY_API\" />\n";
 	}
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 	// Check for boundary visibility
 	if ((bool)export_preset->get_project_setting("xr/openxr/extensions/meta/boundary_visibility")) {
 		contents += "    <uses-permission android:name=\"com.oculus.permission.BOUNDARY_VISIBILITY\" />\n";
 	}
 
+	// XR_EXT_stationary_reference space is now part of the spec!
+	// But since it's an EXT, we should probably implement it in Godot.
+#ifdef META_HEADERS_ENABLED
 	// Check for stationary reference space
 	if ((bool)export_preset->get_project_setting("xr/openxr/extensions/stationary_reference_space")) {
 		contents += "    <uses-feature android:name=\"com.oculus.experimental.enabled\" />\n";

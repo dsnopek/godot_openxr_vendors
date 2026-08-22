@@ -27,8 +27,6 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 #include "extensions/openxr_meta_boundary_visibility_extension.h"
 
 #include <godot_cpp/classes/open_xrapi_extension.hpp>
@@ -158,4 +156,3 @@ bool OpenXRMetaBoundaryVisibilityExtension::initialize_meta_boundary_visibility_
 
 	return true;
 }
-#endif // META_HEADERS_ENABLED

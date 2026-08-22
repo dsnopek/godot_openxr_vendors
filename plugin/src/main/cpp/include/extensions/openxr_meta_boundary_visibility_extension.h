@@ -29,10 +29,6 @@
 
 #pragma once
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
-
-#include <meta_openxr_preview/meta_boundary_visibility.h>
 #include <openxr/openxr.h>
 #include <godot_cpp/classes/open_xr_extension_wrapper.hpp>
 #include <map>
@@ -87,5 +83,3 @@ private:
 
 	XrBoundaryVisibilityMETA current_boundary_visibility = XR_BOUNDARY_VISIBILITY_NOT_SUPPRESSED_META;
 };
-
-#endif // META_HEADERS_ENABLED

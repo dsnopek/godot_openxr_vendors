@@ -215,6 +215,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			GDREGISTER_CLASS(OpenXRFbSpatialEntityQueryExtension);
 			GDREGISTER_CLASS(OpenXRFbSpatialEntityContainerExtension);
 			GDREGISTER_CLASS(OpenXRFbSpatialEntityUserExtension);
+			GDREGISTER_CLASS(OpenXRMetaBoundaryVisibilityExtension);
 			GDREGISTER_CLASS(OpenXRMetaRecommendedLayerResolutionExtension);
 			GDREGISTER_CLASS(OpenXRMetaSimultaneousHandsAndControllersExtension);
 			GDREGISTER_CLASS(OpenXRMetaHeadsetIDExtension);
@@ -239,9 +240,9 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			GDREGISTER_CLASS(OpenXRMetaEnvironmentDepthExtension);
 			GDREGISTER_CLASS(OpenXRAndroidEnvironmentDepthExtension);
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
 #ifdef META_HEADERS_ENABLED
-			GDREGISTER_CLASS(OpenXRMetaBoundaryVisibilityExtension);
+			// XR_EXT_stationary_reference space is now part of the spec!
+			// But since it's an EXT, we should probably implement it in Godot.
 			GDREGISTER_CLASS(OpenXRStationaryReferenceSpaceExtension);
 #endif // META_HEADERS_ENABLED
 
@@ -333,12 +334,13 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 				_register_extension_with_openxr(OpenXRFbCompositionLayerImageLayoutExtension::get_singleton());
 			}
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
-#ifdef META_HEADERS_ENABLED
 			if (_get_bool_project_setting("xr/openxr/extensions/meta/boundary_visibility")) {
 				_register_extension_with_openxr(OpenXRMetaBoundaryVisibilityExtension::get_singleton());
 			}
 
+#ifdef META_HEADERS_ENABLED
+			// XR_EXT_stationary_reference space is now part of the spec!
+			// But since it's an EXT, we should probably implement it in Godot.
 			if (_get_bool_project_setting("xr/openxr/extensions/stationary_reference_space")) {
 				_register_extension_with_openxr(OpenXRStationaryReferenceSpaceExtension::get_singleton());
 			}
@@ -445,6 +447,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			_register_extension_as_singleton(OpenXRFbHandTrackingCapsulesExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRMetaSimultaneousHandsAndControllersExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRMetaHeadsetIDExtension::get_singleton());
+			_register_extension_as_singleton(OpenXRMetaBoundaryVisibilityExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRMetaColocationDiscoveryExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRFbBodyTrackingExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRHtcFacialTrackingExtension::get_singleton());
@@ -476,9 +479,9 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 				_register_extension_as_singleton(OpenXRFbCompositionLayerSettingsExtension::get_singleton());
 			}
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
 #ifdef META_HEADERS_ENABLED
-			_register_extension_as_singleton(OpenXRMetaBoundaryVisibilityExtension::get_singleton());
+			// XR_EXT_stationary_reference space is now part of the spec!
+			// But since it's an EXT, we should probably implement it in Godot.
 			_register_extension_as_singleton(OpenXRStationaryReferenceSpaceExtension::get_singleton());
 #endif // META_HEADERS_ENABLED
 
@@ -648,6 +651,7 @@ void add_plugin_project_settings() {
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/colocation_discovery", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/application_space_warp", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/environment_depth", false);
+	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/boundary_visibility", false);
 
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/magic_leap/marker_understanding", false);
 
@@ -670,10 +674,9 @@ void add_plugin_project_settings() {
 		_add_bool_project_setting(project_settings, "xr/openxr/extensions/androidxr/mouse_interaction", false, true);
 	}
 
-// @todo GH Issue 304: Remove check for meta headers when feature becomes part of OpenXR spec.
 #ifdef META_HEADERS_ENABLED
-	_add_bool_project_setting(project_settings, "xr/openxr/extensions/meta/boundary_visibility", false);
-
+	// XR_EXT_stationary_reference space is now part of the spec!
+	// But since it's an EXT, we should probably implement it in Godot.
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/stationary_reference_space", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/stationary_reference_space/enable_on_startup", false);
 #endif // META_HEADERS_ENABLED
