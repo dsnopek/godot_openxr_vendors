@@ -2,7 +2,7 @@
 #define XR_ANDROID_HAND_MESH_H_ 1
 
 /*
-** Copyright 2017-2025 The Khronos Group Inc.
+** Copyright 2017-2026 The Khronos Group Inc.
 **
 ** SPDX-License-Identifier: Apache-2.0 OR MIT
 */
@@ -22,15 +22,16 @@ extern "C" {
 
 // XR_ANDROID_hand_mesh is a preprocessor guard. Do not pass it to API calls.
 #define XR_ANDROID_hand_mesh 1
-XR_DEFINE_HANDLE(XrHandMeshTrackerANDROID)
-#define XR_ANDROID_hand_mesh_SPEC_VERSION 1
-#define XR_ANDROID_HAND_MESH_EXTENSION_NAME "XR_ANDROID_hand_mesh"
 #define XR_TYPE_SYSTEM_HAND_MESH_TRACKING_PROPERTIES_ANDROID ((XrStructureType) 1000703000U)
 #define XR_TYPE_HAND_MESH_TRACKER_CREATE_INFO_ANDROID ((XrStructureType) 1000703001U)
 #define XR_TYPE_HAND_MESH_GET_INFO_ANDROID ((XrStructureType) 1000703003U)
 #define XR_TYPE_HAND_TRACKING_MESHES_ANDROID ((XrStructureType) 1000703004U)
 // XrHandMeshTrackerANDROID
 #define XR_OBJECT_TYPE_HAND_MESH_TRACKER_ANDROID ((XrObjectType) 1000703000U)
+
+XR_DEFINE_HANDLE(XrHandMeshTrackerANDROID)
+#define XR_ANDROID_hand_mesh_SPEC_VERSION 1
+#define XR_ANDROID_HAND_MESH_EXTENSION_NAME "XR_ANDROID_hand_mesh"
 typedef struct XrSystemHandMeshTrackingPropertiesANDROID {
     XrStructureType       type;
     void* XR_MAY_ALIAS    next;
@@ -90,6 +91,47 @@ XRAPI_ATTR XrResult XRAPI_CALL xrGetHandMeshANDROID(
     XrHandTrackingMeshesANDROID*                handMeshes);
 #endif /* XR_EXTENSION_PROTOTYPES */
 #endif /* !XR_NO_PROTOTYPES */
+
+// Reflection macros
+#define XR_LIST_STRUCT_XrSystemHandMeshTrackingPropertiesANDROID(_) \
+    _(type) \
+    _(next) \
+    _(supportsHandMeshTracking) \
+    _(supportsTextureUV) \
+    _(supportsVertexNormal)
+
+#define XR_LIST_STRUCT_XrHandMeshTrackerCreateInfoANDROID(_) \
+    _(type) \
+    _(next)
+
+#define XR_LIST_STRUCT_XrHandMeshGetInfoANDROID(_) \
+    _(type) \
+    _(next) \
+    _(baseSpace) \
+    _(time)
+
+#define XR_LIST_STRUCT_XrHandMeshANDROID(_) \
+    _(isActive) \
+    _(dynamicLastUpdateTime) \
+    _(indexCount) \
+    _(vertexCount) \
+    _(indices) \
+    _(textureUVs) \
+    _(positions) \
+    _(normals) \
+    _(baseSpaceFromVertexSpace)
+
+#define XR_LIST_STRUCT_XrHandTrackingMeshesANDROID(_) \
+    _(type) \
+    _(next) \
+    _(leftHandMesh) \
+    _(rightHandMesh)
+
+#define XR_LIST_FUNCTIONS_XR_ANDROID_hand_mesh(_) \
+    _(CreateHandMeshTrackerANDROID, ANDROID_hand_mesh) \
+    _(DestroyHandMeshTrackerANDROID, ANDROID_hand_mesh) \
+    _(GetHandMeshANDROID, ANDROID_hand_mesh)
+
 #endif /* XR_ANDROID_hand_mesh */
 
 #ifdef __cplusplus

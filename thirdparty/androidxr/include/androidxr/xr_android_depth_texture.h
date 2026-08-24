@@ -2,7 +2,7 @@
 #define XR_ANDROID_DEPTH_TEXTURE_H_ 1
 
 /*
-** Copyright 2017-2025 The Khronos Group Inc.
+** Copyright 2017-2026 The Khronos Group Inc.
 **
 ** SPDX-License-Identifier: Apache-2.0 OR MIT
 */
@@ -22,9 +22,6 @@ extern "C" {
 
 // XR_ANDROID_depth_texture is a preprocessor guard. Do not pass it to API calls.
 #define XR_ANDROID_depth_texture 1
-XR_DEFINE_HANDLE(XrDepthSwapchainANDROID)
-#define XR_ANDROID_depth_texture_SPEC_VERSION 1
-#define XR_ANDROID_DEPTH_TEXTURE_EXTENSION_NAME "XR_ANDROID_depth_texture"
 #define XR_TYPE_DEPTH_SWAPCHAIN_CREATE_INFO_ANDROID ((XrStructureType) 1000702000U)
 #define XR_TYPE_DEPTH_VIEW_ANDROID        ((XrStructureType) 1000702001U)
 #define XR_TYPE_DEPTH_ACQUIRE_INFO_ANDROID ((XrStructureType) 1000702002U)
@@ -35,6 +32,10 @@ XR_DEFINE_HANDLE(XrDepthSwapchainANDROID)
 #define XR_ERROR_DEPTH_NOT_AVAILABLE_ANDROID ((XrResult) -1000702000U)
 // XrDepthSwapchainANDROID
 #define XR_OBJECT_TYPE_DEPTH_SWAPCHAIN_ANDROID ((XrObjectType) 1000702001U)
+
+XR_DEFINE_HANDLE(XrDepthSwapchainANDROID)
+#define XR_ANDROID_depth_texture_SPEC_VERSION 1
+#define XR_ANDROID_DEPTH_TEXTURE_EXTENSION_NAME "XR_ANDROID_depth_texture"
 
 typedef enum XrDepthCameraResolutionANDROID {
     // The resolution of the depth and confidence images is 80x80.
@@ -135,6 +136,65 @@ XRAPI_ATTR XrResult XRAPI_CALL xrAcquireDepthSwapchainImagesANDROID(
     XrDepthAcquireResultANDROID*                acquireResult);
 #endif /* XR_EXTENSION_PROTOTYPES */
 #endif /* !XR_NO_PROTOTYPES */
+
+// Reflection macros
+#define XR_LIST_ENUM_XrDepthCameraResolutionANDROID(_) \
+    _(XR_DEPTH_CAMERA_RESOLUTION_80x80_ANDROID, 0) \
+    _(XR_DEPTH_CAMERA_RESOLUTION_160x160_ANDROID, 1) \
+    _(XR_DEPTH_CAMERA_RESOLUTION_320x320_ANDROID, 2) \
+    _(XR_DEPTH_CAMERA_RESOLUTION_MAX_ENUM_ANDROID, 0x7FFFFFFF)
+
+#define XR_LIST_BITS_XrDepthSwapchainCreateFlagsANDROID(_) \
+    _(XR_DEPTH_SWAPCHAIN_CREATE_SMOOTH_DEPTH_IMAGE_BIT_ANDROID, 0x00000001) \
+    _(XR_DEPTH_SWAPCHAIN_CREATE_SMOOTH_CONFIDENCE_IMAGE_BIT_ANDROID, 0x00000002) \
+    _(XR_DEPTH_SWAPCHAIN_CREATE_RAW_DEPTH_IMAGE_BIT_ANDROID, 0x00000004) \
+    _(XR_DEPTH_SWAPCHAIN_CREATE_RAW_CONFIDENCE_IMAGE_BIT_ANDROID, 0x00000008)
+
+#define XR_LIST_STRUCT_XrDepthSwapchainCreateInfoANDROID(_) \
+    _(type) \
+    _(next) \
+    _(resolution) \
+    _(createFlags)
+
+#define XR_LIST_STRUCT_XrDepthSwapchainImageANDROID(_) \
+    _(type) \
+    _(next) \
+    _(rawDepthImage) \
+    _(rawDepthConfidenceImage) \
+    _(smoothDepthImage) \
+    _(smoothDepthConfidenceImage)
+
+#define XR_LIST_STRUCT_XrDepthAcquireInfoANDROID(_) \
+    _(type) \
+    _(next) \
+    _(space) \
+    _(displayTime)
+
+#define XR_LIST_STRUCT_XrDepthViewANDROID(_) \
+    _(type) \
+    _(next) \
+    _(fov) \
+    _(pose)
+
+#define XR_LIST_STRUCT_XrDepthAcquireResultANDROID(_) \
+    _(type) \
+    _(next) \
+    _(acquiredIndex) \
+    _(exposureTimestamp) \
+    _(views)
+
+#define XR_LIST_STRUCT_XrSystemDepthTrackingPropertiesANDROID(_) \
+    _(type) \
+    _(next) \
+    _(supportsDepthTracking)
+
+#define XR_LIST_FUNCTIONS_XR_ANDROID_depth_texture(_) \
+    _(CreateDepthSwapchainANDROID, ANDROID_depth_texture) \
+    _(DestroyDepthSwapchainANDROID, ANDROID_depth_texture) \
+    _(EnumerateDepthSwapchainImagesANDROID, ANDROID_depth_texture) \
+    _(EnumerateDepthResolutionsANDROID, ANDROID_depth_texture) \
+    _(AcquireDepthSwapchainImagesANDROID, ANDROID_depth_texture)
+
 #endif /* XR_ANDROID_depth_texture */
 
 #ifdef __cplusplus
