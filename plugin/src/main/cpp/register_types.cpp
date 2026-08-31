@@ -54,6 +54,7 @@
 #include "extensions/openxr_android_environment_depth_extension.h"
 #include "extensions/openxr_android_eye_tracking_extension.h"
 #include "extensions/openxr_android_face_tracking_extension.h"
+#include "extensions/openxr_android_global_passthrough_dimming_extension.h"
 #include "extensions/openxr_android_light_estimation_extension.h"
 #include "extensions/openxr_android_mouse_interaction_extension.h"
 #include "extensions/openxr_android_passthrough_camera_state_extension.h"
@@ -204,6 +205,8 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 
 			GDREGISTER_CLASS(OpenXRAndroidPassthroughCameraStateExtension);
 			GDREGISTER_CLASS(OpenXRAndroidPerformanceMetricsExtension);
+			GDREGISTER_CLASS(OpenXRAndroidGlobalPassthroughDimmingExtension);
+
 			GDREGISTER_CLASS(OpenXRFbPassthroughExtension);
 			GDREGISTER_CLASS(OpenXRFbRenderModelExtension);
 			GDREGISTER_CLASS(OpenXRFbColorSpaceExtension);
@@ -426,6 +429,11 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			if (_get_bool_project_setting("xr/openxr/extensions/androidxr/anchor_persistence")) {
 				_register_extension_with_openxr(OpenXRAndroidDeviceAnchorPersistenceExtension::get_singleton());
 			}
+
+			if (_get_bool_project_setting("xr/openxr/extensions/androidxr/global_passthrough_dimming")) {
+				_register_extension_with_openxr(OpenXRAndroidGlobalPassthroughDimmingExtension::get_singleton());
+			}
+
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_SERVERS:
@@ -468,6 +476,7 @@ void initialize_plugin_module(ModuleInitializationLevel p_level) {
 			_register_extension_as_singleton(OpenXRAndroidTrackablesObjectExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRAndroidRaycastExtension::get_singleton());
 			_register_extension_as_singleton(OpenXRAndroidDeviceAnchorPersistenceExtension::get_singleton());
+			_register_extension_as_singleton(OpenXRAndroidGlobalPassthroughDimmingExtension::get_singleton());
 
 			// Only works with Godot 4.7 or later.
 			if (godot::gdextension_interface::godot_version.minor >= 7) {
@@ -668,6 +677,7 @@ void add_plugin_project_settings() {
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/androidxr/trackables_object", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/androidxr/raycast", false);
 	_add_bool_project_setting(project_settings, "xr/openxr/extensions/androidxr/anchor_persistence", false);
+	_add_bool_project_setting(project_settings, "xr/openxr/extensions/androidxr/global_passthrough_dimming", false);
 
 	// Only works with Godot 4.7 or later.
 	if (godot::gdextension_interface::godot_version.minor >= 7) {
